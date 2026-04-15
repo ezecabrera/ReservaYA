@@ -149,5 +149,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ── Crear suscripción trial (30 días gratis) ────────────────────────────
+  await supabase
+    .from('venue_subscriptions')
+    .insert({ venue_id: venue.id, status: 'trial' })
+
   return NextResponse.json({ ok: true, venueId: venue.id })
 }

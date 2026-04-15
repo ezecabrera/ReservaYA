@@ -35,7 +35,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isPublic = pathname === '/login' || pathname.startsWith('/onboarding')
+  const isPublic = pathname === '/login'
+    || pathname.startsWith('/onboarding')
+    || pathname.startsWith('/api/webhooks')
 
   if (!user && !isPublic) {
     const loginUrl = request.nextUrl.clone()
@@ -47,6 +49,28 @@ export async function middleware(request: NextRequest) {
     const dashboardUrl = request.nextUrl.clone()
     dashboardUrl.pathname = '/dashboard'
     return NextResponse.redirect(dashboardUrl)
+  }
+
+  // Gate de billing: si el usuario está autenticado y trata de acceder al dashboard
+  // (pero no a billing ni a APIs), verificar que tenga acceso activo
+  const isDashboardRoute = pathname.startsWith('/dashboard') && pathname !== '/dashboard/billing'
+  if (user && isDashboardRoute) {
+    const { data: staffUser } = await supabase
+      .from('staff_users')
+      .select('venue_id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (staffUser) {
+      const { data: hasAccess } = await supabase
+        .rpc('venue_has_access', { vid: staffUser.venue_id })
+
+      if (!hasAccess) {
+        const billingUrl = request.nextUrl.clone()
+        billingUrl.pathname = '/dashboard/billing'
+        return NextResponse.redirect(billingUrl)
+      }
+    }
   }
 
   return supabaseResponse

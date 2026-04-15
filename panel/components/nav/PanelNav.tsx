@@ -74,6 +74,19 @@ const ITEMS = [
     ),
   },
   {
+    href: '/dashboard/billing',
+    label: 'Plan',
+    icon: (active: boolean) => (
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
+        <path d="M12 6v6l4 2"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
+          strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/config',
     label: 'Config',
     icon: (active: boolean) => (
