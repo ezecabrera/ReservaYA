@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Confetti } from './Confetti'
 import { QRDisplay } from './QRDisplay'
+import { BottomNav } from '@/components/ui/BottomNav'
 import { buildWhatsAppUrl, buildWhatsAppMessage, generateICS } from '@/lib/shared'
 
 interface ConfirmationData {
@@ -122,7 +123,7 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-bg pb-10 relative overflow-hidden">
+    <div className="min-h-screen bg-bg pb-28 relative overflow-hidden">
       {showConfetti && <Confetti />}
 
       <div className="screen-x pt-12 space-y-5 relative z-20">
@@ -263,8 +264,8 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
             </div>
           )}
 
-          <a href="/" className="block text-center text-tx2 text-[13px] py-2 font-semibold">
-            Ver detalles de la reserva →
+          <a href="/mis-reservas" className="block text-center text-tx2 text-[13px] py-2 font-semibold">
+            Ver mis reservas →
           </a>
         </div>
 
@@ -280,6 +281,8 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
         </div>
 
       </div>
+
+      <BottomNav />
     </div>
   )
 }

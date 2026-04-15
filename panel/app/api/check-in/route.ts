@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import type { QRTokenPayload } from '@/lib/shared'
 
 /**
@@ -30,7 +31,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Verificar que el staff tiene permisos sobre este venue
-  const { data: staffUser } = await supabase
+  const admin = createAdminClient()
+  const { data: staffUser } = await admin
     .from('staff_users')
     .select('venue_id')
     .eq('id', user.id)
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Obtener la reserva
-  const { data: reservation } = await supabase
+  const { data: reservation } = await admin
     .from('reservations')
     .select('id, table_id, status, users(name), time_slot')
     .eq('id', payload.reservation_id)
@@ -62,11 +64,11 @@ export async function POST(request: NextRequest) {
 
   // Hacer el check-in
   await Promise.all([
-    supabase
+    admin
       .from('reservations')
       .update({ status: 'checked_in' })
       .eq('id', reservation.id),
-    supabase
+    admin
       .from('tables')
       .update({ is_occupied: true })
       .eq('id', reservation.table_id),

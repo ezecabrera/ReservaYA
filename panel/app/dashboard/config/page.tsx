@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { ConfigClient } from '@/components/config/ConfigClient'
 
 export default async function ConfigPage() {
@@ -7,7 +8,8 @@ export default async function ConfigPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: me } = await supabase
+  const admin = createAdminClient()
+  const { data: me } = await admin
     .from('staff_users')
     .select('id, name, email, role, venue_id')
     .eq('id', user.id)
@@ -15,7 +17,7 @@ export default async function ConfigPage() {
 
   if (!me) redirect('/login')
 
-  const { data: venue } = await supabase
+  const { data: venue } = await admin
     .from('venues')
     .select('name, address, phone')
     .eq('id', me.venue_id)

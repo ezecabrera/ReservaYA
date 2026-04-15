@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 
 /**
  * PATCH /api/tables/[id]/status
@@ -16,19 +17,23 @@ export async function PATCH(
 
   const body = await request.json() as { is_occupied: boolean }
 
-  // Verificar que la mesa pertenece al venue del staff
-  const { data: table } = await supabase
-    .from('tables')
-    .select('venue_id')
-    .eq('id', params.id)
-    .single()
+  const admin = createAdminClient()
+
+  // Verificar que el staff pertenece al mismo venue que la mesa
+  const [tableResult, staffResult] = await Promise.all([
+    admin.from('tables').select('venue_id').eq('id', params.id).single(),
+    admin.from('staff_users').select('venue_id').eq('id', user.id).single(),
+  ])
+
+  const table = tableResult.data
+  const staffUser = staffResult.data
 
   if (!table) return NextResponse.json({ error: 'Mesa no encontrada' }, { status: 404 })
+  if (!staffUser || staffUser.venue_id !== table.venue_id) {
+    return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
+  }
 
-  const isStaff = await supabase.rpc('is_staff_of', { vid: table.venue_id })
-  if (!isStaff.data) return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
-
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('tables')
     .update({ is_occupied: body.is_occupied })
     .eq('id', params.id)

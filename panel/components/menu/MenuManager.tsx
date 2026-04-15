@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { PanelNav } from '@/components/nav/PanelNav'
 import type { MenuCategory, MenuItem, MenuItemAvailability } from '@/lib/shared'
 
 interface Props {
@@ -361,7 +360,6 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
         </div>
       )}
 
-      <PanelNav />
     </div>
   )
 }

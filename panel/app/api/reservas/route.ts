@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 
 /**
  * GET /api/reservas?date=YYYY-MM-DD
@@ -10,7 +11,8 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { data: staffUser } = await supabase
+  const admin = createAdminClient()
+  const { data: staffUser } = await admin
     .from('staff_users')
     .select('venue_id')
     .eq('id', user.id)
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
   const date = request.nextUrl.searchParams.get('date')
     ?? new Date().toISOString().slice(0, 10)
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('reservations')
     .select(`
       id, status, date, time_slot, party_size, qr_token,

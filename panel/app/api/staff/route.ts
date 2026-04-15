@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 
 /** GET /api/staff — lista el staff del venue (solo owners/managers) */
 export async function GET() {
@@ -7,7 +8,8 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { data: me } = await supabase
+  const admin = createAdminClient()
+  const { data: me } = await admin
     .from('staff_users')
     .select('venue_id, role')
     .eq('id', user.id)
@@ -17,7 +19,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
   }
 
-  const { data } = await supabase
+  const { data } = await admin
     .from('staff_users')
     .select('id, name, email, role, created_at')
     .eq('venue_id', me.venue_id)
@@ -32,7 +34,8 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { data: me } = await supabase
+  const admin = createAdminClient()
+  const { data: me } = await admin
     .from('staff_users')
     .select('venue_id, role')
     .eq('id', user.id)
@@ -47,7 +50,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'No podés cambiar tu propio rol' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('staff_users')
     .update({ role: body.role })
     .eq('id', body.id)

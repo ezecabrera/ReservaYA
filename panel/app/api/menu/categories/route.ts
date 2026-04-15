@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 
 /** POST /api/menu/categories — crea una categoría */
 export async function POST(request: NextRequest) {
@@ -9,7 +10,8 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json() as { venue_id: string; name: string; sort_order: number }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('menu_categories')
     .insert({
       venue_id: body.venue_id,

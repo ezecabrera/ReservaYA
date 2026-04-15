@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PanelNav } from '@/components/nav/PanelNav'
 
 interface StaffMember {
   id: string
@@ -247,7 +246,6 @@ export function ConfigClient({ me, venue }: Props) {
 
       </div>
 
-      <PanelNav />
     </div>
   )
 }

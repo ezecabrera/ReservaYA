@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 
 /**
  * GET /api/analytics
@@ -10,7 +11,8 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { data: staffUser } = await supabase
+  const admin = createAdminClient()
+  const { data: staffUser } = await admin
     .from('staff_users')
     .select('venue_id')
     .eq('id', user.id)
@@ -31,7 +33,7 @@ export async function GET() {
 
   const [reservationsResult, paymentsResult, ordersResult, tablesResult] = await Promise.all([
     // Reservas de los últimos 7 días
-    supabase
+    admin
       .from('reservations')
       .select('id, date, status, party_size, time_slot')
       .eq('venue_id', venueId)
@@ -40,20 +42,20 @@ export async function GET() {
       .order('date', { ascending: true }),
 
     // Pagos aprobados de los últimos 7 días
-    supabase
+    admin
       .from('payments')
       .select('amount, created_at')
       .eq('status', 'approved')
       .gte('created_at', sevenDaysAgo.toISOString()),
 
     // Órdenes (pre-pedidos) de los últimos 7 días
-    supabase
+    admin
       .from('orders')
       .select('total, created_at')
       .gte('created_at', sevenDaysAgo.toISOString()),
 
     // Total de mesas del venue
-    supabase
+    admin
       .from('tables')
       .select('id', { count: 'exact', head: true })
       .eq('venue_id', venueId),

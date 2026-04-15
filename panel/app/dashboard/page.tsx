@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { TableGrid } from '@/components/tables/TableGrid'
 import { getVenueMode, getAvailableTimeSlots } from '@/lib/shared'
 import type { Venue, Table, Reservation, StaffUser, TableWithStatus } from '@/lib/shared'
@@ -11,8 +12,9 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Staff user con venue
-  const { data: staffUser } = await supabase
+  // Staff user con venue — usa admin client para evitar recursión RLS en staff_users
+  const admin = createAdminClient()
+  const { data: staffUser } = await admin
     .from('staff_users')
     .select('*, venues(*)')
     .eq('id', user.id)
@@ -20,10 +22,28 @@ export default async function DashboardPage() {
 
   if (!staffUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-5">
-        <p className="text-tx2 text-center text-[14px]">
-          Tu usuario no está asociado a ningún negocio. Contactá al administrador.
-        </p>
+      <div className="flex flex-col items-center justify-center min-h-screen p-5 gap-5"
+        style={{ background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)' }}>
+        <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
+          <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="7" r="4" stroke="rgba(255,255,255,0.4)" strokeWidth="2" />
+          </svg>
+        </div>
+        <div className="text-center">
+          <p className="text-white font-bold text-[16px]">Sin acceso al panel</p>
+          <p className="text-white/50 text-[13px] mt-1 max-w-[260px]">
+            Tu cuenta no está asociada a ningún negocio.
+            Cerrá sesión y volvé a ingresar con la cuenta correcta.
+          </p>
+        </div>
+        <a
+          href="/api/auth/signout"
+          className="px-6 py-3 rounded-xl bg-white/10 border border-white/20
+                     text-white font-semibold text-[14px] hover:bg-white/15 transition-colors"
+        >
+          Cerrar sesión
+        </a>
       </div>
     )
   }

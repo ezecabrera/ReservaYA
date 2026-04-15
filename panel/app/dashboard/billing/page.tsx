@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { PanelNav } from '@/components/nav/PanelNav'
 
 interface BillingData {
   status: string
@@ -206,7 +205,6 @@ export default function BillingPage() {
         </div>
       )}
 
-      <PanelNav />
     </div>
   )
 }

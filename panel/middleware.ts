@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
@@ -39,6 +40,7 @@ export async function middleware(request: NextRequest) {
     || pathname.startsWith('/onboarding')
     || pathname.startsWith('/api/onboarding')
     || pathname.startsWith('/api/webhooks')
+    || pathname.startsWith('/api/auth/signout')
 
   if (!user && !isPublic) {
     const loginUrl = request.nextUrl.clone()
@@ -52,18 +54,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl)
   }
 
-  // Gate de billing: si el usuario está autenticado y trata de acceder al dashboard
-  // (pero no a billing ni a APIs), verificar que tenga acceso activo
+  // Gate de billing: usa service role para evitar recursión RLS en staff_users
   const isDashboardRoute = pathname.startsWith('/dashboard') && pathname !== '/dashboard/billing'
   if (user && isDashboardRoute) {
-    const { data: staffUser } = await supabase
+    const adminClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } },
+    )
+    const { data: staffUser } = await adminClient
       .from('staff_users')
       .select('venue_id')
       .eq('id', user.id)
       .maybeSingle()
 
     if (staffUser) {
-      const { data: hasAccess } = await supabase
+      const { data: hasAccess } = await adminClient
         .rpc('venue_has_access', { vid: staffUser.venue_id })
 
       if (!hasAccess) {

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PanelNav } from '@/components/nav/PanelNav'
 
 interface AnalyticsData {
   today: {
@@ -275,7 +274,6 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      <PanelNav />
     </div>
   )
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PanelNav } from '@/components/nav/PanelNav'
 
 interface Reservation {
   id: string
@@ -129,7 +128,6 @@ export default function ReservasPage() {
         </div>
       )}
 
-      <PanelNav />
     </div>
   )
 }

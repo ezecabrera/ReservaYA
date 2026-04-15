@@ -113,7 +113,9 @@ export function PanelNav() {
     >
       <div className="flex items-center justify-around pt-2 px-2">
         {ITEMS.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + '/')
+          const active = item.href === '/dashboard'
+            ? pathname === '/dashboard'
+            : pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
               key={item.href}

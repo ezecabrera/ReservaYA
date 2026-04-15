@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 import { MenuManager } from '@/components/menu/MenuManager'
 import type { MenuCategory, MenuItem } from '@/lib/shared'
 
@@ -8,7 +9,8 @@ export default async function MenuPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: staffUser } = await supabase
+  const admin = createAdminClient()
+  const { data: staffUser } = await admin
     .from('staff_users')
     .select('venue_id')
     .eq('id', user.id)
@@ -17,12 +19,12 @@ export default async function MenuPage() {
   if (!staffUser) redirect('/login')
 
   const [categoriesResult, itemsResult] = await Promise.all([
-    supabase
+    admin
       .from('menu_categories')
       .select('*')
       .eq('venue_id', staffUser.venue_id)
       .order('sort_order'),
-    supabase
+    admin
       .from('menu_items')
       .select('*')
       .eq('venue_id', staffUser.venue_id)

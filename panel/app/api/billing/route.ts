@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 
 /** GET /api/billing — estado de la suscripción del venue */
 export async function GET() {
@@ -7,7 +8,8 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { data: staffUser } = await supabase
+  const admin = createAdminClient()
+  const { data: staffUser } = await admin
     .from('staff_users')
     .select('venue_id, role')
     .eq('id', user.id)
@@ -15,7 +17,7 @@ export async function GET() {
 
   if (!staffUser) return NextResponse.json({ error: 'Sin venue' }, { status: 403 })
 
-  const { data: sub } = await supabase
+  const { data: sub } = await admin
     .from('venue_subscriptions')
     .select('*')
     .eq('venue_id', staffUser.venue_id)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
 
 /** PATCH /api/menu/items/[id] — actualiza un ítem */
 export async function PATCH(
@@ -17,7 +18,8 @@ export async function PATCH(
     availability_status: string
   }>
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('menu_items')
     .update(body)
     .eq('id', params.id)
@@ -37,7 +39,8 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('menu_items')
     .delete()
     .eq('id', params.id)
