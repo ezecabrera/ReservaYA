@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TableCard } from './TableCard'
 import { ActionModal } from './ActionModal'
-import type { TableWithStatus, Reservation } from '@reservaya/shared'
+import type { TableWithStatus, Reservation } from '@/lib/shared'
 
 interface TableGridProps {
   venueId: string
@@ -15,12 +15,12 @@ interface TableGridProps {
 }
 
 function computeTableStatus(
-  table: { id: string; label: string; capacity: number; is_occupied: boolean; position_order: number },
+  table: TableWithStatus & { is_occupied?: boolean },
   reservations: Reservation[],
   currentTimeSlot: string | null,
 ): TableWithStatus {
   if (table.is_occupied) {
-    return { ...table, zone_id: null, is_active: true, created_at: '', status: 'occupied' }
+    return { ...table, venue_id: '', zone_id: null, is_active: true, created_at: '', status: 'occupied' }
   }
 
   const activeReservation = reservations.find(
@@ -29,7 +29,7 @@ function computeTableStatus(
       r.status === 'checked_in',
   )
   if (activeReservation) {
-    return { ...table, zone_id: null, is_active: true, created_at: '', status: 'occupied' }
+    return { ...table, venue_id: '', zone_id: null, is_active: true, created_at: '', status: 'occupied' }
   }
 
   if (currentTimeSlot) {
@@ -41,14 +41,14 @@ function computeTableStatus(
     )
     if (reserved) {
       return {
-        ...table, zone_id: null, is_active: true, created_at: '', status: 'reserved',
+        ...table, venue_id: '', zone_id: null, is_active: true, created_at: '', status: 'reserved',
         reservation_holder: undefined, // se une con users en el servidor
         reservation_time: reserved.time_slot,
       }
     }
   }
 
-  return { ...table, zone_id: null, is_active: true, created_at: '', status: 'available' }
+  return { ...table, venue_id: '', zone_id: null, is_active: true, created_at: '', status: 'available' }
 }
 
 export function TableGrid({

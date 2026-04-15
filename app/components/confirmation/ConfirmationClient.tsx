@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Confetti } from './Confetti'
 import { QRDisplay } from './QRDisplay'
-import { buildWhatsAppUrl, buildWhatsAppMessage, generateICS } from '@reservaya/shared'
+import { buildWhatsAppUrl, buildWhatsAppMessage, generateICS } from '@/lib/shared'
 
 interface ConfirmationData {
   userName: string

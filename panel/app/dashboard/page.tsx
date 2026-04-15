@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { TableGrid } from '@/components/tables/TableGrid'
-import { getVenueMode, getAvailableTimeSlots } from '@reservaya/shared'
-import type { Venue, Table, Reservation, StaffUser, TableWithStatus } from '@reservaya/shared'
+import { getVenueMode, getAvailableTimeSlots } from '@/lib/shared'
+import type { Venue, Table, Reservation, StaffUser, TableWithStatus } from '@/lib/shared'
 
 export const dynamic = 'force-dynamic'
 

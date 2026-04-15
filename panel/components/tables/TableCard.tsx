@@ -1,6 +1,6 @@
 'use client'
 
-import type { TableWithStatus } from '@reservaya/shared'
+import type { TableWithStatus } from '@/lib/shared'
 
 interface TableCardProps {
   table: TableWithStatus

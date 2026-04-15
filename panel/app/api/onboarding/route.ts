@@ -44,7 +44,21 @@ interface OnboardingBody {
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  // Intentar auth por header Bearer primero (más confiable en onboarding),
+  // con fallback a cookies de sesión
+  const authHeader = request.headers.get('authorization')
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  let user = null
+  if (bearerToken) {
+    const { data } = await supabase.auth.getUser(bearerToken)
+    user = data.user
+  } else {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  }
+
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
   // Verificar que no tenga ya un venue

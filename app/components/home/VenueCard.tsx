@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import type { Venue } from '@reservaya/shared'
-import { getVenueMode } from '@reservaya/shared'
+import type { Venue } from '@/lib/shared'
+import { getVenueMode } from '@/lib/shared'
 
 interface VenueCardProps {
   venue: Venue

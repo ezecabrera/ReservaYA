@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           )
@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublic = pathname === '/login'
     || pathname.startsWith('/onboarding')
+    || pathname.startsWith('/api/onboarding')
     || pathname.startsWith('/api/webhooks')
 
   if (!user && !isPublic) {

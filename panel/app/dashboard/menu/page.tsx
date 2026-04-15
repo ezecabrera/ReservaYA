@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MenuManager } from '@/components/menu/MenuManager'
-import type { MenuCategory, MenuItem } from '@reservaya/shared'
+import type { MenuCategory, MenuItem } from '@/lib/shared'
 
 export default async function MenuPage() {
   const supabase = await createClient()

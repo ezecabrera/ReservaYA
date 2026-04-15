@@ -50,10 +50,10 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(
     (items ?? [])
-      .filter(i => (i.menu_items as { availability_status: string } | null)?.availability_status !== 'unavailable')
+      .filter(i => (i.menu_items as unknown as { availability_status: string } | null)?.availability_status !== 'unavailable')
       .map(i => ({
         menu_item_id: i.menu_item_id,
-        name: (i.menu_items as { name: string } | null)?.name ?? '',
+        name: (i.menu_items as unknown as { name: string } | null)?.name ?? '',
         qty: i.qty,
         unit_price: i.unit_price,
       }))

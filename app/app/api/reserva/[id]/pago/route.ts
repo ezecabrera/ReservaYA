@@ -48,13 +48,13 @@ export async function POST(
       )
     }
 
-    const venue = reservation.tables?.venues as
+    const venue = reservation.tables?.venues as unknown as
       | { name: string; address: string }
       | null
-    const tableLabel = (reservation.tables as { label: string } | null)?.label
-    const userName = (reservation.users as { name: string } | null)?.name
+    const tableLabel = (reservation.tables as unknown as { label: string } | null)?.label
+    const userName = (reservation.users as unknown as { name: string } | null)?.name
     const payerEmail =
-      (reservation.users as { email: string | null } | null)?.email ?? undefined
+      (reservation.users as unknown as { email: string | null } | null)?.email ?? undefined
 
     // Obtener config del venue para saber el monto de la seña
     const { data: venueData } = await supabase
@@ -63,7 +63,7 @@ export async function POST(
       .eq('id', reservation.venue_id)
       .single()
 
-    const config = venueData?.config_json as {
+    const config = venueData?.config_json as unknown as {
       deposit_type: 'fixed' | 'percentage'
       deposit_amount: number
     } | null

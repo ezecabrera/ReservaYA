@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Venue, Table, MenuCategory, MenuItem } from '@reservaya/shared'
-import { getAvailableDates, getAvailableTimeSlots, formatDateEs } from '@reservaya/shared'
+import type { Venue, Table, MenuCategory, MenuItem } from '@/lib/shared'
+import { getAvailableDates, getAvailableTimeSlots, formatDateEs } from '@/lib/shared'
 import { createClient } from '@/lib/supabase/client'
 import { Toast, useToast } from '@/components/ui/Toast'
 import { TableCardSkeleton } from '@/components/ui/Skeleton'

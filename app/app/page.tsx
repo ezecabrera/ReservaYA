@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { VenueCard } from '@/components/home/VenueCard'
 import { BottomNav } from '@/components/ui/BottomNav'
-import type { Venue } from '@reservaya/shared'
+import type { Venue } from '@/lib/shared'
 
 export const revalidate = 60 // revalidar cada 60s
 

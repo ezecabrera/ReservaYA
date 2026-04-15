@@ -8,7 +8,7 @@ type CheckInState = 'idle' | 'loading' | 'success' | 'error'
 export default function CheckInPage() {
   const [code, setCode] = useState('')
   const [state, setState] = useState<CheckInState>('idle')
-  const [result, setResult] = useState<{ guest_name?: string; time_slot?: string; message?: string } | null>(null)
+  const [result, setResult] = useState<{ guest_name?: string; time_slot?: string; message?: string; already?: boolean } | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
 
   async function handleCheckIn(e: React.FormEvent) {

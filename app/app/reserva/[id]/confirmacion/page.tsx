@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { SignJWT } from 'jose'
 import { createClient } from '@/lib/supabase/server'
 import { ConfirmationClient } from '@/components/confirmation/ConfirmationClient'
-import type { Venue, Table, User, Payment } from '@reservaya/shared'
+import type { Venue, Table, User, Payment } from '@/lib/shared'
 
 interface Props {
   params: { id: string }

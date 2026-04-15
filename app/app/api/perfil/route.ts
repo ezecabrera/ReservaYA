@@ -27,7 +27,7 @@ export async function GET() {
   const venueCounts: Record<string, { name: string; count: number }> = {}
   reservations.forEach(r => {
     if (!r.venue_id) return
-    const name = (r.venues as { name: string } | null)?.name ?? ''
+    const name = (r.venues as unknown as { name: string } | null)?.name ?? ''
     if (!venueCounts[r.venue_id]) venueCounts[r.venue_id] = { name, count: 0 }
     venueCounts[r.venue_id].count++
   })

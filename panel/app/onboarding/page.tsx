@@ -96,6 +96,7 @@ export default function OnboardingPage() {
   const [s, setS] = useState<WizardState>(INITIAL)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -106,13 +107,34 @@ export default function OnboardingPage() {
   // ── Paso 1: Crear cuenta ─────────────────────────────────────────────────
   async function handleStep1() {
     if (!s.email || !s.password || !s.staffName) { setError('Completá todos los campos'); return }
+    if (s.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return }
     setLoading(true); setError(null)
+
+    // Intentar sign-up primero
     const { error: signUpError } = await supabase.auth.signUp({
       email: s.email,
       password: s.password,
     })
+
+    if (signUpError && !signUpError.message.includes('already registered')) {
+      setLoading(false)
+      setError(signUpError.message)
+      return
+    }
+
+    // Iniciar sesión inmediatamente (por si email confirmation está desactivado
+    // o si la cuenta ya existía)
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: s.email,
+      password: s.password,
+    })
+
     setLoading(false)
-    if (signUpError) { setError(signUpError.message); return }
+    if (signInError || !signInData.session) {
+      setError('Revisá tu email y confirmá tu cuenta antes de continuar.')
+      return
+    }
+    setAccessToken(signInData.session.access_token)
     setStep(2)
   }
 
@@ -123,9 +145,16 @@ export default function OnboardingPage() {
     }
     setLoading(true); setError(null)
     try {
+      // Obtener el token vigente (puede haber refrescado desde el paso 1)
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      const token = currentSession?.access_token ?? accessToken
+
       const res = await fetch('/api/onboarding', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           staffName: s.staffName,
           venue: {
@@ -142,8 +171,8 @@ export default function OnboardingPage() {
       const data = await res.json() as { ok?: boolean; error?: string }
       if (!data.ok) { setError(data.error ?? 'Error al guardar'); setLoading(false); return }
       router.replace('/dashboard')
-    } catch {
-      setError('Error de conexión')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error de conexión')
       setLoading(false)
     }
   }

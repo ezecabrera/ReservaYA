@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import { createClient } from '@/lib/supabase/server'
-import type { QRTokenPayload } from '@reservaya/shared'
+import type { QRTokenPayload } from '@/lib/shared'
 
 /**
  * POST /api/check-in
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       .eq('id', reservation.table_id),
   ])
 
-  const r = reservation as { id: string; users: { name: string } | null; time_slot: string }
+  const r = reservation as unknown as { id: string; users: { name: string } | null; time_slot: string }
   return NextResponse.json({
     ok: true,
     guest_name: r.users?.name ?? 'Cliente',

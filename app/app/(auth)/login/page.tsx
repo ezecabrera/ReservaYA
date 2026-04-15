@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type LoginStep = 'phone' | 'otp'
 
-export default function LoginPage() {
+function LoginContent() {
   const [step, setStep] = useState<LoginStep>('phone')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
@@ -41,7 +41,16 @@ export default function LoginPage() {
 
     setLoading(false)
     if (error) {
-      setError('No se pudo enviar el código. Verificá el número.')
+      // Mensajes más claros según el tipo de error de Supabase
+      if (error.message.toLowerCase().includes('not enabled') || error.message.toLowerCase().includes('phone')) {
+        setError('El login por SMS no está habilitado. Contactá al administrador.')
+      } else if (error.message.toLowerCase().includes('rate') || error.message.toLowerCase().includes('60 seconds')) {
+        setError('Esperá un minuto antes de pedir otro código.')
+      } else if (error.message.toLowerCase().includes('invalid')) {
+        setError('Número de teléfono inválido. Verificá el formato.')
+      } else {
+        setError(error.message)
+      }
       return
     }
     setStep('otp')
@@ -198,5 +207,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   )
 }

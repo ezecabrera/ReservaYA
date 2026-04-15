@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ReservationWizard } from '@/components/reservation/ReservationWizard'
 import { BottomNav } from '@/components/ui/BottomNav'
-import type { Venue } from '@reservaya/shared'
+import type { Venue } from '@/lib/shared'
 
 interface Props {
   params: { venueId: string }

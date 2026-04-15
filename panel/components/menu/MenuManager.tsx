@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { PanelNav } from '@/components/nav/PanelNav'
-import type { MenuCategory, MenuItem, MenuItemAvailability } from '@reservaya/shared'
+import type { MenuCategory, MenuItem, MenuItemAvailability } from '@/lib/shared'
 
 interface Props {
   venueId: string
