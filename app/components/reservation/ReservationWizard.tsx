@@ -47,6 +47,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loadingMenu, setLoadingMenu] = useState(false)
+  const [lastOrder, setLastOrder] = useState<{ menu_item_id: string; name: string; qty: number; unit_price: number }[]>([])
 
   function adjustQty(item: MenuItem, delta: number) {
     setState(s => {
@@ -81,7 +82,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   const loadMenu = useCallback(async () => {
     setLoadingMenu(true)
     try {
-      const [catsRes, itemsRes] = await Promise.all([
+      const [catsRes, itemsRes, lastOrderRes] = await Promise.all([
         supabase
           .from('menu_categories')
           .select('*')
@@ -93,9 +94,13 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
           .eq('venue_id', venue.id)
           .neq('availability_status', 'unavailable')
           .order('name'),
+        fetch(`/api/orders/ultimo?venue_id=${venue.id}`).then(r => r.json()),
       ])
       setMenuCategories(catsRes.data ?? [])
       setMenuItems(itemsRes.data ?? [])
+      if (Array.isArray(lastOrderRes) && lastOrderRes.length > 0) {
+        setLastOrder(lastOrderRes)
+      }
     } finally {
       setLoadingMenu(false)
     }
@@ -443,6 +448,26 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Banner "Lo de siempre" */}
+            {lastOrder.length > 0 && state.orderItems.length === 0 && (
+              <div className="card p-4 border-2 border-c3/30 bg-c3l">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[13px] text-[#996600]">¿Lo de siempre?</p>
+                    <p className="text-[12px] text-[#CC8800] mt-0.5 line-clamp-2">
+                      {lastOrder.map(i => `${i.qty}× ${i.name}`).join(', ')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setState(s => ({ ...s, orderItems: lastOrder }))}
+                    className="flex-shrink-0 px-3 py-2 rounded-lg bg-c3 text-white
+                               text-[12px] font-bold active:scale-95 transition-transform"
+                  >
+                    Sí, ese →
+                  </button>
+                </div>
+              </div>
+            )}
             {menuCategories.map(cat => {
               const catItems = menuItems.filter(i => i.category_id === cat.id)
               if (catItems.length === 0) return null
