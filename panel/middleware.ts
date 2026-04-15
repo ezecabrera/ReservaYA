@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
@@ -54,13 +53,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl)
   }
 
-  // Gate de billing: usa service role para evitar recursión RLS en staff_users
+  // Gate de billing: usa service role (createServerClient compatible con Edge)
+  // para evitar recursión RLS en staff_users
   const isDashboardRoute = pathname.startsWith('/dashboard') && pathname !== '/dashboard/billing'
   if (user && isDashboardRoute) {
-    const adminClient = createSupabaseClient(
+    const adminClient = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } },
+      {
+        cookies: {
+          getAll: () => [],
+          setAll: () => {},
+        },
+      },
     )
     const { data: staffUser } = await adminClient
       .from('staff_users')
