@@ -101,8 +101,11 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-white/30 text-[12px] mt-6">
-          ¿Problemas para ingresar? Contactá al equipo de ReservaYa.
+        <p className="text-center text-white/40 text-[13px] mt-6">
+          ¿Tu restaurante aún no está?{' '}
+          <a href="/onboarding" className="text-c1 font-semibold">
+            Registralo gratis →
+          </a>
         </p>
       </div>
     </div>
