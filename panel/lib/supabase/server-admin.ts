@@ -1,20 +1,19 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
 
 /**
- * Cliente Supabase con service role key.
- * Bypassa RLS — usar SOLO en Server Components y API routes,
- * nunca exponer al browser.
- * Necesario porque las políticas RLS de staff_users tienen recursión
- * infinita cuando se usa la anon key + JWT de staff.
+ * Cliente Supabase con service role key (bypassa RLS).
+ * Usa createServerClient de @supabase/ssr para máxima compatibilidad
+ * con Next.js App Router (Server Components + API routes).
+ * Nunca exponer al browser.
  */
 export function createAdminClient() {
-  return createSupabaseClient(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
+      cookies: {
+        getAll: () => [],
+        setAll: () => {},
       },
     },
   )

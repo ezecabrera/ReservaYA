@@ -14,11 +14,13 @@ export default async function DashboardPage() {
 
   // Staff user con venue — usa admin client para evitar recursión RLS en staff_users
   const admin = createAdminClient()
-  const { data: staffUser } = await admin
+  const { data: staffUser, error: staffError } = await admin
     .from('staff_users')
     .select('*, venues(*)')
     .eq('id', user.id)
     .single()
+
+  if (staffError) console.error('[dashboard] staff_users error:', staffError.message, staffError.code)
 
   if (!staffUser) {
     return (
