@@ -2,13 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Venue, Table } from '@reservaya/shared'
+import type { Venue, Table, MenuCategory, MenuItem } from '@reservaya/shared'
 import { getAvailableDates, getAvailableTimeSlots, formatDateEs } from '@reservaya/shared'
 import { createClient } from '@/lib/supabase/client'
 import { Toast, useToast } from '@/components/ui/Toast'
 import { TableCardSkeleton } from '@/components/ui/Skeleton'
 
-type WizardStep = 'datetime' | 'table' | 'summary'
+type WizardStep = 'datetime' | 'table' | 'menu' | 'summary'
+
+interface OrderSelection {
+  menu_item_id: string
+  name: string
+  qty: number
+  unit_price: number
+}
 
 interface WizardState {
   date: string | null
@@ -17,6 +24,7 @@ interface WizardState {
   selectedTable: Table | null
   lockId: string | null
   lockExpiresAt: string | null
+  orderItems: OrderSelection[]
 }
 
 interface ReservationWizardProps {
@@ -30,11 +38,37 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   const [state, setState] = useState<WizardState>({
     date: null, timeSlot: null, partySize: 2,
     selectedTable: null, lockId: null, lockExpiresAt: null,
+    orderItems: [],
   })
   const [availableTables, setAvailableTables] = useState<Table[]>([])
   const [loadingTables, setLoadingTables] = useState(false)
   const [lockTimer, setLockTimer] = useState<number | null>(null)
   const [creating, setCreating] = useState(false)
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [loadingMenu, setLoadingMenu] = useState(false)
+
+  function adjustQty(item: MenuItem, delta: number) {
+    setState(s => {
+      const existing = s.orderItems.find(o => o.menu_item_id === item.id)
+      const newQty = (existing?.qty ?? 0) + delta
+      if (newQty <= 0) {
+        return { ...s, orderItems: s.orderItems.filter(o => o.menu_item_id !== item.id) }
+      }
+      if (existing) {
+        return { ...s, orderItems: s.orderItems.map(o => o.menu_item_id === item.id ? { ...o, qty: newQty } : o) }
+      }
+      return {
+        ...s,
+        orderItems: [...s.orderItems, {
+          menu_item_id: item.id,
+          name: item.name,
+          qty: newQty,
+          unit_price: item.price,
+        }],
+      }
+    })
+  }
   const { toast, show: showToast, dismiss } = useToast()
   const router = useRouter()
   const supabase = createClient()
@@ -43,6 +77,29 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   const availableSlots = state.date
     ? getAvailableTimeSlots(venue.config_json, state.date)
     : []
+
+  const loadMenu = useCallback(async () => {
+    setLoadingMenu(true)
+    try {
+      const [catsRes, itemsRes] = await Promise.all([
+        supabase
+          .from('menu_categories')
+          .select('*')
+          .eq('venue_id', venue.id)
+          .order('sort_order'),
+        supabase
+          .from('menu_items')
+          .select('*')
+          .eq('venue_id', venue.id)
+          .neq('availability_status', 'unavailable')
+          .order('name'),
+      ])
+      setMenuCategories(catsRes.data ?? [])
+      setMenuItems(itemsRes.data ?? [])
+    } finally {
+      setLoadingMenu(false)
+    }
+  }, [venue.id, supabase])
 
   // Countdown del lock de selección
   useEffect(() => {
@@ -85,7 +142,8 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
 
   useEffect(() => {
     if (step === 'table') loadTables()
-  }, [step, loadTables])
+    if (step === 'menu') loadMenu()
+  }, [step, loadTables, loadMenu])
 
   async function handleSelectTable(table: Table) {
     // Limpiar lock anterior si existe
@@ -109,7 +167,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
         ...s, selectedTable: table,
         lockId: lock.id, lockExpiresAt: lock.expires_at,
       }))
-      setStep('summary')
+      setStep('menu')
     } catch {
       showToast('Error al reservar la mesa', 'error')
     }
@@ -148,6 +206,18 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
       }
 
       const reservation = await res.json() as { id: string }
+
+      // Crear pre-pedido si hay ítems seleccionados
+      if (state.orderItems.length > 0) {
+        await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reservation_id: reservation.id,
+            items: state.orderItems,
+          }),
+        })
+      }
 
       // Crear preferencia de pago y redirigir a MP
       const payRes = await fetch(`/api/reserva/${reservation.id}/pago`, {
@@ -338,13 +408,135 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
     )
   }
 
+  // ─── STEP: PRE-PEDIDO (MENÚ) ──────────────────────────────────────────────
+  if (step === 'menu') {
+    const orderTotal = state.orderItems.reduce((sum, i) => sum + i.qty * i.unit_price, 0)
+
+    return (
+      <div className="space-y-5">
+        {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
+
+        <div className="flex items-center gap-3">
+          <button onClick={() => setStep('table')}
+            className="w-9 h-9 rounded-full bg-sf flex items-center justify-center
+                       border border-[var(--br)] active:scale-95 transition-transform">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+              <path d="M15 18l-6-6 6-6" stroke="var(--tx2)"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div>
+            <p className="font-semibold text-[15px] text-tx">Pre-pedido (opcional)</p>
+            <p className="text-tx3 text-[12px]">El restaurante lo tendrá listo al llegar</p>
+          </div>
+        </div>
+
+        {loadingMenu ? (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-16 skeleton rounded-xl" />
+            ))}
+          </div>
+        ) : menuCategories.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-tx2 text-[14px]">Sin menú disponible por el momento.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {menuCategories.map(cat => {
+              const catItems = menuItems.filter(i => i.category_id === cat.id)
+              if (catItems.length === 0) return null
+              return (
+                <div key={cat.id}>
+                  <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mb-3">
+                    {cat.name}
+                  </p>
+                  <div className="space-y-2">
+                    {catItems.map(item => {
+                      const sel = state.orderItems.find(o => o.menu_item_id === item.id)
+                      const qty = sel?.qty ?? 0
+                      return (
+                        <div key={item.id}
+                          className="card p-3.5 flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-[14px] text-tx">{item.name}</span>
+                              {item.availability_status === 'limited' && (
+                                <span className="badge badge-amber">Últimos</span>
+                              )}
+                            </div>
+                            {item.description && (
+                              <p className="text-tx3 text-[12px] mt-0.5 line-clamp-1">
+                                {item.description}
+                              </p>
+                            )}
+                            <p className="text-c1 font-bold text-[14px] mt-1">
+                              ${item.price.toLocaleString('es-AR')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {qty > 0 && (
+                              <>
+                                <button
+                                  onClick={() => adjustQty(item, -1)}
+                                  className="w-8 h-8 rounded-full bg-sf2 flex items-center justify-center
+                                             font-bold text-tx2 text-[18px] active:scale-90 transition-transform"
+                                >
+                                  −
+                                </button>
+                                <span className="font-display font-bold text-[18px] text-tx w-5 text-center">
+                                  {qty}
+                                </span>
+                              </>
+                            )}
+                            <button
+                              onClick={() => adjustQty(item, 1)}
+                              className="w-8 h-8 rounded-full bg-c1 flex items-center justify-center
+                                         font-bold text-white text-[18px] active:scale-90 transition-transform"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Resumen del pedido + CTAs */}
+        <div className="space-y-3 pt-1">
+          {state.orderItems.length > 0 && (
+            <div className="card p-3.5 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-[13px] text-tx">
+                  {state.orderItems.reduce((s, i) => s + i.qty, 0)} ítem{state.orderItems.reduce((s, i) => s + i.qty, 0) !== 1 ? 's' : ''} seleccionados
+                </p>
+                <p className="text-tx3 text-[12px]">Se abona al llegar</p>
+              </div>
+              <span className="font-display text-[20px] font-bold text-tx">
+                ${orderTotal.toLocaleString('es-AR')}
+              </span>
+            </div>
+          )}
+          <button onClick={() => setStep('summary')} className="btn-primary">
+            {state.orderItems.length > 0 ? 'Continuar con pre-pedido →' : 'Continuar sin pre-pedido →'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // ─── STEP: RESUMEN + CONFIRMAR ─────────────────────────────────────────────
   return (
     <div className="space-y-4">
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
       <div className="flex items-center gap-3">
-        <button onClick={() => setStep('table')}
+        <button onClick={() => setStep('menu')}
           className="w-9 h-9 rounded-full bg-sf flex items-center justify-center
                      border border-[var(--br)] active:scale-95 transition-transform">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
@@ -398,6 +590,33 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
               {Math.floor(lockTimer / 60)}:{String(lockTimer % 60).padStart(2, '0')}
             </span>
           </p>
+        </div>
+      )}
+
+      {/* Pre-pedido */}
+      {state.orderItems.length > 0 && (
+        <div className="card p-4 space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[13px] font-bold text-tx2">Pre-pedido</p>
+            <button onClick={() => setStep('menu')}
+              className="text-[12px] text-c4 font-semibold">Editar</button>
+          </div>
+          {state.orderItems.map(item => (
+            <div key={item.menu_item_id} className="flex items-center justify-between">
+              <span className="text-[13px] text-tx">
+                {item.qty}× {item.name}
+              </span>
+              <span className="text-[13px] font-semibold text-tx2">
+                ${(item.qty * item.unit_price).toLocaleString('es-AR')}
+              </span>
+            </div>
+          ))}
+          <div className="border-t border-[var(--br)] pt-2 flex items-center justify-between">
+            <span className="text-[13px] font-bold text-tx">Total pre-pedido</span>
+            <span className="font-display text-[16px] font-bold text-tx">
+              ${state.orderItems.reduce((s, i) => s + i.qty * i.unit_price, 0).toLocaleString('es-AR')}
+            </span>
+          </div>
         </div>
       )}
 

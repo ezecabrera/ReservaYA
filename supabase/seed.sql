@@ -70,13 +70,33 @@ INSERT INTO menu_categories (id, venue_id, name, sort_order) VALUES
 
 -- Ítems del menú
 INSERT INTO menu_items (venue_id, category_id, name, price, description, availability_status) VALUES
+  -- Entradas
   ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Tabla de quesos y fiambres', 2800, 'Selección de quesos artesanales y fiambres de la casa', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Bruschetta al pomodoro', 1600, 'Pan tostado con tomate fresco, albahaca y aceite de oliva', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Carpaccio de lomo', 3200, 'Finas láminas de lomo crudo, rúcula, parmesano y limón', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'Sopa de cebolla gratinada', 1900, 'Caldo de res con cebolla caramelizada y queso gratinado', 'limited'),
+  -- Pastas
   ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Tagliatelle al ragú', 3200, 'Pasta fresca con ragú de carne vacuna y panceta', 'available'),
   ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Gnocchi al pesto', 2900, 'Gnocchi caseros con pesto de albahaca y piñones', 'limited'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Ravioles de ricota y espinaca', 3100, 'Ravioles artesanales con salsa fileto y albahaca fresca', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Fettuccine a la crema', 2800, 'Pasta con crema, champignones y jamón cocido', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'Lasagna de la casa', 3400, 'Capas de pasta fresca, ragú, bechamel y parmesano', 'available'),
+  -- Carnes
   ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'Bife de chorizo', 4800, '400g a las brasas con papas rústicas', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'Entraña a la parrilla', 4200, 'Corte entero con chimichurri casero y ensalada', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'Milanesa napolitana', 3600, 'Milanesa de ternera con salsa, jamón y muzzarella, papas fritas', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'Pollo al limón', 3100, 'Suprema a la plancha con reducción de limón y hierbas', 'available'),
+  -- Postres
   ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000004', 'Tiramisú', 1600, 'Receta tradicional con mascarpone y café espresso', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000004', 'Panacotta de vainilla', 1400, 'Con coulis de frutos rojos', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000004', 'Budín de pan', 1200, 'Con salsa de caramelo y helado de crema', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000004', 'Tabla de helados', 1800, 'Tres bochas a elección con toppings', 'limited'),
+  -- Bebidas
   ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000005', 'Agua mineral', 600, '500ml con o sin gas', 'available'),
-  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000005', 'Vino de la casa', 2200, 'Copa de tinto o blanco', 'available');
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000005', 'Vino de la casa', 2200, 'Copa de tinto o blanco de la bodega seleccionada', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000005', 'Cerveza artesanal', 1400, 'Rubia o roja de producción local, 500ml', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000005', 'Gaseosa', 700, 'Coca-Cola, Seven-Up o Sprite', 'available'),
+  ('00000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000005', 'Jugo natural', 900, 'Naranja, manzana o pomelo exprimido en el momento', 'available');
 
 -- NOTA: El staff user se crea via Supabase Auth Dashboard o via API.
 -- Después de crearlo en auth.users, insertar manualmente en staff_users:

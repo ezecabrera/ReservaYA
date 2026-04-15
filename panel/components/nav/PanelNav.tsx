@@ -34,6 +34,22 @@ const ITEMS = [
     ),
   },
   {
+    href: '/dashboard/menu',
+    label: 'Menú',
+    icon: (active: boolean) => (
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
+          strokeWidth="2" strokeLinecap="round" />
+        <rect x="9" y="3" width="6" height="4" rx="1"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
+        <path d="M9 12h6M9 16h4"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
+          strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: '/check-in',
     label: 'Check-in',
     icon: (active: boolean) => (
