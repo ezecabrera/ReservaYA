@@ -39,6 +39,15 @@ export default async function DashboardPage() {
             Cerrá sesión y volvé a ingresar con la cuenta correcta.
           </p>
         </div>
+        {/* Diagnóstico temporal — eliminar después */}
+        <div className="w-full max-w-sm rounded-xl bg-white/5 border border-white/10 p-4 text-left space-y-1">
+          <p className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-2">Debug info</p>
+          <p className="text-white/60 text-[11px] font-mono break-all">user.id: {user.id}</p>
+          <p className="text-white/60 text-[11px] font-mono break-all">email: {user.email}</p>
+          <p className="text-white/60 text-[11px] font-mono break-all">
+            error: {staffError ? `${staffError.code} — ${staffError.message}` : 'none'}
+          </p>
+        </div>
         <a
           href="/api/auth/signout"
           className="px-6 py-3 rounded-xl bg-white/10 border border-white/20
