@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
     || pathname.startsWith('/api/onboarding')
     || pathname.startsWith('/api/webhooks')
     || pathname.startsWith('/api/auth/signout')
+    || pathname.startsWith('/api/debug-admin')
 
   if (!user && !isPublic) {
     const loginUrl = request.nextUrl.clone()
