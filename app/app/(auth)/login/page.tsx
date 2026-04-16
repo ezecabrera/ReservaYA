@@ -4,108 +4,165 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-type LoginStep = 'phone' | 'otp'
+type Mode = 'login' | 'register'
+
+const inputCls = `w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf
+  px-4 py-3.5 text-[15px] text-tx outline-none
+  focus:border-c4 focus:ring-2 focus:ring-[var(--c4)]/20
+  transition-all duration-[180ms]`
 
 function LoginContent() {
-  const [step, setStep] = useState<LoginStep>('phone')
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [name, setName] = useState('')
+  const [mode, setMode]     = useState<Mode>('login')
+  const [name, setName]     = useState('')
+  const [email, setEmail]   = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState<string | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
 
-  const router = useRouter()
+  const router       = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/'
-  const supabase = createClient()
+  const redirect     = searchParams.get('redirect') ?? '/'
+  const supabase     = createClient()
 
-  function formatPhone(raw: string): string {
-    // Normalizar número argentino a E.164: +549XXXXXXXXXX
-    const digits = raw.replace(/\D/g, '')
-    if (digits.startsWith('549')) return `+${digits}`
-    if (digits.startsWith('54')) return `+${digits}`
-    if (digits.startsWith('0')) return `+549${digits.slice(1)}`
-    return `+549${digits}`
+  async function ensureProfile() {
+    await fetch('/api/auth/ensure-profile', { method: 'POST' })
   }
 
-  async function handleSendOTP(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) { setError('Ingresá tu nombre'); return }
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: formatPhone(phone),
-      options: { data: { name: name.trim() } },
-    })
-
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
+
     if (error) {
-      // Mensajes más claros según el tipo de error de Supabase
-      if (error.message.toLowerCase().includes('not enabled') || error.message.toLowerCase().includes('phone')) {
-        setError('El login por SMS no está habilitado. Contactá al administrador.')
-      } else if (error.message.toLowerCase().includes('rate') || error.message.toLowerCase().includes('60 seconds')) {
-        setError('Esperá un minuto antes de pedir otro código.')
-      } else if (error.message.toLowerCase().includes('invalid')) {
-        setError('Número de teléfono inválido. Verificá el formato.')
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Email o contraseña incorrectos.')
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Confirmá tu email antes de ingresar.')
       } else {
         setError(error.message)
       }
       return
     }
-    setStep('otp')
+
+    await ensureProfile()
+    router.push(redirect)
+    router.refresh()
   }
 
-  async function handleVerifyOTP(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    if (!name.trim()) { setError('Ingresá tu nombre'); return }
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.verifyOtp({
-      phone: formatPhone(phone),
-      token: otp,
-      type: 'sms',
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name: name.trim() } },
     })
 
     setLoading(false)
+
     if (error) {
-      setError('Código incorrecto o vencido. Intentá de nuevo.')
+      if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+        setError('Ese email ya está registrado. Iniciá sesión.')
+      } else if (error.message.includes('Password should be') || error.message.includes('at least')) {
+        setError('La contraseña debe tener al menos 6 caracteres.')
+      } else {
+        setError(error.message)
+      }
       return
     }
 
-    router.push(redirect)
-    router.refresh()
+    if (data.session) {
+      await ensureProfile()
+      router.push(redirect)
+      router.refresh()
+    } else {
+      setEmailSent(true)
+    }
+  }
+
+  function switchMode(next: Mode) {
+    setMode(next)
+    setError(null)
+  }
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-bg px-6 text-center gap-5">
+        <div className="w-16 h-16 rounded-full bg-c2/15 flex items-center justify-center">
+          <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              stroke="var(--c2)" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+        <h2 className="font-display text-[22px] font-bold text-tx">Revisá tu email</h2>
+        <p className="text-tx2 text-[14px] max-w-[280px]">
+          Te enviamos un link de confirmación a <strong>{email}</strong>.
+          Hacé clic en él para activar tu cuenta.
+        </p>
+        <button
+          onClick={() => { setEmailSent(false); switchMode('login') }}
+          className="mt-2 text-c4 font-semibold text-[14px]"
+        >
+          Ya confirmé → Iniciar sesión
+        </button>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-bg">
       {/* Header */}
       <div className="screen-x pt-12 pb-6">
-        {step === 'otp' && (
-          <button
-            onClick={() => { setStep('phone'); setError(null) }}
-            className="mb-4 flex items-center gap-1.5 text-tx2 text-[14px]"
-          >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Volver
-          </button>
-        )}
         <h1 className="font-display text-[28px] font-bold text-tx tracking-tight">
-          {step === 'phone' ? 'Ingresá tu número' : 'Verificá tu número'}
+          {mode === 'login' ? 'Bienvenido' : 'Crear cuenta'}
         </h1>
         <p className="text-tx2 text-[14px] mt-1">
-          {step === 'phone'
-            ? 'Te enviamos un código para confirmar tu reserva.'
-            : `Enviamos un código a ${phone}. Ingresalo acá.`}
+          {mode === 'login'
+            ? 'Ingresá para ver tus reservas y hacer nuevas.'
+            : 'Registrate para reservar en tus lugares favoritos.'}
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="screen-x mb-6">
+        <div className="flex bg-sf rounded-xl p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => switchMode('login')}
+            className={`flex-1 py-2.5 rounded-lg text-[14px] font-semibold transition-all duration-[180ms]
+              ${mode === 'login'
+                ? 'bg-bg text-tx shadow-sm'
+                : 'text-tx2 hover:text-tx'}`}
+          >
+            Iniciar sesión
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode('register')}
+            className={`flex-1 py-2.5 rounded-lg text-[14px] font-semibold transition-all duration-[180ms]
+              ${mode === 'register'
+                ? 'bg-bg text-tx shadow-sm'
+                : 'text-tx2 hover:text-tx'}`}
+          >
+            Crear cuenta
+          </button>
+        </div>
+      </div>
+
+      {/* Form */}
       <div className="screen-x flex-1">
-        {step === 'phone' ? (
-          <form onSubmit={handleSendOTP} className="space-y-4">
+        <form
+          onSubmit={mode === 'login' ? handleLogin : handleRegister}
+          className="space-y-4"
+        >
+          {mode === 'register' && (
             <div>
               <label className="block text-[13px] font-semibold text-tx2 mb-1.5">
                 Tu nombre
@@ -113,98 +170,62 @@ function LoginContent() {
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder="Germán"
                 autoComplete="given-name"
                 required
-                className="w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf
-                           px-4 py-3.5 text-[15px] text-tx outline-none
-                           focus:border-c4 focus:ring-2 focus:ring-[var(--c4)]/20
-                           transition-all duration-[180ms]"
+                className={inputCls}
               />
             </div>
-            <div>
-              <label className="block text-[13px] font-semibold text-tx2 mb-1.5">
-                Número de celular
-              </label>
-              <div className="flex items-center gap-2">
-                <span className="text-tx2 font-semibold text-[15px] bg-sf border
-                                 border-[rgba(0,0,0,0.1)] rounded-md px-3 py-3.5">
-                  🇦🇷 +54
-                </span>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="9 11 1234-5678"
-                  autoComplete="tel"
-                  required
-                  className="flex-1 rounded-md border border-[rgba(0,0,0,0.1)] bg-sf
-                             px-4 py-3.5 text-[15px] text-tx outline-none
-                             focus:border-c4 focus:ring-2 focus:ring-[var(--c4)]/20
-                             transition-all duration-[180ms]"
-                />
-              </div>
-            </div>
+          )}
 
-            {error && (
-              <p className="text-[13px] text-[#D63646] bg-c1l rounded-lg px-3 py-2">
-                {error}
-              </p>
-            )}
+          <div>
+            <label className="block text-[13px] font-semibold text-tx2 mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              autoComplete="email"
+              required
+              className={inputCls}
+            />
+          </div>
 
-            <button type="submit" disabled={loading} className="btn-primary mt-2 disabled:opacity-60">
-              {loading ? 'Enviando…' : 'Enviar código'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOTP} className="space-y-4">
-            <div>
-              <label className="block text-[13px] font-semibold text-tx2 mb-1.5">
-                Código de verificación
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="123456"
-                autoFocus
-                autoComplete="one-time-code"
-                required
-                className="w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf
-                           px-4 py-4 text-[24px] font-display font-bold text-center
-                           text-tx tracking-[0.2em] outline-none
-                           focus:border-c4 focus:ring-2 focus:ring-[var(--c4)]/20
-                           transition-all duration-[180ms]"
-              />
-              <p className="text-tx3 text-[12px] mt-2 text-center">
-                El código llega por SMS en segundos.
-              </p>
-            </div>
+          <div>
+            <label className="block text-[13px] font-semibold text-tx2 mb-1.5">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder={mode === 'register' ? 'Mínimo 6 caracteres' : '••••••••'}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              required
+              minLength={6}
+              className={inputCls}
+            />
+          </div>
 
-            {error && (
-              <p className="text-[13px] text-[#D63646] bg-c1l rounded-lg px-3 py-2 text-center">
-                {error}
-              </p>
-            )}
+          {error && (
+            <p className="text-[13px] text-[#D63646] bg-c1l rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
 
-            <button type="submit" disabled={loading || otp.length < 6}
-              className="btn-secondary disabled:opacity-60">
-              {loading ? 'Verificando…' : 'Confirmar'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendOTP({ preventDefault: () => {} } as React.FormEvent)}
-              className="w-full text-center text-tx2 text-[13px] py-2"
-            >
-              ¿No recibiste el código? Reenviar →
-            </button>
-          </form>
-        )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary mt-2 disabled:opacity-60"
+          >
+            {loading
+              ? (mode === 'login' ? 'Ingresando…' : 'Creando cuenta…')
+              : (mode === 'login' ? 'Ingresar' : 'Crear cuenta')}
+          </button>
+        </form>
       </div>
     </div>
   )
