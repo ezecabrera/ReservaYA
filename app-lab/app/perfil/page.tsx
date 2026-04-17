@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { Countdown } from '@/components/lab/Countdown'
 
 interface ProfileData {
   name: string
@@ -15,6 +17,15 @@ interface ProfileData {
     checkedIn: number
     favoriteVenue: string | null
   }
+}
+
+interface UpcomingReservation {
+  id: string
+  date: string
+  time_slot: string
+  status: string
+  venues: { name: string } | null
+  tables: { label: string } | null
 }
 
 const AVATAR_COLORS = ['#FF4757', '#2ED8A8', '#4E8EFF', '#9B59FF', '#FFB800', '#FF8C42']
@@ -36,6 +47,7 @@ export default function PerfilPage() {
   const [newName, setNewName] = useState('')
   const [saving, setSaving] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [nextUp, setNextUp] = useState<UpcomingReservation | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -47,6 +59,26 @@ export default function PerfilPage() {
       })
       .then(d => { if (d) { setData(d); setNewName(d.name) } })
       .finally(() => setLoading(false))
+
+    // Fetch próxima reserva en paralelo (silencioso si falla)
+    fetch('/api/mis-reservas')
+      .then(r => r.ok ? r.json() : [])
+      .then((list: UpcomingReservation[]) => {
+        if (!Array.isArray(list)) return
+        const now = Date.now()
+        const upcoming = list
+          .filter(r => {
+            const t = new Date(`${r.date}T${r.time_slot}:00`).getTime()
+            return t > now && (r.status === 'confirmed' || r.status === 'pending_payment')
+          })
+          .sort((a, b) => {
+            const tA = new Date(`${a.date}T${a.time_slot}:00`).getTime()
+            const tB = new Date(`${b.date}T${b.time_slot}:00`).getTime()
+            return tA - tB
+          })
+        setNextUp(upcoming[0] ?? null)
+      })
+      .catch(() => { /* silent */ })
   }, [router])
 
   async function handleSaveName() {
@@ -167,6 +199,32 @@ export default function PerfilPage() {
       </div>
 
       <div className="screen-x space-y-4">
+
+        {/* Próxima reserva */}
+        {nextUp && (
+          <Link
+            href={`/reserva/${nextUp.id}/confirmacion`}
+            className="block active:scale-[0.99] transition-transform duration-[180ms] space-y-2"
+          >
+            <div className="bg-white rounded-xl p-4 border border-[var(--br)] shadow-sm">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-c1 animate-pulse" />
+                <p className="text-tx3 text-[10px] font-bold uppercase tracking-[0.15em]">
+                  Tu próxima salida
+                </p>
+              </div>
+              <p className="font-display text-[18px] font-bold text-tx truncate">
+                {nextUp.venues?.name}
+              </p>
+              <p className="text-tx2 text-[12px] mt-0.5">
+                {new Date(nextUp.date + 'T12:00:00').toLocaleDateString('es-AR', {
+                  weekday: 'short', day: 'numeric', month: 'short',
+                })} · {nextUp.time_slot} hs · Mesa {nextUp.tables?.label}
+              </p>
+            </div>
+            <Countdown date={nextUp.date} time={nextUp.time_slot} />
+          </Link>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">

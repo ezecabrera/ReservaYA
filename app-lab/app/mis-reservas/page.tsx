@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { Countdown } from '@/components/lab/Countdown'
 
 interface Reservation {
   id: string
@@ -50,11 +51,16 @@ export default function MisReservasPage() {
 
   const proximas = reservations.filter(r =>
     isUpcoming(r.date, r.time_slot) && r.status !== 'cancelled'
-  )
+  ).sort((a, b) => {
+    const tA = new Date(`${a.date}T${a.time_slot}:00`).getTime()
+    const tB = new Date(`${b.date}T${b.time_slot}:00`).getTime()
+    return tA - tB
+  })
   const pasadas = reservations.filter(r =>
     !isUpcoming(r.date, r.time_slot) || r.status === 'cancelled'
   )
   const list = tab === 'proximas' ? proximas : pasadas
+  const nextUp = proximas.find(r => r.status === 'confirmed' || r.status === 'pending_payment')
 
   return (
     <div className="min-h-screen bg-bg pb-28">
@@ -64,6 +70,32 @@ export default function MisReservasPage() {
           Mis reservas
         </h1>
       </div>
+
+      {/* Hero countdown para próxima reserva */}
+      {!loading && nextUp && tab === 'proximas' && (
+        <div className="screen-x mb-5">
+          <Link
+            href={`/reserva/${nextUp.id}/confirmacion`}
+            className="block active:scale-[0.99] transition-transform duration-[180ms] space-y-3"
+          >
+            <div className="bg-white rounded-2xl p-5 border border-[var(--br)] shadow-sm">
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-c1 animate-pulse" />
+                <p className="text-tx3 text-[10px] font-bold uppercase tracking-[0.15em]">
+                  Tu próxima salida
+                </p>
+              </div>
+              <p className="font-display text-[22px] font-bold text-tx leading-tight">
+                {nextUp.venues?.name ?? 'Reserva'}
+              </p>
+              <p className="text-tx2 text-[12px] mt-0.5">
+                {formatDate(nextUp.date)} · {nextUp.time_slot} hs · Mesa {nextUp.tables?.label}
+              </p>
+            </div>
+            <Countdown date={nextUp.date} time={nextUp.time_slot} />
+          </Link>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="screen-x mb-5">
