@@ -47,6 +47,23 @@ function LoginContent() {
     // Si no hay error, el browser está redirigiendo a Google — no resetear loading
   }
 
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      setError('Ingresá tu email primero y te mandamos el link de recuperación.')
+      return
+    }
+    setError(null)
+    const redirectUrl = new URL('/auth/callback', window.location.origin).toString()
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: redirectUrl,
+    })
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setEmailSent(true)
+  }
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -282,6 +299,17 @@ function LoginContent() {
               ? (mode === 'login' ? 'Ingresando…' : 'Creando cuenta…')
               : (mode === 'login' ? 'Ingresar' : 'Crear cuenta')}
           </button>
+
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="block w-full text-center text-tx2 text-[13px] font-semibold
+                         py-2 underline underline-offset-2"
+            >
+              Olvidé mi contraseña
+            </button>
+          )}
         </form>
       </div>
     </div>

@@ -15,6 +15,7 @@ interface ProfileData {
   stats: {
     total: number
     checkedIn: number
+    pending?: number
     favoriteVenue: string | null
   }
 }
@@ -234,7 +235,14 @@ export default function PerfilPage() {
             <p className="font-display text-[26px] font-bold text-tx leading-none">
               {data.stats.total}
             </p>
-            <p className="text-tx3 text-[11px] font-semibold mt-1">Reservas</p>
+            <p className="text-tx3 text-[11px] font-semibold mt-1">
+              {(data.stats.pending ?? 0) > 0 ? 'Total' : 'Reservas'}
+            </p>
+            {(data.stats.pending ?? 0) > 0 && (
+              <p className="text-c3 text-[10px] font-bold mt-0.5">
+                {data.stats.pending} en proceso
+              </p>
+            )}
           </div>
           <div className="card p-3.5 text-center">
             <p className="font-display text-[26px] font-bold text-c2 leading-none">
@@ -244,8 +252,8 @@ export default function PerfilPage() {
           </div>
           <div className="card p-3.5 text-center">
             <p className="font-display text-[22px] font-bold text-tx leading-none">
-              {data.stats.total > 0
-                ? `${Math.round((data.stats.checkedIn / data.stats.total) * 100)}%`
+              {data.stats.checkedIn + data.stats.total - (data.stats.pending ?? 0) > 0
+                ? `${Math.round((data.stats.checkedIn / Math.max(1, data.stats.total - (data.stats.pending ?? 0))) * 100)}%`
                 : '—'
               }
             </p>

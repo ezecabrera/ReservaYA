@@ -2,8 +2,48 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import type { Venue } from '@/lib/shared'
+import type { Venue, ServiceHours } from '@/lib/shared'
 import { ReservationWizard } from '@/components/reservation/ReservationWizard'
+
+// ─── Helpers horario / features ──────────────────────────────────────────
+
+function todayHoursLabel(venue: Venue): string {
+  const hours = (venue.config_json?.service_hours ?? []) as ServiceHours[]
+  const today = new Date().getDay()
+  const shifts = hours
+    .filter((h) => h.day_of_week === today && h.is_open)
+    .map((h) => `${h.opens_at}–${h.closes_at}`)
+  if (shifts.length === 0) return 'Cerrado hoy'
+  return shifts.join(' · ')
+}
+
+interface VenueFeature {
+  emoji: string
+  label: string
+}
+
+const FEATURE_LIB: Record<string, VenueFeature> = {
+  wifi:        { emoji: '📶', label: 'Wi-Fi gratis' },
+  accessible:  { emoji: '♿', label: 'Accesible' },
+  parking:     { emoji: '🅿️', label: 'Estacionamiento' },
+  pet_friendly:{ emoji: '🐾', label: 'Pet-friendly' },
+  outdoor:     { emoji: '🌿', label: 'Al aire libre' },
+  cards:       { emoji: '💳', label: 'Acepta tarjetas' },
+  vegetarian:  { emoji: '🥗', label: 'Opciones vegetarianas' },
+  vegan:       { emoji: '🌱', label: 'Opciones veganas' },
+  celiaco:     { emoji: '🌾', label: 'Sin TACC' },
+  kids:        { emoji: '👶', label: 'Apto niños' },
+  wine_bar:    { emoji: '🍷', label: 'Carta de vinos' },
+  bar:         { emoji: '🍸', label: 'Barra / tragos' },
+  quiet:       { emoji: '🤫', label: 'Ambiente tranquilo' },
+  trendy:      { emoji: '✨', label: 'Trendy' },
+}
+
+function venueFeatures(venue: Venue): VenueFeature[] {
+  const cfg = venue.config_json as { features?: string[] } | null
+  const features = cfg?.features ?? ['cards', 'vegetarian', 'wifi', 'accessible']
+  return features.map((k) => FEATURE_LIB[k]).filter((f): f is VenueFeature => !!f).slice(0, 6)
+}
 
 interface Props {
   venue: Venue
@@ -26,12 +66,6 @@ function cuisineEmoji(v: Venue): string {
   return (c && map[c]) || '🍽️'
 }
 
-function mockRating(id: string): { score: number; count: number } {
-  let h = 0
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0
-  return { score: Math.round((4.2 + (Math.abs(h) % 7) / 10) * 10) / 10, count: 40 + (Math.abs(h) % 280) }
-}
-
 function neighborhood(address: string): string {
   const m = address.match(/,\s*([^,]+),\s*CABA/i)
   return m ? m[1].trim() : ''
@@ -50,18 +84,14 @@ function gallery(venue: Venue): string[] {
   ]
 }
 
-// Reviews demo (sería data real con F5-1)
-const DEMO_REVIEWS = [
-  { name: 'Agustina R.', date: 'Hace 3 días', score: 5, text: 'Excelente atención. La comida súper bien presentada y el ambiente ideal para una cena tranquila.' },
-  { name: 'Martín P.',   date: 'Hace 1 semana', score: 4, text: 'Muy bueno en general. Volvería sin duda. Recomiendo reservar con anticipación.' },
-  { name: 'Lucía F.',    date: 'Hace 2 semanas', score: 5, text: 'Uno de los mejores lugares del barrio. La relación precio-calidad es notable.' },
-]
+// Reviews: por ahora sin data real (venue_reputation_view aún no conectado en lab).
+// Mostramos empty state verificable en vez de datos ficticios que erosionan confianza.
+const DEMO_REVIEWS: Array<{ name: string; date: string; score: number; text: string }> = []
 
 export function VenueDetailClient({ venue }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
   const [showWizard, setShowWizard] = useState(false)
   const pics = gallery(venue)
-  const rating = mockRating(venue.id)
   const hood = neighborhood(venue.address)
   const deposit = (venue.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 0
   const zonesEnabled = (venue.config_json as { zones_enabled?: boolean } | null)?.zones_enabled
@@ -172,14 +202,8 @@ export function VenueDetailClient({ venue }: Props) {
           <h1 className="font-display text-[28px] font-bold text-tx tracking-tight leading-tight">
             {venue.name}
           </h1>
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-1 text-[14px]">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-c3">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              <span className="font-bold text-tx">{rating.score.toFixed(1)}</span>
-              <span className="text-tx3">({rating.count} reseñas)</span>
-            </div>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <span className="badge bg-c2l text-[#0F7A5A]">Nuevo en ReservaYa</span>
             {deposit > 0 && (
               <span className="badge bg-c3l text-[#B78200]">Seña ${deposit.toLocaleString('es-AR')}</span>
             )}
@@ -196,7 +220,7 @@ export function VenueDetailClient({ venue }: Props) {
           <InfoTile
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--tx)" strokeWidth="2"/><path d="M12 7v5l3 2" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
             title="Horario hoy"
-            value="12:00–15:30 · 20:00–00:00"
+            value={todayHoursLabel(venue)}
           />
         </section>
 
@@ -231,10 +255,9 @@ export function VenueDetailClient({ venue }: Props) {
         <section>
           <h2 className="font-display text-[17px] font-bold text-tx mb-2">Lo bueno de acá</h2>
           <div className="grid grid-cols-2 gap-2">
-            <Feature emoji="✓" text="Wi-Fi gratis" />
-            <Feature emoji="✓" text="Accesible" />
-            <Feature emoji="✓" text="Opciones vegetarianas" />
-            <Feature emoji="✓" text="Acepta tarjetas" />
+            {venueFeatures(venue).map((f) => (
+              <Feature key={f.label} emoji={f.emoji} text={f.label} />
+            ))}
           </div>
         </section>
 
@@ -258,32 +281,47 @@ export function VenueDetailClient({ venue }: Props) {
             <h2 className="font-display text-[17px] font-bold text-tx">Reseñas verificadas</h2>
             <span className="text-[11px] text-tx3">Post-visita</span>
           </div>
-          <div className="space-y-3">
-            {DEMO_REVIEWS.map((r, i) => (
-              <article key={i} className="bg-white rounded-xl p-4 border border-[var(--br)]">
-                <header className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-c1 to-c3
-                                    flex items-center justify-center text-white font-bold text-[12px]">
-                      {r.name[0]}
+          {DEMO_REVIEWS.length === 0 ? (
+            <div className="bg-sf rounded-xl p-5 border border-[var(--br)] text-center">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mx-auto mb-2 border border-[var(--br)]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-c3">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </div>
+              <p className="text-[13px] font-semibold text-tx">Aún no hay reseñas</p>
+              <p className="text-[12px] text-tx2 mt-1 leading-relaxed">
+                Reservá, comé y sé el primero en opinar. Sólo podés reseñar si
+                visitaste el local — todas las reseñas son verificadas.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {DEMO_REVIEWS.map((r, i) => (
+                <article key={i} className="bg-white rounded-xl p-4 border border-[var(--br)]">
+                  <header className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-c1 to-c3
+                                      flex items-center justify-center text-white font-bold text-[12px]">
+                        {r.name[0]}
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold text-tx">{r.name}</p>
+                        <p className="text-[11px] text-tx3">{r.date}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[13px] font-semibold text-tx">{r.name}</p>
-                      <p className="text-[11px] text-tx3">{r.date}</p>
+                    <div className="flex text-c3">
+                      {Array.from({ length: r.score }).map((_, i) => (
+                        <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                      ))}
                     </div>
-                  </div>
-                  <div className="flex text-c3">
-                    {Array.from({ length: r.score }).map((_, i) => (
-                      <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
-                    ))}
-                  </div>
-                </header>
-                <p className="text-[13px] text-tx2 leading-relaxed">{r.text}</p>
-              </article>
-            ))}
-          </div>
+                  </header>
+                  <p className="text-[13px] text-tx2 leading-relaxed">{r.text}</p>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Wizard section */}

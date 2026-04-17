@@ -17,7 +17,7 @@ export async function GET() {
       .from('reservations')
       .select('status, venue_id, venues(name)')
       .eq('user_id', user.id)
-      .in('status', ['confirmed', 'checked_in', 'no_show']),
+      .in('status', ['pending_payment', 'confirmed', 'checked_in', 'no_show']),
   ])
 
   const profile = profileResult.data
@@ -41,6 +41,7 @@ export async function GET() {
     stats: {
       total: reservations.length,
       checkedIn: reservations.filter(r => r.status === 'checked_in').length,
+      pending: reservations.filter(r => r.status === 'pending_payment').length,
       favoriteVenue: favoriteVenue?.name ?? null,
     },
   })

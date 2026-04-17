@@ -46,7 +46,8 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${fraunces.variable} ${plusJakarta.variable}`}>
       <body className="font-body bg-bg text-tx min-h-screen">
-        {children}
+        <a href="#main" className="skip-link">Saltar al contenido</a>
+        <main id="main">{children}</main>
       </body>
     </html>
   )

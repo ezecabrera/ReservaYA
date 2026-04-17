@@ -6,8 +6,6 @@ interface Props {
   variant?: 'hero' | 'standard' | 'compact'
   /** Para mostrar disponibilidad "20:30 · 21:00 · 21:30" */
   availableSlots?: string[]
-  /** Rating demo / aggregate */
-  rating?: { score: number; count: number }
   /** Price tier $ → $$$$ */
   priceTier?: 1 | 2 | 3 | 4
   /** Indica si la reserva requiere seña */
@@ -41,15 +39,6 @@ function cuisineEmoji(v: Venue): string {
   return (c && map[c]) || '🍽️'
 }
 
-// Demo rating determinístico por id (para no cambiar entre renders)
-function mockRating(id: string): { score: number; count: number } {
-  let h = 0
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0
-  const score = 4.2 + (Math.abs(h) % 7) / 10 // 4.2–4.8
-  const count = 40 + (Math.abs(h) % 280)
-  return { score: Math.round(score * 10) / 10, count }
-}
-
 function mockPriceTier(v: Venue): 1 | 2 | 3 | 4 {
   const deposit = (v.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 1500
   if (deposit >= 4000) return 4
@@ -60,15 +49,12 @@ function mockPriceTier(v: Venue): 1 | 2 | 3 | 4 {
 
 // ─── Components ───────────────────────────────────────────────────────────
 
-function StarRow({ score, count }: { score: number; count: number }) {
+function NewBadge() {
   return (
-    <div className="flex items-center gap-1 text-[12px]">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-c3">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-      </svg>
-      <span className="font-bold text-tx">{score.toFixed(1)}</span>
-      <span className="text-tx3">({count})</span>
-    </div>
+    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0F7A5A]">
+      <span className="w-1.5 h-1.5 rounded-full bg-c2" />
+      Nuevo
+    </span>
   )
 }
 
@@ -83,9 +69,8 @@ function PriceTier({ tier }: { tier: number }) {
 
 export function VenueCardLab({
   venue, variant = 'standard', availableSlots,
-  rating, priceTier, hasDeposit, distanceKm,
+  priceTier, hasDeposit, distanceKm,
 }: Props) {
-  const r = rating ?? mockRating(venue.id)
   const tier = priceTier ?? mockPriceTier(venue)
   const cuisine = cuisineLabel(venue)
   const hood = neighborhood(venue.address)
@@ -125,7 +110,7 @@ export function VenueCardLab({
           </div>
         </div>
         <div className="px-4 py-3 flex items-center justify-between">
-          <StarRow score={r.score} count={r.count} />
+          <NewBadge />
           {availableSlots && availableSlots.length > 0 ? (
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse" />
@@ -156,7 +141,7 @@ export function VenueCardLab({
         <div className="flex-1 min-w-0 py-0.5">
           <div className="flex items-start justify-between gap-2">
             <p className="font-bold text-[14px] text-tx truncate">{venue.name}</p>
-            <StarRow score={r.score} count={r.count} />
+            <NewBadge />
           </div>
           <p className="text-[12px] text-tx3 truncate mt-0.5">
             {cuisine} · {hood && `${hood} · `}<PriceTier tier={tier} />
@@ -212,7 +197,7 @@ export function VenueCardLab({
               {hood && `${hood} · `}<PriceTier tier={tier} />
             </p>
           </div>
-          <StarRow score={r.score} count={r.count} />
+          <NewBadge />
         </div>
       </div>
     </Link>
