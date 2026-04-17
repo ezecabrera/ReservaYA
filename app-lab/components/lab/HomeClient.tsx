@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { Venue } from '@/lib/shared'
 import { useGeolocation, distanceKm } from '@/lib/geolocation'
 import { SearchPill } from './SearchPill'
@@ -50,6 +50,25 @@ function eyebrowByHour(): string {
   return 'Late night'
 }
 
+/** Contador de actividad "X personas reservaron hoy" — mock determinístico
+ * por día (misma cantidad durante las 24hs del día, varía cada jornada). */
+function reservedTodayCount(): number {
+  const now = new Date()
+  const key = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
+  // Hash simple del día → 40-180 reservas
+  return 40 + (key % 141)
+}
+
+/** "Mariana acaba de reservar en Trattoria" — rota cada 30s */
+const ACTIVITY_FEED = [
+  { name: 'Mariana', venue: 'Trattoria Sentori', when: 8 },
+  { name: 'Joaquín', venue: 'Cortes del 9', when: 14 },
+  { name: 'Sofía',   venue: 'Niko Sushi Bar', when: 23 },
+  { name: 'Agustín', venue: 'La Pizzería de Almagro', when: 37 },
+  { name: 'Camila',  venue: 'Verde de Mercado', when: 52 },
+  { name: 'Lucas',   venue: 'Asador Don Ramiro', when: 66 },
+]
+
 export function HomeClient({ venues }: Props) {
   const [cuisine, setCuisine] = useState('all')
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
@@ -62,6 +81,23 @@ export function HomeClient({ venues }: Props) {
   const geo = useGeolocation()
   const [notifsOpen, setNotifsOpen] = useState(false)
   const unreadCount = useUnreadCount()
+  const [searchState, setSearchState] = useState<{ date: string; time: string; party: number } | null>(null)
+  const [activeTab, setActiveTab] = useState<'ahora' | 'despues'>('despues')
+  const [activityIdx, setActivityIdx] = useState(0)
+
+  // Rotar feed de actividad cada 5s
+  useEffect(() => {
+    const id = setInterval(() => setActivityIdx((i) => (i + 1) % ACTIVITY_FEED.length), 5000)
+    return () => clearInterval(id)
+  }, [])
+
+  const reservedToday = useMemo(() => reservedTodayCount(), [])
+  const currentActivity = ACTIVITY_FEED[activityIdx]
+
+  // Query string a propagar al venue detail (prefill wizard)
+  const qs = searchState
+    ? `?date=${searchState.date}&time=${searchState.time}&party=${searchState.party}`
+    : ''
 
   // Counts por cocina
   const counts = useMemo(() => {
@@ -98,6 +134,11 @@ export function HomeClient({ venues }: Props) {
         return filters.dietary.every((x) => d.includes(x))
       })
     }
+    // Tab "Ahora mismo" → sólo venues con slots disponibles en la próxima hora
+    if (activeTab === 'ahora') {
+      list = list.filter((v) => mockSlots(v.id).length >= 2)
+      list.sort((a, b) => mockSlots(b.id).length - mockSlots(a.id).length)
+    }
     // Ordenamiento
     if (filters.sort === 'nearby' && geo.location) {
       list.sort((a, b) => {
@@ -113,7 +154,7 @@ export function HomeClient({ venues }: Props) {
       list.sort((a, b) => mockSlots(b.id).length - mockSlots(a.id).length)
     }
     return list
-  }, [venues, cuisine, filters, query, geo.location])
+  }, [venues, cuisine, filters, query, geo.location, activeTab])
 
   // Helper: distancia de un venue al usuario (o undefined)
   const distTo = (v: Venue): number | undefined => {
@@ -226,6 +267,38 @@ export function HomeClient({ venues }: Props) {
         )}
       </header>
 
+      {/* Social proof strip (rotativo) */}
+      <div className="screen-x mb-3">
+        <div className="bg-c2l rounded-full px-4 py-2 flex items-center gap-2.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse flex-shrink-0" />
+          <p className="text-[12px] text-[#0F7A5A] flex-1 truncate transition-opacity duration-300">
+            <span className="font-bold">{reservedToday}</span> personas ya reservaron hoy ·
+            {' '}<span className="font-semibold">{currentActivity.name}</span> en{' '}
+            <span className="font-semibold">{currentActivity.venue}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Ahora / Después */}
+      <div className="screen-x mb-4">
+        <div className="inline-flex bg-sf rounded-full p-1 border border-[var(--br)] w-full">
+          <button
+            onClick={() => setActiveTab('ahora')}
+            className={`flex-1 py-2 rounded-full text-[13px] font-bold transition-all
+              ${activeTab === 'ahora' ? 'bg-c1 text-white shadow-c1' : 'text-tx3'}`}
+          >
+            ⚡ Ahora mismo
+          </button>
+          <button
+            onClick={() => setActiveTab('despues')}
+            className={`flex-1 py-2 rounded-full text-[13px] font-bold transition-all
+              ${activeTab === 'despues' ? 'bg-white text-tx shadow-sm' : 'text-tx3'}`}
+          >
+            📅 Más adelante
+          </button>
+        </div>
+      </div>
+
       {/* Hero venue (primera pantalla) */}
       {hero ? (
         <div className="screen-x mt-3 mb-5">
@@ -240,7 +313,7 @@ export function HomeClient({ venues }: Props) {
               </span>
             )}
           </div>
-          <VenueCardLab venue={hero} variant="hero" availableSlots={mockSlots(hero.id)} distanceKm={distTo(hero)} />
+          <VenueCardLab venue={hero} variant="hero" availableSlots={mockSlots(hero.id)} distanceKm={distTo(hero)} linkSuffix={qs} />
         </div>
       ) : (
         <div className="screen-x mt-3 mb-5 text-center py-8 bg-sf rounded-xl border border-[var(--br)]">
@@ -270,7 +343,7 @@ export function HomeClient({ venues }: Props) {
 
       {/* Controles: search pill + text search */}
       <div className="screen-x mb-3">
-        <SearchPill defaultTime="21:00" />
+        <SearchPill defaultTime="21:00" onChange={setSearchState} />
       </div>
 
       <div className="screen-x mb-4">
@@ -369,7 +442,7 @@ export function HomeClient({ venues }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {rest.slice(0, 6).map((v) => (
-                  <VenueCardLab key={v.id} venue={v} variant="standard" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} />
+                  <VenueCardLab key={v.id} venue={v} variant="standard" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
                 ))}
               </div>
             </section>
@@ -388,7 +461,7 @@ export function HomeClient({ venues }: Props) {
               </h2>
               <div className="space-y-2">
                 {rest.slice(6).map((v) => (
-                  <VenueCardLab key={v.id} venue={v} variant="compact" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} />
+                  <VenueCardLab key={v.id} venue={v} variant="compact" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
                 ))}
               </div>
             </section>

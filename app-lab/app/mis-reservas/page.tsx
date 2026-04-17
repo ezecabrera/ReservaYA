@@ -51,12 +51,23 @@ function formatDate(dateStr: string) {
   })
 }
 
+const CANCEL_REASONS = [
+  'Cambié de plan',
+  'Me enfermé',
+  'Voy a ir otro día',
+  'Reservé en otro lado',
+  'Otro motivo',
+]
+
 export default function MisReservasPage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'proximas' | 'pasadas'>('proximas')
   const [reviewFor, setReviewFor] = useState<Reservation | null>(null)
   const [reviewed, setReviewed] = useState<Set<string>>(new Set())
+  const [cancelFor, setCancelFor] = useState<Reservation | null>(null)
+  const [cancelReason, setCancelReason] = useState<string>('')
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
     try {
@@ -247,14 +258,14 @@ export default function MisReservasPage() {
                       >
                         Ver QR
                       </Link>
-                      <Link
-                        href={`/${r.venues.id}`}
-                        className="flex-1 text-center py-2 rounded-lg bg-c1l text-c1
+                      <button
+                        onClick={() => { setCancelFor(r); setCancelReason('') }}
+                        className="flex-1 text-center py-2 rounded-lg bg-white text-[#D63646]
                                    text-[12px] font-bold border border-c1/20
                                    active:scale-95 transition-transform"
                       >
-                        Reservar de nuevo
-                      </Link>
+                        Cancelar
+                      </button>
                     </div>
                   )}
                   {!upcoming && r.status === 'checked_in' && r.venues && (
@@ -301,6 +312,86 @@ export default function MisReservasPage() {
           }}
           onSubmitted={() => setReviewed((s) => new Set([...s, reviewFor.id]))}
         />
+      )}
+
+      {/* Modal cancelar con razones */}
+      {cancelFor && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4">
+          <button
+            aria-label="Cerrar"
+            onClick={() => !cancelling && setCancelFor(null)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          />
+          <div className="relative bg-bg rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+              Cancelar reserva
+            </p>
+            <h3 className="font-display text-[20px] font-bold text-tx mt-0.5 leading-tight">
+              {cancelFor.venues?.name}
+            </h3>
+            <p className="text-[12px] text-tx2 mt-1">
+              {formatDate(cancelFor.date)} · {formatTime(cancelFor.time_slot)} hs · Mesa {cancelFor.tables?.label}
+            </p>
+
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mt-5 mb-2">
+              ¿Por qué cancelás?
+            </p>
+            <div className="space-y-1.5">
+              {CANCEL_REASONS.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setCancelReason(r)}
+                  className={`w-full text-left px-4 py-2.5 rounded-lg border text-[13px] font-semibold transition-all
+                    ${cancelReason === r
+                      ? 'bg-c1l border-c1 text-c1'
+                      : 'bg-white border-[var(--br)] text-tx2 active:scale-[0.98]'}`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-5 bg-c2l rounded-lg p-3">
+              <p className="text-[12px] text-[#0F7A5A] font-semibold">
+                Cancelás a tiempo — la seña se te devuelve 100% en las próximas 24hs.
+              </p>
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setCancelFor(null)}
+                disabled={cancelling}
+                className="flex-1 py-3 rounded-md bg-sf text-tx2 text-[14px] font-semibold
+                           border border-[var(--br)] active:scale-[0.98] transition-transform"
+              >
+                Volver
+              </button>
+              <button
+                onClick={async () => {
+                  if (!cancelReason) { alert('Elegí un motivo'); return }
+                  setCancelling(true)
+                  try {
+                    // TODO: endpoint real — por ahora sólo actualiza localmente
+                    await fetch(`/api/mis-reservas/${cancelFor.id}/cancelar`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ reason: cancelReason }),
+                    }).catch(() => null)
+                    setReservations((rs) => rs.map((r) => r.id === cancelFor.id ? { ...r, status: 'cancelled' } : r))
+                    setCancelFor(null)
+                  } finally {
+                    setCancelling(false)
+                  }
+                }}
+                disabled={cancelling || !cancelReason}
+                className="flex-1 py-3 rounded-md bg-c1 text-white text-[14px] font-bold
+                           disabled:opacity-50 active:scale-[0.98] transition-transform"
+              >
+                {cancelling ? 'Cancelando…' : 'Confirmar cancelación'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <BottomNav />

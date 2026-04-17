@@ -55,6 +55,7 @@ export type MenuPreview = Array<{
 interface Props {
   venue: Venue
   menu?: MenuPreview
+  prefill?: { date?: string; time?: string; partySize?: number }
 }
 
 function cuisineLabel(v: Venue): string {
@@ -98,11 +99,12 @@ function gallery(venue: Venue): string[] {
 // Mostramos empty state verificable en vez de datos ficticios que erosionan confianza.
 const DEMO_REVIEWS: Array<{ name: string; date: string; score: number; text: string }> = []
 
-export function VenueDetailClient({ venue, menu = [] }: Props) {
+export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
   const [showWizard, setShowWizard] = useState(false)
   const [showFullMenu, setShowFullMenu] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
+  const [fullscreenGallery, setFullscreenGallery] = useState(false)
   const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const saved = isFavorite(venue.id)
 
@@ -152,6 +154,63 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
         </div>
       )}
 
+      {/* Fullscreen gallery (stories-style) */}
+      {fullscreenGallery && pics.length > 0 && (
+        <div className="fixed inset-0 z-[90] bg-black flex items-center justify-center">
+          {/* Close */}
+          <button
+            onClick={() => setFullscreenGallery(false)}
+            aria-label="Cerrar galería"
+            className="absolute top-12 right-4 z-10 w-10 h-10 rounded-full
+                       bg-white/10 backdrop-blur-sm flex items-center justify-center
+                       active:scale-95 transition-transform"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M6 18L18 6" stroke="white" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          {/* Progress bars stories-style */}
+          <div className="absolute top-12 left-4 right-16 z-10 flex gap-1">
+            {pics.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setGalleryIdx(i)}
+                aria-label={`Foto ${i + 1} de ${pics.length}`}
+                className={`flex-1 h-0.5 rounded-full transition-colors
+                            ${i === galleryIdx ? 'bg-white' : 'bg-white/30'}`}
+              />
+            ))}
+          </div>
+          {/* Left/right tap zones */}
+          <button
+            onClick={() => setGalleryIdx((i) => Math.max(0, i - 1))}
+            className="absolute left-0 top-0 bottom-0 w-1/3 z-5"
+            aria-label="Foto anterior"
+            disabled={galleryIdx === 0}
+          />
+          <button
+            onClick={() => setGalleryIdx((i) => Math.min(pics.length - 1, i + 1))}
+            className="absolute right-0 top-0 bottom-0 w-1/3 z-5"
+            aria-label="Foto siguiente"
+            disabled={galleryIdx === pics.length - 1}
+          />
+          {/* Image */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={pics[galleryIdx]}
+            alt={venue.name}
+            className="max-w-full max-h-full object-contain"
+          />
+          {/* Caption */}
+          <div className="absolute bottom-10 left-4 right-4 z-10 text-center">
+            <p className="text-white font-display text-[18px] font-bold">{venue.name}</p>
+            <p className="text-white/60 text-[12px] mt-0.5">
+              Foto {galleryIdx + 1} de {pics.length} · Tocá los lados para navegar
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Gallery hero */}
       <div className="relative">
         <div className="relative h-64 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460] overflow-hidden">
@@ -160,7 +219,8 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
             <img
               src={pics[galleryIdx]}
               alt={venue.name}
-              className="w-full h-full object-cover transition-opacity duration-300"
+              onClick={() => setFullscreenGallery(true)}
+              className="w-full h-full object-cover transition-opacity duration-300 cursor-zoom-in"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
@@ -282,6 +342,37 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
             })}
           </div>
         </section>
+
+        {/* Precio promedio por persona (derivado del menú) + botón llamar */}
+        {(() => {
+          if (!menu || menu.length === 0) return null
+          // Heurística: promedio de principales + 1 bebida + propina 10%
+          const allPrices = menu.flatMap((c) => c.items.map((it) => it.price))
+          if (allPrices.length === 0) return null
+          const avg = allPrices.reduce((a, b) => a + b, 0) / allPrices.length
+          const perPerson = Math.round((avg * 2 + allPrices[0] * 0.3) * 1.1 / 100) * 100
+          return (
+            <section className="flex items-center justify-between bg-sf rounded-xl px-4 py-3 border border-[var(--br)]">
+              <div>
+                <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">Promedio por persona</p>
+                <p className="font-display text-[20px] font-bold text-tx">~${perPerson.toLocaleString('es-AR')}</p>
+              </div>
+              {venue.phone && (
+                <a
+                  href={`tel:${venue.phone.replace(/[^+\d]/g, '')}`}
+                  className="flex items-center gap-2 bg-c2 text-white rounded-full px-4 py-2
+                             text-[13px] font-bold shadow-c2 active:scale-95 transition-transform"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"
+                          stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                  </svg>
+                  Llamar
+                </a>
+              )}
+            </section>
+          )
+        })()}
 
         {/* Info rápida */}
         <section className="grid grid-cols-2 gap-3">
@@ -463,7 +554,7 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
             )}
           </div>
           {showWizard ? (
-            <ReservationWizard venue={venue} />
+            <ReservationWizard venue={venue} prefill={prefill} />
           ) : (
             <button
               onClick={() => setShowWizard(true)}

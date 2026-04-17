@@ -7,9 +7,10 @@ import type { Venue } from '@/lib/shared'
 
 interface Props {
   params: { venueId: string }
+  searchParams: { date?: string; time?: string; party?: string }
 }
 
-export default async function VenueDetailPage({ params }: Props) {
+export default async function VenueDetailPage({ params, searchParams }: Props) {
   const supabase = await createClient()
   const { data: venue, error } = await supabase
     .from('venues')
@@ -51,9 +52,17 @@ export default async function VenueDetailPage({ params }: Props) {
       })),
   })).filter((c) => c.items.length > 0)
 
+  // Prefill wizard desde SearchPill del home (si vino con params)
+  const party = searchParams.party ? parseInt(searchParams.party, 10) : undefined
+  const prefill = {
+    date: searchParams.date,
+    time: searchParams.time,
+    partySize: party && party >= 1 && party <= 20 ? party : undefined,
+  }
+
   return (
     <div className="min-h-screen bg-bg pb-28">
-      <VenueDetailClient venue={venue as Venue} menu={menu} />
+      <VenueDetailClient venue={venue as Venue} menu={menu} prefill={prefill} />
       <BottomNav />
     </div>
   )

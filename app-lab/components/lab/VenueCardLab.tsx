@@ -15,6 +15,8 @@ interface Props {
   hasDeposit?: boolean
   /** Distancia en km si está geolocalizado */
   distanceKm?: number
+  /** Query string a pegar al href (prefill wizard): '?date=...&time=...&party=...' */
+  linkSuffix?: string
 }
 
 // ── Derivaciones desde venue (mock si no hay data) ────────────────────────
@@ -99,9 +101,10 @@ function PriceTier({ tier }: { tier: number }) {
 
 export function VenueCardLab({
   venue, variant = 'standard', availableSlots,
-  priceTier, hasDeposit, distanceKm,
+  priceTier, hasDeposit, distanceKm, linkSuffix = '',
 }: Props) {
   const tier = priceTier ?? priceTierOf(venue)
+  const href = `/${venue.id}${linkSuffix}`
   const cuisine = cuisineLabel(venue)
   const hood = neighborhood(venue.address)
   const deposit = hasDeposit ?? ((venue.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 0) > 0
@@ -111,7 +114,7 @@ export function VenueCardLab({
     return (
       <div className="relative">
         <HeartButton venueId={venue.id} absolute />
-        <Link href={`/${venue.id}`} className="block rounded-xl overflow-hidden
+        <Link href={href} className="block rounded-xl overflow-hidden
                                               border border-[var(--br)] shadow-sm bg-white
                                               active:scale-[0.99] transition-transform duration-[180ms]">
         <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#1A1A2E] to-[#0F3460]">
@@ -166,7 +169,7 @@ export function VenueCardLab({
   if (variant === 'compact') {
     return (
       <div className="relative">
-        <Link href={`/${venue.id}`} className="flex gap-3 p-2.5 bg-white rounded-lg
+        <Link href={href} className="flex gap-3 p-2.5 bg-white rounded-lg
                                               border border-[var(--br)] shadow-sm
                                               active:scale-[0.98] transition-transform duration-[180ms]">
         <div className="relative w-20 h-20 rounded-md overflow-hidden bg-sf2 flex-shrink-0">
@@ -207,7 +210,7 @@ export function VenueCardLab({
   return (
     <div className="relative">
       <HeartButton venueId={venue.id} absolute />
-      <Link href={`/${venue.id}`}
+      <Link href={href}
           className="block bg-white rounded-xl overflow-hidden border border-[var(--br)]
                      shadow-sm active:scale-[0.99] transition-transform duration-[180ms]">
       <div className="relative aspect-[4/3] overflow-hidden bg-sf2">

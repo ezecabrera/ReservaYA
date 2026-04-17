@@ -50,14 +50,17 @@ interface WizardState {
 
 interface ReservationWizardProps {
   venue: Venue
+  prefill?: { date?: string; time?: string; partySize?: number }
 }
 
 const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8]
 
-export function ReservationWizard({ venue }: ReservationWizardProps) {
+export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
   const [step, setStep] = useState<WizardStep>('datetime')
   const [state, setState] = useState<WizardState>({
-    date: null, timeSlot: null, partySize: 2,
+    date: prefill?.date ?? null,
+    timeSlot: prefill?.time ?? null,
+    partySize: prefill?.partySize ?? 2,
     selectedTable: null, lockId: null, lockExpiresAt: null,
     orderItems: [],
   })
@@ -70,6 +73,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   const [loadingMenu, setLoadingMenu] = useState(false)
   const [lastOrder, setLastOrder] = useState<{ menu_item_id: string; name: string; qty: number; unit_price: number }[]>([])
   const [showMenuModal, setShowMenuModal] = useState(false)
+  const [guestNote, setGuestNote] = useState('')
 
   // Refs para auto-scroll progresivo en el step datetime
   const timeRef  = useRef<HTMLDivElement>(null)
@@ -808,6 +812,23 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
           </div>
         </div>
       )}
+
+      {/* Nota al restaurante */}
+      <div className="card p-4">
+        <label className="block text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2">
+          Nota al restaurante (opcional)
+        </label>
+        <textarea
+          value={guestNote}
+          onChange={(e) => setGuestNote(e.target.value.slice(0, 240))}
+          placeholder="Ej. alérgico a los mariscos · mesa con silla alta · festejo un cumpleaños…"
+          rows={2}
+          className="w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf px-3 py-2
+                     text-[13px] text-tx outline-none resize-none
+                     focus:border-c4 focus:ring-2 focus:ring-[var(--c4)]/20"
+        />
+        <p className="text-[10px] text-tx3 text-right mt-1">{guestNote.length}/240</p>
+      </div>
 
       {/* Seña */}
       <div className="card p-4 flex items-center justify-between">
