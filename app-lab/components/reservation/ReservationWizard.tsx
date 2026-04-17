@@ -224,19 +224,9 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
         })
       }
 
-      // Crear preferencia de pago y redirigir a MP
-      const payRes = await fetch(`/api/reserva/${reservation.id}/pago`, {
-        method: 'POST',
-      })
-
-      if (!payRes.ok) {
-        showToast('Error al iniciar el pago', 'error')
-        setCreating(false)
-        return
-      }
-
-      const { init_point } = await payRes.json() as { init_point: string }
-      window.location.href = init_point
+      // Redirigir a la pantalla de selección de método de pago
+      // (antes se iba directo a MP; ahora el usuario elige tarjeta o MP)
+      window.location.href = `/reserva/${reservation.id}/pagar`
     } catch {
       showToast('Error inesperado', 'error')
       setCreating(false)

@@ -118,6 +118,13 @@ export async function POST(
       })
     }
 
+    // Method selector — 'all' (default, todo MP) o 'card' (sólo tarjeta)
+    let method: 'all' | 'card' = 'all'
+    try {
+      const body = await request.json() as { method?: string }
+      if (body.method === 'card') method = 'card'
+    } catch { /* sin body: default all */ }
+
     // 3. Crear la preference en MP
     const mp = new MercadoPago({
       accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN!,
@@ -126,6 +133,19 @@ export async function POST(
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL!
     const description = `Seña — ${venue?.name ?? 'Restaurante'} · ${tableLabel ?? 'Mesa'} · ${userName ?? ''}`
+
+    // Si eligió 'card', excluimos todo lo que no sea tarjeta para que el
+    // checkout de MP arranque directo en el form de tarjeta.
+    const paymentMethods = method === 'card'
+      ? {
+          excluded_payment_types: [
+            { id: 'ticket' },       // PagoFácil, Rapipago
+            { id: 'atm' },          // Link Pagos, Red Banelco
+            { id: 'bank_transfer' },// transferencia
+            { id: 'account_money' },// cuenta MP
+          ],
+        }
+      : undefined
 
     const created = await preference.create({
       body: {
@@ -139,15 +159,14 @@ export async function POST(
           },
         ],
         payer: payerEmail ? { email: payerEmail } : undefined,
-        // external_reference = idempotency_key para identificar el pago al volver
         external_reference: payment.idempotency_key,
+        payment_methods: paymentMethods,
         back_urls: {
           success: `${appUrl}/reserva/${reservationId}/confirmacion?status=approved`,
           failure: `${appUrl}/reserva/${reservationId}/confirmacion?status=rejected`,
           pending: `${appUrl}/reserva/${reservationId}/confirmacion?status=pending`,
         },
         auto_return: 'approved',
-        // El pago expira en 10 minutos (timer de la pantalla de pago)
         expiration_date_to: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       },
     })
