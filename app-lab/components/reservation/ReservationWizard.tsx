@@ -9,14 +9,24 @@ import { Toast, useToast } from '@/components/ui/Toast'
 import { TableCardSkeleton } from '@/components/ui/Skeleton'
 
 /**
- * Scroll suave a un elemento con offset para que no quede pegado al header.
- * AUTO-SCROLL PROGRESIVO: evita que el usuario tenga que scrollear manualmente
- * al seleccionar fecha → hora → personas → mesa.
+ * Scroll suave a un elemento si NO está visible en viewport.
+ * - Si ya se ve entero → no scrollea (evita movimientos innecesarios).
+ * - Si está debajo del fold → scrollea con offset para dar respiro al header.
+ * - Usa requestAnimationFrame para esperar que React pinte antes de medir.
  */
-function scrollToRef(ref: React.RefObject<HTMLElement>, offset = 80) {
+function scrollToRef(ref: React.RefObject<HTMLElement>, offset = 90) {
   if (!ref.current) return
-  const y = ref.current.getBoundingClientRect().top + window.scrollY - offset
-  window.scrollTo({ top: y, behavior: 'smooth' })
+  requestAnimationFrame(() => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const vh = window.innerHeight
+    // Si el top ya está visible en la primera mitad del viewport y su bottom
+    // también se ve, no movemos nada — evita jitter.
+    const alreadyVisible = rect.top >= 0 && rect.top < vh * 0.6 && rect.bottom <= vh
+    if (alreadyVisible) return
+    const y = rect.top + window.scrollY - offset
+    window.scrollTo({ top: y, behavior: 'smooth' })
+  })
 }
 
 type WizardStep = 'datetime' | 'table' | 'menu' | 'summary'
@@ -276,14 +286,34 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
 
   // ─── STEP: DATE / TIME / PARTY SIZE ───────────────────────────────────────
   if (step === 'datetime') {
+    const selectedDateObj = state.date ? new Date(state.date + 'T12:00:00') : null
+    const selectedDateLabel = selectedDateObj
+      ? selectedDateObj.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+      : null
+    const timeActive  = !!state.date
+    const partyActive = !!state.timeSlot
+    const ctaActive   = !!state.date && !!state.timeSlot
+
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 pb-24">
         {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
-        {/* Fecha */}
-        <div>
-          <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Fecha</p>
+        {/* ─── 1. Fecha ─── */}
+        <section className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-c1 text-white text-[11px] font-bold flex items-center justify-center">
+                {state.date ? '✓' : '1'}
+              </span>
+              <p className="text-[13px] font-bold text-tx uppercase tracking-wider">Fecha</p>
+            </div>
+            {selectedDateLabel && (
+              <span className="text-[12px] text-c1 font-bold capitalize truncate max-w-[180px]">
+                {selectedDateLabel}
+              </span>
+            )}
+          </div>
           <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
             {availableDates.slice(0, 10).map((d) => {
               const dateObj = new Date(d + 'T12:00:00')
@@ -313,50 +343,85 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
               )
             })}
           </div>
-        </div>
+        </section>
 
-        {/* Horarios */}
-        {state.date && (
-          <div ref={timeRef} className="scroll-mt-20">
-            <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Horario</p>
-            {availableSlots.length === 0 ? (
-              <div className="bg-c3l border border-[rgba(255,184,0,0.3)] rounded-xl p-4 text-center">
-                <p className="text-[#CC7700] text-[13px] font-semibold">
-                  Las reservas para este turno ya cerraron. Elegí otro día.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {availableSlots.map((slot) => (
-                  <button
-                    key={slot}
-                    onClick={() => {
-                      setState(s => ({ ...s, timeSlot: slot }))
-                      // Auto-scroll al selector de personas
-                      setTimeout(() => scrollToRef(partyRef), 150)
-                    }}
-                    className={`chip ${state.timeSlot === slot ? 'chip-active' : ''}`}
-                  >
-                    {slot} hs
-                  </button>
-                ))}
-              </div>
+        {/* ─── 2. Horario ─── */}
+        <section
+          ref={timeRef}
+          style={{ opacity: timeActive ? 1 : 0.5, transition: 'opacity 0.3s ease' }}
+          className="card p-4 space-y-3 scroll-mt-24"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center
+                                ${state.timeSlot ? 'bg-c1 text-white' : timeActive ? 'bg-c1 text-white' : 'bg-sf2 text-tx3'}`}>
+                {state.timeSlot ? '✓' : '2'}
+              </span>
+              <p className="text-[13px] font-bold text-tx uppercase tracking-wider">Horario</p>
+            </div>
+            {state.timeSlot && (
+              <span className="text-[12px] text-c1 font-bold">{state.timeSlot} hs</span>
             )}
           </div>
-        )}
 
-        {/* Personas */}
-        {state.timeSlot && (
-          <div ref={partyRef} className="scroll-mt-20">
-            <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Personas</p>
+          {!timeActive ? (
+            <p className="text-[12px] text-tx3">Elegí primero la fecha.</p>
+          ) : availableSlots.length === 0 ? (
+            <div className="bg-c3l border border-[rgba(255,184,0,0.3)] rounded-lg p-3 text-center">
+              <p className="text-[#CC7700] text-[12px] font-semibold">
+                Reservas cerradas para este turno. Elegí otro día.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {availableSlots.map((slot) => (
+                <button
+                  key={slot}
+                  onClick={() => {
+                    setState(s => ({ ...s, timeSlot: slot }))
+                    // Auto-scroll a Personas (sólo si no está visible ya)
+                    scrollToRef(partyRef)
+                  }}
+                  className={`chip ${state.timeSlot === slot ? 'chip-active' : ''}`}
+                >
+                  {slot} hs
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ─── 3. Personas ─── */}
+        <section
+          ref={partyRef}
+          style={{ opacity: partyActive ? 1 : 0.5, transition: 'opacity 0.3s ease' }}
+          className="card p-4 space-y-3 scroll-mt-24"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center
+                                ${partyActive ? 'bg-c1 text-white' : 'bg-sf2 text-tx3'}`}>
+                {partyActive ? '✓' : '3'}
+              </span>
+              <p className="text-[13px] font-bold text-tx uppercase tracking-wider">Personas</p>
+            </div>
+            {partyActive && (
+              <span className="text-[12px] text-c1 font-bold">
+                {state.partySize} {state.partySize === 1 ? 'persona' : 'personas'}
+              </span>
+            )}
+          </div>
+
+          {!partyActive ? (
+            <p className="text-[12px] text-tx3">Elegí primero el horario.</p>
+          ) : (
             <div className="flex gap-2 flex-wrap">
               {PARTY_SIZES.map((n) => (
                 <button
                   key={n}
                   onClick={() => {
                     setState(s => ({ ...s, partySize: n }))
-                    // Auto-scroll al CTA
-                    setTimeout(() => scrollToRef(ctaRef), 150)
+                    scrollToRef(ctaRef)
                   }}
                   className={`w-11 h-11 rounded-full font-bold text-[15px] border-2
                               transition-all duration-[180ms]
@@ -369,20 +434,24 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </section>
 
-        {/* CTA */}
-        {state.date && state.timeSlot && (
-          <div ref={ctaRef} className="scroll-mt-20">
-            <button
-              onClick={() => setStep('table')}
-              className="btn-primary"
-            >
-              Ver mesas disponibles
-            </button>
-          </div>
-        )}
+        {/* ─── CTA sticky al fondo ─── */}
+        <div
+          ref={ctaRef}
+          className="fixed bottom-0 left-0 right-0 z-40 px-[18px] pt-2 pb-[max(16px,env(safe-area-inset-bottom))]
+                     bg-gradient-to-t from-bg via-bg/95 to-bg/0 backdrop-blur-sm
+                     pointer-events-none"
+        >
+          <button
+            onClick={() => setStep('table')}
+            disabled={!ctaActive}
+            className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed pointer-events-auto"
+          >
+            {ctaActive ? 'Ver mesas disponibles →' : 'Elegí fecha, horario y personas'}
+          </button>
+        </div>
       </div>
     )
   }
