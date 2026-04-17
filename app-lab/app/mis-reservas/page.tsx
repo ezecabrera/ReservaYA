@@ -31,6 +31,11 @@ function isUpcoming(date: string, timeSlot: string) {
   return dt.getTime() > Date.now()
 }
 
+/** Normaliza time_slot de "HH:MM:SS" a "HH:MM" */
+function formatTime(timeSlot: string): string {
+  return timeSlot.slice(0, 5)
+}
+
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T12:00:00').toLocaleDateString('es-AR', {
     weekday: 'short', day: 'numeric', month: 'short',
@@ -89,10 +94,10 @@ export default function MisReservasPage() {
                 {nextUp.venues?.name ?? 'Reserva'}
               </p>
               <p className="text-tx2 text-[12px] mt-0.5">
-                {formatDate(nextUp.date)} · {nextUp.time_slot} hs · Mesa {nextUp.tables?.label}
+                {formatDate(nextUp.date)} · {formatTime(nextUp.time_slot)} hs · Mesa {nextUp.tables?.label}
               </p>
             </div>
-            <Countdown date={nextUp.date} time={nextUp.time_slot} />
+            <Countdown date={nextUp.date} time={formatTime(nextUp.time_slot)} />
           </Link>
         </div>
       )}
@@ -185,7 +190,7 @@ export default function MisReservasPage() {
                         <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
                         <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       </svg>
-                      {r.time_slot} hs
+                      {formatTime(r.time_slot)} hs
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24">

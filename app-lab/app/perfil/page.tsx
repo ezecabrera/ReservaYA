@@ -66,16 +66,18 @@ export default function PerfilPage() {
       .then((list: UpcomingReservation[]) => {
         if (!Array.isArray(list)) return
         const now = Date.now()
+        const toTs = (date: string, timeSlot: string) => {
+          // time_slot viene como "HH:MM:SS" o "HH:MM" — normalizar a HH:MM
+          const t = timeSlot.slice(0, 5)
+          return new Date(`${date}T${t}:00`).getTime()
+        }
         const upcoming = list
+          .map(r => ({ ...r, time_slot: r.time_slot.slice(0, 5) }))
           .filter(r => {
-            const t = new Date(`${r.date}T${r.time_slot}:00`).getTime()
+            const t = toTs(r.date, r.time_slot)
             return t > now && (r.status === 'confirmed' || r.status === 'pending_payment')
           })
-          .sort((a, b) => {
-            const tA = new Date(`${a.date}T${a.time_slot}:00`).getTime()
-            const tB = new Date(`${b.date}T${b.time_slot}:00`).getTime()
-            return tA - tB
-          })
+          .sort((a, b) => toTs(a.date, a.time_slot) - toTs(b.date, b.time_slot))
         setNextUp(upcoming[0] ?? null)
       })
       .catch(() => { /* silent */ })

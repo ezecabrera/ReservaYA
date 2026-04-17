@@ -144,6 +144,8 @@ export function VenueDetailClient({ venue }: Props) {
               <button
                 key={i}
                 onClick={() => setGalleryIdx(i)}
+                aria-label={`Ver foto ${i + 1}`}
+                aria-pressed={i === galleryIdx}
                 className={`relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0
                            transition-all ${i === galleryIdx ? 'ring-2 ring-c1' : 'opacity-70'}`}
               >
