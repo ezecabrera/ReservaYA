@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { CreditCardForm } from './CreditCardForm'
 
 interface Data {
   venueName: string
@@ -18,6 +19,7 @@ interface Props {
 }
 
 type Method = 'mp' | 'card'
+type View = 'select' | 'card_form'
 
 function formatDate(iso: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('es-AR', {
@@ -30,6 +32,7 @@ function formatTime(t: string) {
 }
 
 export function PaymentMethodClient({ reservationId, data }: Props) {
+  const [view, setView] = useState<View>('select')
   const [selected, setSelected] = useState<Method | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -104,15 +107,45 @@ export function PaymentMethodClient({ reservationId, data }: Props) {
         </div>
       </div>
 
+      {/* Form de tarjeta */}
+      {view === 'card_form' && (
+        <div className="screen-x space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+              Datos de tu tarjeta
+            </p>
+            <button
+              onClick={() => setView('select')}
+              className="text-[12px] text-tx2 font-semibold underline underline-offset-2"
+            >
+              Cambiar método
+            </button>
+          </div>
+          <CreditCardForm
+            amount={data.depositAmount}
+            submitting={loading}
+            errorMessage={error}
+            onSubmit={() => {
+              // Form válida — redirigimos al checkout MP filtrado a sólo tarjetas.
+              // En una integración full MP Cards SDK, acá se tokenizaría la tarjeta y
+              // se procesaría el pago directamente. Por ahora el form valida datos
+              // client-side y el cobro real lo procesa MP Checkout Pro.
+              handlePay('card')
+            }}
+          />
+        </div>
+      )}
+
       {/* Opciones */}
+      {view === 'select' && (
       <div className="screen-x space-y-3">
         <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
           Método de pago
         </p>
 
-        {/* Tarjeta de crédito / débito — checkout con sólo tarjeta */}
+        {/* Tarjeta de crédito / débito — muestra form inline */}
         <button
-          onClick={() => handlePay('card')}
+          onClick={() => setView('card_form')}
           disabled={loading}
           className={`w-full bg-white rounded-xl border p-4 flex items-center gap-3
                       active:scale-[0.99] transition-all duration-[180ms] disabled:opacity-50
@@ -176,6 +209,7 @@ export function PaymentMethodClient({ reservationId, data }: Props) {
           </div>
         )}
       </div>
+      )}
 
       {/* Seguridad y cancelación */}
       <div className="screen-x mt-6 space-y-3">

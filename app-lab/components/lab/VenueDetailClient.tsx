@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Venue, ServiceHours } from '@/lib/shared'
 import { ReservationWizard } from '@/components/reservation/ReservationWizard'
 import { useFavorites } from '@/lib/favorites'
+import { VenueMap } from './VenueMap'
 
 // ─── Helpers horario / features ──────────────────────────────────────────
 
@@ -101,8 +102,40 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
   const [showWizard, setShowWizard] = useState(false)
   const [showFullMenu, setShowFullMenu] = useState(false)
+  const [shareMsg, setShareMsg] = useState<string | null>(null)
   const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const saved = isFavorite(venue.id)
+
+  async function handleShare() {
+    const url = typeof window !== 'undefined'
+      ? `${window.location.origin}/${venue.id}`
+      : `/${venue.id}`
+    const title = venue.name
+    const text = venue.description
+      ? `${venue.name} — ${venue.description}`
+      : `Mirá este restaurante en ReservaYa: ${venue.name}`
+
+    // Web Share API (iOS Safari, Android Chrome, Edge)
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        await navigator.share({ title, text, url })
+        return
+      } catch (e) {
+        // User cancelled — ignore
+        if ((e as Error)?.name === 'AbortError') return
+      }
+    }
+
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(url)
+      setShareMsg('Link copiado al portapapeles ✓')
+      setTimeout(() => setShareMsg(null), 2500)
+    } catch {
+      setShareMsg('No pudimos copiar el link. Probá de nuevo.')
+      setTimeout(() => setShareMsg(null), 2500)
+    }
+  }
   const pics = gallery(venue)
   const hood = neighborhood(venue.address)
   const deposit = (venue.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 0
@@ -111,6 +144,14 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
 
   return (
     <>
+      {shareMsg && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80]
+                        bg-tx text-white px-4 py-2.5 rounded-full shadow-lg
+                        text-[13px] font-semibold animate-fade-up">
+          {shareMsg}
+        </div>
+      )}
+
       {/* Gallery hero */}
       <div className="relative">
         <div className="relative h-64 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460] overflow-hidden">
@@ -138,7 +179,8 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
             </Link>
             <div className="flex gap-2">
               <button
-                aria-label="Compartir"
+                onClick={handleShare}
+                aria-label="Compartir restaurante"
                 className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm
                            flex items-center justify-center shadow-sm active:scale-95 transition-transform"
               >
@@ -221,6 +263,23 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
             {deposit > 0 && (
               <span className="badge bg-c3l text-[#B78200]">Seña ${deposit.toLocaleString('es-AR')}</span>
             )}
+            {/* Tags dietary: Celíacos, Vegano, Vegetariano */}
+            {((venue.config_json as { dietary?: string[] } | null)?.dietary ?? []).map((d) => {
+              const labels: Record<string, string> = {
+                vegetarian: 'Vegetariano',
+                vegan: 'Vegano',
+                celiaco: 'Celíacos',
+                kosher: 'Kosher',
+                halal: 'Halal',
+              }
+              const label = labels[d]
+              if (!label) return null
+              return (
+                <span key={d} className="badge bg-c5l text-[#6B30CC]">
+                  {label}
+                </span>
+              )
+            })}
           </div>
         </section>
 
@@ -320,6 +379,14 @@ export function VenueDetailClient({ venue, menu = [] }: Props) {
             ))}
           </div>
         </section>
+
+        {/* Mapa + Cómo llegar */}
+        {(() => {
+          const coords = (venue.config_json as { coords?: { lat: number; lng: number } } | null)?.coords
+          return coords ? (
+            <VenueMap name={venue.name} address={venue.address} coords={coords} />
+          ) : null
+        })()}
 
         {/* Política de cancelación visible pre-checkout */}
         <section className="bg-sf rounded-xl p-4 border border-[var(--br)]">

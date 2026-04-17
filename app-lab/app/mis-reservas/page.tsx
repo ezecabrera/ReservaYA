@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/ui/BottomNav'
 import { Countdown } from '@/components/lab/Countdown'
+import { QRDisplay } from '@/components/confirmation/QRDisplay'
+import { ReviewModal } from '@/components/lab/ReviewModal'
 
 interface Reservation {
   id: string
@@ -36,6 +38,13 @@ function formatTime(timeSlot: string): string {
   return timeSlot.slice(0, 5)
 }
 
+/** URL del QR apunta al endpoint de check-in del panel */
+function buildQRUrl(token: string): string {
+  if (typeof window === 'undefined') return ''
+  const panelUrl = process.env.NEXT_PUBLIC_PANEL_URL ?? 'http://localhost:3001'
+  return `${panelUrl}/check-in?token=${encodeURIComponent(token)}`
+}
+
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T12:00:00').toLocaleDateString('es-AR', {
     weekday: 'short', day: 'numeric', month: 'short',
@@ -46,6 +55,16 @@ export default function MisReservasPage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'proximas' | 'pasadas'>('proximas')
+  const [reviewFor, setReviewFor] = useState<Reservation | null>(null)
+  const [reviewed, setReviewed] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('reservaya-reviews')
+      const list = raw ? JSON.parse(raw) : []
+      setReviewed(new Set(list.map((r: { reservation_id: string }) => r.reservation_id)))
+    } catch { /* silent */ }
+  }, [])
 
   useEffect(() => {
     fetch('/api/mis-reservas')
@@ -76,9 +95,9 @@ export default function MisReservasPage() {
         </h1>
       </div>
 
-      {/* Hero countdown para próxima reserva */}
+      {/* Hero countdown + QR para próxima reserva */}
       {!loading && nextUp && tab === 'proximas' && (
-        <div className="screen-x mb-5">
+        <div className="screen-x mb-5 space-y-3">
           <Link
             href={`/reserva/${nextUp.id}/confirmacion`}
             className="block active:scale-[0.99] transition-transform duration-[180ms] space-y-3"
@@ -99,6 +118,19 @@ export default function MisReservasPage() {
             </div>
             <Countdown date={nextUp.date} time={formatTime(nextUp.time_slot)} />
           </Link>
+
+          {/* QR prominente — listo para mostrar en la entrada del local */}
+          {nextUp.qr_token && (
+            <div className="bg-white rounded-2xl p-4 border border-[var(--br)] shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-bold text-tx3 uppercase tracking-[0.15em]">
+                  Tu QR de check-in
+                </p>
+                <span className="badge bg-c2l text-[#0F7A5A]">Listo</span>
+              </div>
+              <QRDisplay value={buildQRUrl(nextUp.qr_token)} />
+            </div>
+          )}
         </div>
       )}
 
@@ -226,10 +258,24 @@ export default function MisReservasPage() {
                     </div>
                   )}
                   {!upcoming && r.status === 'checked_in' && r.venues && (
-                    <div className="mt-3 pt-3 border-t border-[var(--br)]">
+                    <div className="mt-3 pt-3 border-t border-[var(--br)] flex gap-2">
+                      {reviewed.has(r.id) ? (
+                        <span className="flex-1 text-center py-2 rounded-lg bg-c2l text-[#0F7A5A]
+                                         text-[12px] font-bold border border-c2/20">
+                          ✓ Ya dejaste reseña
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setReviewFor(r)}
+                          className="flex-1 text-center py-2 rounded-lg bg-c3 text-white
+                                     text-[12px] font-bold active:scale-95 transition-transform"
+                        >
+                          ★ Dejar reseña
+                        </button>
+                      )}
                       <Link
                         href={`/${r.venues.id}`}
-                        className="block text-center py-2 rounded-lg bg-sf text-tx2
+                        className="flex-1 text-center py-2 rounded-lg bg-sf text-tx2
                                    text-[12px] font-semibold border border-[var(--br)]
                                    active:scale-95 transition-transform"
                       >
@@ -243,6 +289,19 @@ export default function MisReservasPage() {
           })
         )}
       </div>
+
+      {reviewFor && (
+        <ReviewModal
+          open={!!reviewFor}
+          onClose={() => setReviewFor(null)}
+          reservation={{
+            id: reviewFor.id,
+            venueName: reviewFor.venues?.name ?? 'Restaurante',
+            date: reviewFor.date,
+          }}
+          onSubmitted={() => setReviewed((s) => new Set([...s, reviewFor.id]))}
+        />
+      )}
 
       <BottomNav />
     </div>

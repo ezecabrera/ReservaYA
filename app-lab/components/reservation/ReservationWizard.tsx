@@ -1,12 +1,23 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Venue, Table, MenuCategory, MenuItem } from '@/lib/shared'
 import { getAvailableDates, getAvailableTimeSlots, formatDateEs } from '@/lib/shared'
 import { createClient } from '@/lib/supabase/client'
 import { Toast, useToast } from '@/components/ui/Toast'
 import { TableCardSkeleton } from '@/components/ui/Skeleton'
+
+/**
+ * Scroll suave a un elemento con offset para que no quede pegado al header.
+ * AUTO-SCROLL PROGRESIVO: evita que el usuario tenga que scrollear manualmente
+ * al seleccionar fecha → hora → personas → mesa.
+ */
+function scrollToRef(ref: React.RefObject<HTMLElement>, offset = 80) {
+  if (!ref.current) return
+  const y = ref.current.getBoundingClientRect().top + window.scrollY - offset
+  window.scrollTo({ top: y, behavior: 'smooth' })
+}
 
 type WizardStep = 'datetime' | 'table' | 'menu' | 'summary'
 
@@ -48,6 +59,12 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loadingMenu, setLoadingMenu] = useState(false)
   const [lastOrder, setLastOrder] = useState<{ menu_item_id: string; name: string; qty: number; unit_price: number }[]>([])
+  const [showMenuModal, setShowMenuModal] = useState(false)
+
+  // Refs para auto-scroll progresivo en el step datetime
+  const timeRef  = useRef<HTMLDivElement>(null)
+  const partyRef = useRef<HTMLDivElement>(null)
+  const ctaRef   = useRef<HTMLDivElement>(null)
 
   function adjustQty(item: MenuItem, delta: number) {
     setState(s => {
@@ -147,7 +164,14 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
 
   useEffect(() => {
     if (step === 'table') loadTables()
-    if (step === 'menu') loadMenu()
+    if (step === 'menu') {
+      loadMenu()
+      // POP-UP OMITIR MENÚ: al entrar al paso menu, abrir modal inmediatamente
+      // para que el usuario pueda saltar sin scrollear todas las categorías.
+      setShowMenuModal(true)
+    }
+    // Al cambiar de step, scroll arriba
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [step, loadTables, loadMenu])
 
   async function handleSelectTable(table: Table) {
@@ -233,10 +257,28 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
     }
   }
 
+  // Progreso 1/4 → 2/4 → 3/4 → 4/4
+  const stepNum = step === 'datetime' ? 1 : step === 'table' ? 2 : step === 'menu' ? 3 : 4
+  const progressBar = (
+    <div className="mb-5">
+      <div className="flex items-center gap-1 mb-2">
+        {[1, 2, 3, 4].map((n) => (
+          <div key={n}
+               className={`h-1 flex-1 rounded-full transition-colors duration-300
+                          ${n <= stepNum ? 'bg-c1' : 'bg-sf2'}`} />
+        ))}
+      </div>
+      <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+        Paso {stepNum} de 4 · {step === 'datetime' ? 'Cuándo' : step === 'table' ? 'Mesa' : step === 'menu' ? 'Menú' : 'Confirmar'}
+      </p>
+    </div>
+  )
+
   // ─── STEP: DATE / TIME / PARTY SIZE ───────────────────────────────────────
   if (step === 'datetime') {
     return (
       <div className="space-y-6">
+        {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
         {/* Fecha */}
@@ -252,7 +294,11 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
               return (
                 <button
                   key={d}
-                  onClick={() => setState(s => ({ ...s, date: d, timeSlot: null }))}
+                  onClick={() => {
+                    setState(s => ({ ...s, date: d, timeSlot: null }))
+                    // Auto-scroll al selector de horario
+                    setTimeout(() => scrollToRef(timeRef), 150)
+                  }}
                   className={`flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl
                               px-3 py-2.5 min-w-[56px] border-2 transition-all duration-[180ms]
                               ${isSelected
@@ -271,7 +317,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
 
         {/* Horarios */}
         {state.date && (
-          <div>
+          <div ref={timeRef} className="scroll-mt-20">
             <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Horario</p>
             {availableSlots.length === 0 ? (
               <div className="bg-c3l border border-[rgba(255,184,0,0.3)] rounded-xl p-4 text-center">
@@ -284,7 +330,11 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                 {availableSlots.map((slot) => (
                   <button
                     key={slot}
-                    onClick={() => setState(s => ({ ...s, timeSlot: slot }))}
+                    onClick={() => {
+                      setState(s => ({ ...s, timeSlot: slot }))
+                      // Auto-scroll al selector de personas
+                      setTimeout(() => scrollToRef(partyRef), 150)
+                    }}
                     className={`chip ${state.timeSlot === slot ? 'chip-active' : ''}`}
                   >
                     {slot} hs
@@ -297,13 +347,17 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
 
         {/* Personas */}
         {state.timeSlot && (
-          <div>
+          <div ref={partyRef} className="scroll-mt-20">
             <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Personas</p>
             <div className="flex gap-2 flex-wrap">
               {PARTY_SIZES.map((n) => (
                 <button
                   key={n}
-                  onClick={() => setState(s => ({ ...s, partySize: n }))}
+                  onClick={() => {
+                    setState(s => ({ ...s, partySize: n }))
+                    // Auto-scroll al CTA
+                    setTimeout(() => scrollToRef(ctaRef), 150)
+                  }}
                   className={`w-11 h-11 rounded-full font-bold text-[15px] border-2
                               transition-all duration-[180ms]
                               ${state.partySize === n
@@ -320,12 +374,14 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
 
         {/* CTA */}
         {state.date && state.timeSlot && (
-          <button
-            onClick={() => setStep('table')}
-            className="btn-primary"
-          >
-            Ver mesas disponibles
-          </button>
+          <div ref={ctaRef} className="scroll-mt-20">
+            <button
+              onClick={() => setStep('table')}
+              className="btn-primary"
+            >
+              Ver mesas disponibles
+            </button>
+          </div>
         )}
       </div>
     )
@@ -335,6 +391,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   if (step === 'table') {
     return (
       <div className="space-y-5">
+        {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
         <div className="flex items-center gap-3">
@@ -408,8 +465,55 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
     const orderTotal = state.orderItems.reduce((sum, i) => sum + i.qty * i.unit_price, 0)
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-5 relative">
+        {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
+
+        {/* MODAL OMITIR PRE-PEDIDO — aparece al entrar al step menu */}
+        {showMenuModal && (
+          <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4">
+            <button
+              aria-label="Cerrar"
+              onClick={() => setShowMenuModal(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+            <div className="relative bg-bg rounded-2xl w-full max-w-md p-6
+                            shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+              <div className="w-14 h-14 rounded-full bg-c3l flex items-center justify-center mx-auto mb-3">
+                <span className="text-[28px]">🍽️</span>
+              </div>
+              <h3 className="font-display text-[20px] font-bold text-tx text-center">
+                ¿Pre-pedir tu menú?
+              </h3>
+              <p className="text-tx2 text-[14px] text-center mt-2 leading-relaxed">
+                Podés adelantar tu pedido para que el restaurante lo tenga listo al llegar.
+                O seguir y pedirlo ahí.
+              </p>
+              <div className="mt-6 space-y-2.5">
+                <button
+                  onClick={() => setShowMenuModal(false)}
+                  className="btn-primary"
+                >
+                  Ver menú
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenuModal(false)
+                    setStep('summary')
+                  }}
+                  className="w-full bg-sf text-tx font-semibold text-[15px] py-[15px] px-6
+                             rounded-md border border-[var(--br)]
+                             active:scale-[0.97] transition-transform duration-[180ms]"
+                >
+                  Continuar sin pre-pedido
+                </button>
+              </div>
+              <p className="text-center text-tx3 text-[11px] mt-4">
+                Podés cambiar esto después
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <button onClick={() => setStep('table')}
@@ -548,6 +652,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   // ─── STEP: RESUMEN + CONFIRMAR ─────────────────────────────────────────────
   return (
     <div className="space-y-4">
+      {progressBar}
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
       <div className="flex items-center gap-3">

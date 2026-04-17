@@ -6,6 +6,7 @@ export interface FilterState {
   sort: 'relevance' | 'nearby' | 'reputation' | 'available'
   meal: string[]         // desayuno / almuerzo / merienda / cena / late night
   cuisines: string[]     // pastas / carnes / pizza / vegano / sushi
+  dietary: string[]      // vegetarian / vegan / celiaco / kosher / halal
   price: string[]
   ambience: string[]
   features: string[]
@@ -33,6 +34,13 @@ const CUISINE_OPTS: Array<{ key: string; label: string; emoji: string }> = [
   { key: 'vegano', label: 'Vegano', emoji: '🥗' },
   { key: 'sushi',  label: 'Sushi',  emoji: '🍣' },
 ]
+const DIETARY_OPTS: Array<{ key: string; label: string; emoji: string }> = [
+  { key: 'vegetarian', label: 'Vegetariano', emoji: '🥗' },
+  { key: 'vegan',      label: 'Vegano',      emoji: '🌱' },
+  { key: 'celiaco',    label: 'Celíacos',    emoji: '🌾' },
+  { key: 'kosher',     label: 'Kosher',      emoji: '✡️' },
+  { key: 'halal',      label: 'Halal',       emoji: '☪️' },
+]
 const PROMO_OPTS: Array<{ key: string; label: string; emoji: string }> = [
   { key: 'happy_hour',    label: 'Happy Hour',        emoji: '🥂' },
   { key: 'promo',         label: 'Con descuento',     emoji: '💸' },
@@ -45,7 +53,7 @@ const FEATURES = ['Terraza', 'Patio', 'Barra', 'Privado', 'Pet-friendly', 'Celí
 const NEIGHBORHOODS = ['Palermo', 'Villa Crespo', 'Recoleta', 'San Telmo', 'Caballito', 'Belgrano', 'Núñez', 'Almagro', 'Boedo', 'Chacarita', 'Colegiales', 'Puerto Madero']
 
 export const EMPTY_FILTERS: FilterState = {
-  sort: 'relevance', meal: [], cuisines: [], price: [],
+  sort: 'relevance', meal: [], cuisines: [], dietary: [], price: [],
   ambience: [], features: [], neighborhoods: [], promos: [],
 }
 
@@ -62,7 +70,7 @@ export function FiltersSheet({ open, onClose, value, onChange }: Props) {
 
   if (!open) return null
 
-  type ArrKeys = 'meal' | 'cuisines' | 'price' | 'ambience' | 'features' | 'neighborhoods' | 'promos'
+  type ArrKeys = 'meal' | 'cuisines' | 'dietary' | 'price' | 'ambience' | 'features' | 'neighborhoods' | 'promos'
   function toggle(key: ArrKeys, val: string) {
     const cur = local[key]
     setLocal({
@@ -72,7 +80,7 @@ export function FiltersSheet({ open, onClose, value, onChange }: Props) {
   }
 
   function countActive(f: FilterState) {
-    return f.meal.length + f.cuisines.length + f.price.length +
+    return f.meal.length + f.cuisines.length + f.dietary.length + f.price.length +
            f.ambience.length + f.features.length + f.neighborhoods.length + f.promos.length
   }
 
@@ -129,6 +137,19 @@ export function FiltersSheet({ open, onClose, value, onChange }: Props) {
                   active={local.cuisines.includes(c.key)}
                   onClick={() => toggle('cuisines', c.key)}
                   label={`${c.emoji} ${c.label}`}
+                />
+              ))}
+            </div>
+          </Section>
+
+          <Section title="Dieta / restricciones">
+            <div className="flex flex-wrap gap-2">
+              {DIETARY_OPTS.map((d) => (
+                <Chip
+                  key={d.key}
+                  active={local.dietary.includes(d.key)}
+                  onClick={() => toggle('dietary', d.key)}
+                  label={`${d.emoji} ${d.label}`}
                 />
               ))}
             </div>

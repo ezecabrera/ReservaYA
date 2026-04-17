@@ -11,6 +11,7 @@ import { VenueCardLab } from './VenueCardLab'
 import { LiveReviewsStrip } from './LiveReviewsStrip'
 import { EditorialBand } from './EditorialBand'
 import { MapPreview } from './MapPreview'
+import { NotificationsSheet, useUnreadCount } from './NotificationsSheet'
 
 interface Props {
   venues: Venue[]
@@ -59,6 +60,8 @@ export function HomeClient({ venues }: Props) {
 
   const eyebrow = eyebrowByHour()
   const geo = useGeolocation()
+  const [notifsOpen, setNotifsOpen] = useState(false)
+  const unreadCount = useUnreadCount()
 
   // Counts por cocina
   const counts = useMemo(() => {
@@ -89,6 +92,12 @@ export function HomeClient({ venues }: Props) {
     if (filters.neighborhoods.length > 0) {
       list = list.filter((v) => filters.neighborhoods.includes(venueNeighborhood(v)))
     }
+    if (filters.dietary.length > 0) {
+      list = list.filter((v) => {
+        const d = (v.config_json as { dietary?: string[] } | null)?.dietary ?? []
+        return filters.dietary.every((x) => d.includes(x))
+      })
+    }
     // Ordenamiento
     if (filters.sort === 'nearby' && geo.location) {
       list.sort((a, b) => {
@@ -114,8 +123,8 @@ export function HomeClient({ venues }: Props) {
   }
 
   const activeFiltersCount =
-    filters.meal.length + filters.cuisines.length + filters.price.length +
-    filters.ambience.length + filters.features.length +
+    filters.meal.length + filters.cuisines.length + filters.dietary.length +
+    filters.price.length + filters.ambience.length + filters.features.length +
     filters.neighborhoods.length + filters.promos.length
 
   const hero = filtered[0]
@@ -138,8 +147,9 @@ export function HomeClient({ venues }: Props) {
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="badge bg-c3l text-[#B78200] text-[10px]">LAB</span>
             <button
-              aria-label="Notificaciones"
-              className="w-10 h-10 rounded-full bg-sf flex items-center justify-center
+              onClick={() => setNotifsOpen(true)}
+              aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
+              className="relative w-10 h-10 rounded-full bg-sf flex items-center justify-center
                          border border-[var(--br)] active:scale-95 transition-transform duration-[180ms]"
             >
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
@@ -148,6 +158,13 @@ export function HomeClient({ venues }: Props) {
                   stroke="var(--tx2)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
                 />
               </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1
+                                 rounded-full bg-c1 text-white text-[9px] font-bold
+                                 flex items-center justify-center border-2 border-bg">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -385,6 +402,12 @@ export function HomeClient({ venues }: Props) {
         onClose={() => setFiltersOpen(false)}
         value={filters}
         onChange={setFilters}
+      />
+
+      {/* Bottom sheet de notificaciones */}
+      <NotificationsSheet
+        open={notifsOpen}
+        onClose={() => setNotifsOpen(false)}
       />
     </>
   )
