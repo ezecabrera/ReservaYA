@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "dev:app": "turbo run dev --filter=@reservaya/app",
+    "dev:app-lab": "turbo run dev --filter=@reservaya/app-lab",
     "dev:panel": "turbo run dev --filter=@reservaya/panel",
     "build": "turbo run build",
     "lint": "turbo run lint",
