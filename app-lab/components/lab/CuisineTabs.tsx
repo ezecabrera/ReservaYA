@@ -24,7 +24,9 @@ interface Props {
 
 export function CuisineTabs({ value, onChange, counts }: Props) {
   return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-[18px] px-[18px] pb-1">
+    // Sin -mx negativo para que el primer chip no sobresalga del viewport
+    // cuando está activo (el shadow bleedeaba al borde de la pantalla).
+    <div className="flex gap-2 overflow-x-auto no-scrollbar px-[18px] pb-2 pt-0.5">
       {TABS.map((t) => {
         const active = value === t.key
         const count = counts?.[t.key]
@@ -35,13 +37,13 @@ export function CuisineTabs({ value, onChange, counts }: Props) {
             className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full
                         border text-[13px] font-semibold transition-all duration-[180ms]
                         ${active
-                          ? 'bg-tx text-white border-tx shadow-[0_4px_12px_rgba(0,0,0,0.15)]'
-                          : 'bg-white text-tx2 border-[var(--br)]'}`}
+                          ? 'bg-c1 text-white border-c1 shadow-[0_4px_12px_rgba(255,71,87,0.25)]'
+                          : 'bg-white text-tx2 border-[var(--br)] active:scale-95'}`}
           >
             <span className="text-[14px]">{t.emoji}</span>
             <span>{t.label}</span>
             {count !== undefined && (
-              <span className={`text-[10px] font-bold ${active ? 'text-white/70' : 'text-tx3'}`}>
+              <span className={`text-[10px] font-bold ${active ? 'text-white/80' : 'text-tx3'}`}>
                 {count}
               </span>
             )}

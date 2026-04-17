@@ -104,6 +104,47 @@ function buildGallery(seed) {
   ]
 }
 
+// Centroides aproximados por barrio CABA — suficiente para ordenar
+// por distancia en el piloto. Para producción real: geocodificar la
+// address exacta con Mapbox/Google Geocoding.
+const NEIGHBORHOOD_COORDS = {
+  'Palermo':        { lat: -34.5880, lng: -58.4300 },
+  'Palermo Soho':   { lat: -34.5880, lng: -58.4315 },
+  'Palermo Hollywood': { lat: -34.5840, lng: -58.4440 },
+  'Villa Crespo':   { lat: -34.5990, lng: -58.4430 },
+  'Recoleta':       { lat: -34.5890, lng: -58.3930 },
+  'San Telmo':      { lat: -34.6210, lng: -58.3710 },
+  'Caballito':      { lat: -34.6180, lng: -58.4420 },
+  'Belgrano':       { lat: -34.5610, lng: -58.4580 },
+  'Núñez':          { lat: -34.5460, lng: -58.4590 },
+  'Almagro':        { lat: -34.6100, lng: -58.4200 },
+  'Boedo':          { lat: -34.6250, lng: -58.4150 },
+  'Chacarita':      { lat: -34.5830, lng: -58.4540 },
+  'Colegiales':     { lat: -34.5740, lng: -58.4480 },
+  'Puerto Madero':  { lat: -34.6130, lng: -58.3640 },
+  'Coghlan':        { lat: -34.5620, lng: -58.4790 },
+  'Villa Urquiza':  { lat: -34.5720, lng: -58.4930 },
+}
+
+function coordsFor(hood) {
+  // Match exacto o partial (ej. "Palermo Soho" busca en map primero)
+  if (NEIGHBORHOOD_COORDS[hood]) return NEIGHBORHOOD_COORDS[hood]
+  for (const key of Object.keys(NEIGHBORHOOD_COORDS)) {
+    if (hood.includes(key) || key.includes(hood)) return NEIGHBORHOOD_COORDS[key]
+  }
+  // Fallback centro CABA
+  return { lat: -34.6037, lng: -58.3816 }
+}
+
+// Jitter determinístico para que no caigan todos en el mismo pin
+function jitter(id) {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0
+  const dx = ((h & 0xff) - 128) / 10000           // ±0.013°
+  const dy = (((h >> 8) & 0xff) - 128) / 10000
+  return { dx, dy }
+}
+
 // ─── Run ──────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -136,6 +177,9 @@ async function main() {
     const dietary  = [...new Set([...(preset.dietary  ?? []), ...(override.dietary_add  ?? [])])]
     const price_tier = override.price_tier ?? preset.price_tier
     const neighborhood = (v.address.match(/,\s*([^,]+),\s*CABA/i)?.[1] ?? '').trim()
+    const base = coordsFor(neighborhood)
+    const { dx, dy } = jitter(v.id)
+    const coords = { lat: base.lat + dy, lng: base.lng + dx }
 
     const merged = {
       ...current.config_json,
@@ -145,6 +189,7 @@ async function main() {
       price_tier,
       neighborhood,
       gallery_urls: buildGallery(v.image_seed),
+      coords,
     }
 
     const { error } = await admin
@@ -158,7 +203,7 @@ async function main() {
     }
     console.log(
       `  ${String(n).padStart(2, '0')} ${v.name.padEnd(28)} · ` +
-      `tier=${price_tier} · features=${features.length} · ambience=${ambience.length} · dietary=${dietary.length}`
+      `tier=${price_tier} · ${neighborhood.padEnd(14)} · lat=${coords.lat.toFixed(4)} lng=${coords.lng.toFixed(4)}`
     )
   }
 

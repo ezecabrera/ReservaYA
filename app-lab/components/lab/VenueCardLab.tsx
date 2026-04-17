@@ -42,6 +42,11 @@ function cuisineEmoji(v: Venue): string {
   return (c && map[c]) || '🍽️'
 }
 
+function formatDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`
+  return `${km.toFixed(1)} km`
+}
+
 function priceTierOf(v: Venue): 1 | 2 | 3 | 4 {
   const cfg = v.config_json as { price_tier?: number; deposit_amount?: number } | null
   if (cfg?.price_tier && cfg.price_tier >= 1 && cfg.price_tier <= 4) return cfg.price_tier as 1 | 2 | 3 | 4
@@ -133,6 +138,9 @@ export function VenueCardLab({
             </h2>
             <p className="text-white/80 text-[12px] drop-shadow-md">
               {hood && `${hood} · `}<PriceTier tier={tier} />
+              {typeof distanceKm === 'number' && (
+                <span className="ml-1">· {formatDistance(distanceKm)}</span>
+              )}
             </p>
           </div>
         </div>
@@ -183,7 +191,7 @@ export function VenueCardLab({
               <span className="text-[10px] text-tx3">· Seña</span>
             )}
             {typeof distanceKm === 'number' && (
-              <span className="text-[10px] text-tx3">· {distanceKm.toFixed(1)} km</span>
+              <span className="text-[10px] text-tx3">· {formatDistance(distanceKm)}</span>
             )}
           </div>
         </div>
@@ -230,6 +238,9 @@ export function VenueCardLab({
             <p className="font-bold text-[15px] text-tx truncate">{venue.name}</p>
             <p className="text-[12px] text-tx3 truncate">
               {hood && `${hood} · `}<PriceTier tier={tier} />
+              {typeof distanceKm === 'number' && (
+                <span className="ml-1">· {formatDistance(distanceKm)}</span>
+              )}
             </p>
           </div>
           <NewBadge />

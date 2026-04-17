@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { Venue } from '@/lib/shared'
+import { useGeolocation, distanceKm } from '@/lib/geolocation'
 import { SearchPill } from './SearchPill'
 import { FiltersSheet, type FilterState, EMPTY_FILTERS } from './FiltersSheet'
 import { CuisineTabs } from './CuisineTabs'
@@ -34,6 +35,11 @@ function venueNeighborhood(v: Venue): string {
   return m ? m[1].trim() : ''
 }
 
+function venueCoords(v: Venue): { lat: number; lng: number } | null {
+  const c = (v.config_json as { coords?: { lat: number; lng: number } } | null)?.coords
+  return c && typeof c.lat === 'number' && typeof c.lng === 'number' ? c : null
+}
+
 function eyebrowByHour(): string {
   const h = new Date().getHours()
   if (h < 11) return 'Buen día'
@@ -52,6 +58,7 @@ export function HomeClient({ venues }: Props) {
   const [query, setQuery] = useState('')
 
   const eyebrow = eyebrowByHour()
+  const geo = useGeolocation()
 
   // Counts por cocina
   const counts = useMemo(() => {
@@ -83,13 +90,28 @@ export function HomeClient({ venues }: Props) {
       list = list.filter((v) => filters.neighborhoods.includes(venueNeighborhood(v)))
     }
     // Ordenamiento
-    if (filters.sort === 'reputation') {
+    if (filters.sort === 'nearby' && geo.location) {
+      list.sort((a, b) => {
+        const ca = venueCoords(a), cb = venueCoords(b)
+        if (!ca && !cb) return 0
+        if (!ca) return 1
+        if (!cb) return -1
+        return distanceKm(geo.location!, ca) - distanceKm(geo.location!, cb)
+      })
+    } else if (filters.sort === 'reputation') {
       list.sort((a, b) => (a.name < b.name ? 1 : -1))
     } else if (filters.sort === 'available') {
       list.sort((a, b) => mockSlots(b.id).length - mockSlots(a.id).length)
     }
     return list
-  }, [venues, cuisine, filters, query])
+  }, [venues, cuisine, filters, query, geo.location])
+
+  // Helper: distancia de un venue al usuario (o undefined)
+  const distTo = (v: Venue): number | undefined => {
+    if (!geo.location) return undefined
+    const c = venueCoords(v)
+    return c ? distanceKm(geo.location, c) : undefined
+  }
 
   const activeFiltersCount =
     filters.meal.length + filters.cuisines.length + filters.price.length +
@@ -130,8 +152,8 @@ export function HomeClient({ venues }: Props) {
           </div>
         </div>
 
-        {/* Filtro compacto blanco debajo del H1 */}
-        <div className="mt-3 flex items-center gap-2">
+        {/* Filtros + Cerca mío + Lista/Mapa */}
+        <div className="mt-3 flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setFiltersOpen(true)}
             className="inline-flex items-center gap-2 bg-white border border-[var(--br)]
@@ -149,8 +171,42 @@ export function HomeClient({ venues }: Props) {
               </span>
             )}
           </button>
+
+          {/* Cerca mío */}
+          <button
+            onClick={() => {
+              if (geo.location) {
+                geo.clear()
+                if (filters.sort === 'nearby') setFilters({ ...filters, sort: 'relevance' })
+              } else {
+                geo.request()
+                setFilters({ ...filters, sort: 'nearby' })
+              }
+            }}
+            disabled={geo.status === 'requesting'}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px]
+                        font-semibold shadow-sm active:scale-95 transition-all duration-[180ms]
+                        disabled:opacity-60
+                        ${geo.location
+                          ? 'bg-c4 text-white border border-c4'
+                          : 'bg-white text-tx border border-[var(--br)]'}`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 21s-7-6.6-7-12a7 7 0 1114 0c0 5.4-7 12-7 12z"
+                    stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
+            </svg>
+            {geo.status === 'requesting' ? 'Obteniendo…' : geo.location ? 'Cerca mío' : 'Cerca mío'}
+          </button>
+
           <ListMapToggle value={view} onChange={setView} />
         </div>
+
+        {geo.status === 'denied' && (
+          <p className="mt-2 text-[12px] text-[#D63646]">
+            Permiso denegado. Activalo desde el ícono de ubicación del navegador.
+          </p>
+        )}
       </header>
 
       {/* Hero venue (primera pantalla) */}
@@ -167,7 +223,7 @@ export function HomeClient({ venues }: Props) {
               </span>
             )}
           </div>
-          <VenueCardLab venue={hero} variant="hero" availableSlots={mockSlots(hero.id)} />
+          <VenueCardLab venue={hero} variant="hero" availableSlots={mockSlots(hero.id)} distanceKm={distTo(hero)} />
         </div>
       ) : (
         <div className="screen-x mt-3 mb-5 text-center py-8 bg-sf rounded-xl border border-[var(--br)]">
@@ -296,7 +352,7 @@ export function HomeClient({ venues }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {rest.slice(0, 6).map((v) => (
-                  <VenueCardLab key={v.id} venue={v} variant="standard" availableSlots={mockSlots(v.id)} />
+                  <VenueCardLab key={v.id} venue={v} variant="standard" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} />
                 ))}
               </div>
             </section>
@@ -315,7 +371,7 @@ export function HomeClient({ venues }: Props) {
               </h2>
               <div className="space-y-2">
                 {rest.slice(6).map((v) => (
-                  <VenueCardLab key={v.id} venue={v} variant="compact" availableSlots={mockSlots(v.id)} />
+                  <VenueCardLab key={v.id} venue={v} variant="compact" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} />
                 ))}
               </div>
             </section>

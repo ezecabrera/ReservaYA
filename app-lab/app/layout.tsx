@@ -18,15 +18,30 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: 'ReservaYa · Lab',
-  description: 'Reservá tu mesa sin descargar ninguna app — versión experimental',
+  description: 'Reservá tu mesa en segundos — restaurantes de Buenos Aires',
   manifest: '/manifest.json',
+  applicationName: 'ReservaYa',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'ReservaYa Lab',
+    statusBarStyle: 'black-translucent',
+    title: 'ReservaYa',
+  },
+  formatDetection: {
+    telephone: false,
   },
   icons: {
-    apple: '/icons/apple-touch-icon.png',
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180' },
+    ],
+    shortcut: '/icons/apple-touch-icon.png',
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'mobile-web-app-capable': 'yes',
   },
 }
 
