@@ -299,7 +299,7 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
     const ctaActive   = !!state.date && !!state.timeSlot
 
     return (
-      <div className="space-y-5 pb-24">
+      <div className="space-y-5 pb-44">
         {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
@@ -441,17 +441,21 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
           )}
         </section>
 
-        {/* ─── CTA sticky al fondo ─── */}
+        {/* ─── CTA sticky ARRIBA del BottomNav (no overlap, no bleed coral) ─── */}
         <div
           ref={ctaRef}
-          className="fixed bottom-0 left-0 right-0 z-40 px-[18px] pt-2 pb-[max(16px,env(safe-area-inset-bottom))]
-                     bg-gradient-to-t from-bg via-bg/95 to-bg/0 backdrop-blur-sm
-                     pointer-events-none"
+          className="fixed left-0 right-0 z-40 px-[18px] py-2
+                     bg-bg/95 backdrop-blur-md border-t border-[var(--br)]"
+          style={{
+            // El BottomNav mide ~72px + safe-area bottom. Posicionamos el CTA
+            // justo encima para que no se tapen visualmente.
+            bottom: 'calc(72px + env(safe-area-inset-bottom, 18px))',
+          }}
         >
           <button
             onClick={() => setStep('table')}
             disabled={!ctaActive}
-            className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed pointer-events-auto"
+            className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {ctaActive ? 'Ver mesas disponibles →' : 'Elegí fecha, horario y personas'}
           </button>
