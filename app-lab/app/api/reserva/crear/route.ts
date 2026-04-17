@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+
+/** Admin client para ops que no pasan la RLS del anon user
+ *  (ej. update de table_locks cuando auth.is_staff_of() no existe). */
+function adminClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } },
+  )
+}
 
 /**
  * POST /api/reserva/crear
@@ -87,9 +98,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Error al crear la reserva' }, { status: 500 })
   }
 
-  // Actualizar lock: tipo payment, 10 min, vinculado a la reserva
+  // Actualizar lock: tipo payment, 10 min, vinculado a la reserva.
+  // Usamos admin client porque la policy table_locks_staff_manage usa
+  // auth.is_staff_of() que no está creada en schema auth de la DB actual.
+  const admin = adminClient()
   const paymentLockExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString()
-  await supabase
+  await admin
     .from('table_locks')
     .update({
       type: 'payment',
