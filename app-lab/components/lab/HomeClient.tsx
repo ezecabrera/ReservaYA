@@ -34,13 +34,13 @@ function venueNeighborhood(v: Venue): string {
   return m ? m[1].trim() : ''
 }
 
-function greetingByHour(): { eyebrow: string; cta: string } {
+function eyebrowByHour(): string {
   const h = new Date().getHours()
-  if (h < 11) return { eyebrow: 'Buen día', cta: 'Dónde desayunar' }
-  if (h < 15) return { eyebrow: 'Mediodía', cta: 'Dónde almorzar' }
-  if (h < 19) return { eyebrow: 'Tarde', cta: 'Dónde merendar' }
-  if (h < 23) return { eyebrow: 'Esta noche', cta: 'Dónde cenar' }
-  return { eyebrow: 'Late night', cta: 'Todavía abiertos' }
+  if (h < 11) return 'Buen día'
+  if (h < 15) return 'Mediodía'
+  if (h < 19) return 'Tarde'
+  if (h < 23) return 'Esta noche'
+  return 'Late night'
 }
 
 export function HomeClient({ venues }: Props) {
@@ -51,7 +51,7 @@ export function HomeClient({ venues }: Props) {
   const [activeMapId, setActiveMapId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
-  const greeting = greetingByHour()
+  const eyebrow = eyebrowByHour()
 
   // Counts por cocina
   const counts = useMemo(() => {
@@ -102,15 +102,15 @@ export function HomeClient({ venues }: Props) {
 
   return (
     <>
-      {/* Header compacto (sticky sobre scroll no, lo dejamos simple en mobile) */}
+      {/* Header compacto */}
       <header className="screen-x pt-8 pb-2">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
             <p className="text-tx3 text-[11px] font-bold uppercase tracking-wider">
-              {greeting.eyebrow} · Buenos Aires
+              {eyebrow} · Buenos Aires
             </p>
             <h1 className="font-display text-[26px] font-bold text-tx tracking-tight leading-tight">
-              {greeting.cta}
+              ¿Qué sale?
             </h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -128,6 +128,28 @@ export function HomeClient({ venues }: Props) {
               </svg>
             </button>
           </div>
+        </div>
+
+        {/* Filtro compacto blanco debajo del H1 */}
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            onClick={() => setFiltersOpen(true)}
+            className="inline-flex items-center gap-2 bg-white border border-[var(--br)]
+                       rounded-full px-4 py-2 text-[13px] font-semibold text-tx
+                       shadow-sm active:scale-95 transition-transform duration-[180ms]"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Filtros
+            {activeFiltersCount > 0 && (
+              <span className="ml-1 bg-c1 text-white text-[10px] font-bold
+                               rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+          <ListMapToggle value={view} onChange={setView} />
         </div>
       </header>
 
@@ -207,33 +229,6 @@ export function HomeClient({ venues }: Props) {
       {/* Cuisine tabs */}
       <div className="mb-3">
         <CuisineTabs value={cuisine} onChange={setCuisine} counts={counts} />
-      </div>
-
-      {/* Filters bar — grande y prominente */}
-      <div className="screen-x flex items-center gap-2 mb-4">
-        <button
-          onClick={() => setFiltersOpen(true)}
-          className="flex-1 flex items-center gap-2.5 bg-tx text-white
-                     rounded-full px-4 py-3 text-[14px] font-bold
-                     shadow-[0_4px_16px_rgba(0,0,0,0.15)]
-                     active:scale-[0.98] transition-transform duration-[180ms]"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          <span>Filtros</span>
-          {activeFiltersCount > 0 ? (
-            <span className="ml-auto bg-c1 text-white text-[11px] font-bold
-                             rounded-full px-2 py-0.5 min-w-[22px] text-center">
-              {activeFiltersCount} activos
-            </span>
-          ) : (
-            <span className="ml-auto text-white/60 text-[12px] font-semibold">
-              Momento · cocina · zona · promos
-            </span>
-          )}
-        </button>
-        <ListMapToggle value={view} onChange={setView} />
       </div>
 
       {/* Filtros rápidos activos (chips de lo seleccionado) */}
