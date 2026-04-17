@@ -45,8 +45,14 @@ function venueFeatures(venue: Venue): VenueFeature[] {
   return features.map((k) => FEATURE_LIB[k]).filter((f): f is VenueFeature => !!f).slice(0, 6)
 }
 
+export type MenuPreview = Array<{
+  name: string
+  items: Array<{ name: string; price: number; description: string | null }>
+}>
+
 interface Props {
   venue: Venue
+  menu?: MenuPreview
 }
 
 function cuisineLabel(v: Venue): string {
@@ -71,8 +77,10 @@ function neighborhood(address: string): string {
   return m ? m[1].trim() : ''
 }
 
-// Genera galería "fake" variando el seed base
+// Galería desde config_json.gallery_urls o fallback derivado del image_url
 function gallery(venue: Venue): string[] {
+  const configGallery = (venue.config_json as { gallery_urls?: string[] } | null)?.gallery_urls
+  if (configGallery && configGallery.length > 0) return configGallery
   if (!venue.image_url) return []
   const base = venue.image_url.match(/\/seed\/([^/]+)/)?.[1]
   if (!base) return [venue.image_url]
@@ -88,9 +96,10 @@ function gallery(venue: Venue): string[] {
 // Mostramos empty state verificable en vez de datos ficticios que erosionan confianza.
 const DEMO_REVIEWS: Array<{ name: string; date: string; score: number; text: string }> = []
 
-export function VenueDetailClient({ venue }: Props) {
+export function VenueDetailClient({ venue, menu = [] }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
   const [showWizard, setShowWizard] = useState(false)
+  const [showFullMenu, setShowFullMenu] = useState(false)
   const pics = gallery(venue)
   const hood = neighborhood(venue.address)
   const deposit = (venue.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 0
@@ -247,6 +256,52 @@ export function VenueDetailClient({ venue }: Props) {
             </div>
             <p className="text-tx3 text-[12px] mt-2">
               Elegí tu sector preferido al reservar.
+            </p>
+          </section>
+        )}
+
+        {/* Menú preview */}
+        {menu.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-[17px] font-bold text-tx">La carta</h2>
+              {menu.length > 2 && (
+                <button
+                  onClick={() => setShowFullMenu((v) => !v)}
+                  className="text-[12px] font-semibold text-c1 underline underline-offset-2"
+                >
+                  {showFullMenu ? 'Ver menos' : `Ver toda (${menu.length} secciones)`}
+                </button>
+              )}
+            </div>
+            <div className="space-y-4">
+              {(showFullMenu ? menu : menu.slice(0, 2)).map((cat) => (
+                <div key={cat.name} className="bg-white rounded-xl p-4 border border-[var(--br)]">
+                  <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2.5">
+                    {cat.name}
+                  </p>
+                  <ul className="space-y-2.5">
+                    {cat.items.map((it) => (
+                      <li key={it.name} className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-tx truncate">{it.name}</p>
+                          {it.description && (
+                            <p className="text-[12px] text-tx2 mt-0.5 line-clamp-2 leading-snug">
+                              {it.description}
+                            </p>
+                          )}
+                        </div>
+                        <span className="font-display font-bold text-tx text-[15px] tabular-nums flex-shrink-0">
+                          ${it.price.toLocaleString('es-AR')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-tx3 mt-2 text-center">
+              Los precios pueden variar. Consultá al llegar.
             </p>
           </section>
         )}

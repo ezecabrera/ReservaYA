@@ -39,8 +39,10 @@ function cuisineEmoji(v: Venue): string {
   return (c && map[c]) || '🍽️'
 }
 
-function mockPriceTier(v: Venue): 1 | 2 | 3 | 4 {
-  const deposit = (v.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 1500
+function priceTierOf(v: Venue): 1 | 2 | 3 | 4 {
+  const cfg = v.config_json as { price_tier?: number; deposit_amount?: number } | null
+  if (cfg?.price_tier && cfg.price_tier >= 1 && cfg.price_tier <= 4) return cfg.price_tier as 1 | 2 | 3 | 4
+  const deposit = cfg?.deposit_amount ?? 1500
   if (deposit >= 4000) return 4
   if (deposit >= 2500) return 3
   if (deposit >= 1500) return 2
@@ -71,7 +73,7 @@ export function VenueCardLab({
   venue, variant = 'standard', availableSlots,
   priceTier, hasDeposit, distanceKm,
 }: Props) {
-  const tier = priceTier ?? mockPriceTier(venue)
+  const tier = priceTier ?? priceTierOf(venue)
   const cuisine = cuisineLabel(venue)
   const hood = neighborhood(venue.address)
   const deposit = hasDeposit ?? ((venue.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 0) > 0

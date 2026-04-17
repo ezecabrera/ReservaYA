@@ -12,7 +12,8 @@
     "type-check": "turbo run type-check",
     "clean": "turbo run clean",
     "seed:demo": "node scripts/seed-demo.mjs",
-    "seed:demo:reset": "node scripts/seed-demo-reset.mjs"
+    "seed:demo:reset": "node scripts/seed-demo-reset.mjs",
+    "upgrade:metadata": "node scripts/upgrade-venue-metadata.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.45.4",
