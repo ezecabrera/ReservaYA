@@ -114,10 +114,10 @@ export function VenueCardLab({
         <div className="px-4 py-3 flex items-center justify-between">
           <NewBadge />
           {availableSlots && availableSlots.length > 0 ? (
-            <div className="flex items-center gap-1.5">
+            <div className="inline-flex items-center gap-1.5 bg-c2l rounded-full px-2.5 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse" />
-              <span className="text-[12px] text-tx2 font-semibold">
-                Hoy {availableSlots[0]}
+              <span className="text-[12px] text-[#0F7A5A] font-bold">
+                Reservable hoy · {availableSlots[0]}
               </span>
             </div>
           ) : (

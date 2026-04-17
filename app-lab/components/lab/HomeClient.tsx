@@ -34,6 +34,15 @@ function venueNeighborhood(v: Venue): string {
   return m ? m[1].trim() : ''
 }
 
+function greetingByHour(): { eyebrow: string; cta: string } {
+  const h = new Date().getHours()
+  if (h < 11) return { eyebrow: 'Buen día', cta: 'Dónde desayunar' }
+  if (h < 15) return { eyebrow: 'Mediodía', cta: 'Dónde almorzar' }
+  if (h < 19) return { eyebrow: 'Tarde', cta: 'Dónde merendar' }
+  if (h < 23) return { eyebrow: 'Esta noche', cta: 'Dónde cenar' }
+  return { eyebrow: 'Late night', cta: 'Todavía abiertos' }
+}
+
 export function HomeClient({ venues }: Props) {
   const [cuisine, setCuisine] = useState('all')
   const [filters, setFilters] = useState<FilterState>({
@@ -43,6 +52,8 @@ export function HomeClient({ venues }: Props) {
   const [view, setView] = useState<'list' | 'map'>('list')
   const [activeMapId, setActiveMapId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+
+  const greeting = greetingByHour()
 
   // Counts por cocina
   const counts = useMemo(() => {
@@ -72,7 +83,7 @@ export function HomeClient({ venues }: Props) {
     }
     // Ordenamiento
     if (filters.sort === 'reputation') {
-      list.sort((a, b) => (a.name < b.name ? 1 : -1)) // placeholder sin rating real
+      list.sort((a, b) => (a.name < b.name ? 1 : -1))
     } else if (filters.sort === 'available') {
       list.sort((a, b) => mockSlots(b.id).length - mockSlots(a.id).length)
     }
@@ -85,19 +96,22 @@ export function HomeClient({ venues }: Props) {
 
   const hero = filtered[0]
   const rest = filtered.slice(1)
+  const availableNow = filtered.filter((v) => mockSlots(v.id).length > 0).length
 
   return (
     <>
-      {/* Header */}
-      <header className="screen-x pt-10 pb-3">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className="font-display text-[28px] font-bold text-tx tracking-tight">
-              ReservaYa
+      {/* Header compacto (sticky sobre scroll no, lo dejamos simple en mobile) */}
+      <header className="screen-x pt-8 pb-2">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="text-tx3 text-[11px] font-bold uppercase tracking-wider">
+              {greeting.eyebrow} · Buenos Aires
+            </p>
+            <h1 className="font-display text-[26px] font-bold text-tx tracking-tight leading-tight">
+              {greeting.cta}
             </h1>
-            <p className="text-tx2 text-[13px]">Buenos Aires · ¿A dónde salís hoy?</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span className="badge bg-c3l text-[#B78200] text-[10px]">LAB</span>
             <button
               aria-label="Notificaciones"
@@ -113,12 +127,55 @@ export function HomeClient({ venues }: Props) {
             </button>
           </div>
         </div>
-
-        {/* Search pill (Airbnb style) */}
-        <SearchPill defaultTime="21:00" />
       </header>
 
-      {/* Search by name */}
+      {/* Hero venue (primera pantalla) */}
+      {hero ? (
+        <div className="screen-x mt-3 mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+              Destacado esta semana
+            </p>
+            {availableNow > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0F7A5A]">
+                <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse" />
+                {availableNow} disponibles ahora
+              </span>
+            )}
+          </div>
+          <VenueCardLab venue={hero} variant="hero" availableSlots={mockSlots(hero.id)} />
+        </div>
+      ) : (
+        <div className="screen-x mt-3 mb-5 text-center py-8 bg-sf rounded-xl border border-[var(--br)]">
+          <p className="text-[40px]">🔍</p>
+          <p className="font-display text-[18px] font-bold text-tx mt-2">Sin resultados</p>
+          <p className="text-tx2 text-[13px] mt-1">Probá otra cocina o ajustá los filtros.</p>
+          <button
+            onClick={() => {
+              setCuisine('all'); setQuery('')
+              setFilters({ sort: 'relevance', price: [], ambience: [], features: [], neighborhoods: [] })
+            }}
+            className="mt-3 text-c1 text-[13px] font-semibold underline"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      )}
+
+      {/* Live reviews strip — social proof en movimiento, arriba de los controles */}
+      {hero && (
+        <div className="mb-6">
+          <div className="screen-x">
+            <LiveReviewsStrip />
+          </div>
+        </div>
+      )}
+
+      {/* Controles: search pill + text search */}
+      <div className="screen-x mb-3">
+        <SearchPill defaultTime="21:00" />
+      </div>
+
       <div className="screen-x mb-4">
         <div className="flex items-center gap-3 bg-sf border border-[var(--br)]
                         rounded-full px-4 py-2.5">
@@ -132,9 +189,10 @@ export function HomeClient({ venues }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent outline-none text-[14px] text-tx placeholder:text-tx3"
+            aria-label="Buscar restaurante"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="text-tx3 p-1" aria-label="Limpiar">
+            <button onClick={() => setQuery('')} className="text-tx3 p-1" aria-label="Limpiar búsqueda">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
                 <path d="M8 8l8 8M8 16l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -171,7 +229,7 @@ export function HomeClient({ venues }: Props) {
         <ListMapToggle value={view} onChange={setView} />
       </div>
 
-      {/* Mapa o Lista */}
+      {/* Mapa o Grid */}
       {view === 'map' ? (
         <div className="screen-x">
           <MapPreview
@@ -185,7 +243,7 @@ export function HomeClient({ venues }: Props) {
         </div>
       ) : (
         <div className="screen-x space-y-5">
-          {/* Results count + quick info */}
+          {/* Info header */}
           <div className="flex items-center justify-between">
             <p className="text-[13px] text-tx2">
               <span className="font-bold text-tx">{filtered.length}</span> locales
@@ -199,21 +257,6 @@ export function HomeClient({ venues }: Props) {
               {filters.sort === 'reputation' && 'Mejor reputación'}
               {filters.sort === 'nearby' && 'Cerca mío'}
             </p>
-          </div>
-
-          {/* Hero */}
-          {hero && (
-            <>
-              <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
-                Destacado esta semana
-              </p>
-              <VenueCardLab venue={hero} variant="hero" availableSlots={mockSlots(hero.id)} />
-            </>
-          )}
-
-          {/* Live reviews strip */}
-          <div className="pt-1">
-            <LiveReviewsStrip />
           </div>
 
           {/* Grid resto */}
@@ -233,7 +276,7 @@ export function HomeClient({ venues }: Props) {
             </section>
           )}
 
-          {/* Banda editorial (dirección A) */}
+          {/* Banda editorial */}
           <div className="pt-2">
             <EditorialBand />
           </div>
@@ -250,27 +293,6 @@ export function HomeClient({ venues }: Props) {
                 ))}
               </div>
             </section>
-          )}
-
-          {filtered.length === 0 && (
-            <div className="text-center py-12 bg-sf rounded-xl border border-[var(--br)]">
-              <p className="text-[40px]">🔍</p>
-              <p className="font-display text-[18px] font-bold text-tx mt-2">
-                Sin resultados
-              </p>
-              <p className="text-tx2 text-[13px] mt-1">
-                Probá otra cocina o ajustá los filtros.
-              </p>
-              <button
-                onClick={() => {
-                  setCuisine('all'); setQuery('')
-                  setFilters({ sort: 'relevance', price: [], ambience: [], features: [], neighborhoods: [] })
-                }}
-                className="mt-3 text-c1 text-[13px] font-semibold underline"
-              >
-                Limpiar filtros
-              </button>
-            </div>
           )}
         </div>
       )}
