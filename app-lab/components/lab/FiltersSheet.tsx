@@ -77,7 +77,7 @@ export function FiltersSheet({ open, onClose, value, onChange }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-0 z-[60] flex flex-col justify-end">
       {/* Backdrop */}
       <button
         aria-label="Cerrar filtros"
