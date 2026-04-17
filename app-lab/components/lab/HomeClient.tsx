@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { Venue } from '@/lib/shared'
 import { SearchPill } from './SearchPill'
-import { FiltersSheet, type FilterState } from './FiltersSheet'
+import { FiltersSheet, type FilterState, EMPTY_FILTERS } from './FiltersSheet'
 import { CuisineTabs } from './CuisineTabs'
 import { ListMapToggle } from './ListMapToggle'
 import { VenueCardLab } from './VenueCardLab'
@@ -45,9 +45,7 @@ function greetingByHour(): { eyebrow: string; cta: string } {
 
 export function HomeClient({ venues }: Props) {
   const [cuisine, setCuisine] = useState('all')
-  const [filters, setFilters] = useState<FilterState>({
-    sort: 'relevance', price: [], ambience: [], features: [], neighborhoods: [],
-  })
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [view, setView] = useState<'list' | 'map'>('list')
   const [activeMapId, setActiveMapId] = useState<string | null>(null)
@@ -78,6 +76,9 @@ export function HomeClient({ venues }: Props) {
         (v.description ?? '').toLowerCase().includes(q)
       )
     }
+    if (filters.cuisines.length > 0) {
+      list = list.filter((v) => filters.cuisines.includes(venueCuisine(v)))
+    }
     if (filters.neighborhoods.length > 0) {
       list = list.filter((v) => filters.neighborhoods.includes(venueNeighborhood(v)))
     }
@@ -91,8 +92,9 @@ export function HomeClient({ venues }: Props) {
   }, [venues, cuisine, filters, query])
 
   const activeFiltersCount =
-    filters.price.length + filters.ambience.length +
-    filters.features.length + filters.neighborhoods.length
+    filters.meal.length + filters.cuisines.length + filters.price.length +
+    filters.ambience.length + filters.features.length +
+    filters.neighborhoods.length + filters.promos.length
 
   const hero = filtered[0]
   const rest = filtered.slice(1)
@@ -153,7 +155,7 @@ export function HomeClient({ venues }: Props) {
           <button
             onClick={() => {
               setCuisine('all'); setQuery('')
-              setFilters({ sort: 'relevance', price: [], ambience: [], features: [], neighborhoods: [] })
+              setFilters(EMPTY_FILTERS)
             }}
             className="mt-3 text-c1 text-[13px] font-semibold underline"
           >
@@ -207,27 +209,56 @@ export function HomeClient({ venues }: Props) {
         <CuisineTabs value={cuisine} onChange={setCuisine} counts={counts} />
       </div>
 
-      {/* Filters bar */}
-      <div className="screen-x flex items-center justify-between mb-4">
+      {/* Filters bar — grande y prominente */}
+      <div className="screen-x flex items-center gap-2 mb-4">
         <button
           onClick={() => setFiltersOpen(true)}
-          className="flex items-center gap-2 bg-white border border-[var(--br)]
-                     rounded-full px-4 py-2 text-[13px] font-semibold text-tx
-                     active:scale-95 transition-transform duration-[180ms]"
+          className="flex-1 flex items-center gap-2.5 bg-tx text-white
+                     rounded-full px-4 py-3 text-[14px] font-bold
+                     shadow-[0_4px_16px_rgba(0,0,0,0.15)]
+                     active:scale-[0.98] transition-transform duration-[180ms]"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
-          Filtros
-          {activeFiltersCount > 0 && (
-            <span className="ml-1 w-5 h-5 rounded-full bg-c1 text-white text-[10px]
-                             font-bold flex items-center justify-center">
-              {activeFiltersCount}
+          <span>Filtros</span>
+          {activeFiltersCount > 0 ? (
+            <span className="ml-auto bg-c1 text-white text-[11px] font-bold
+                             rounded-full px-2 py-0.5 min-w-[22px] text-center">
+              {activeFiltersCount} activos
+            </span>
+          ) : (
+            <span className="ml-auto text-white/60 text-[12px] font-semibold">
+              Momento · cocina · zona · promos
             </span>
           )}
         </button>
         <ListMapToggle value={view} onChange={setView} />
       </div>
+
+      {/* Filtros rápidos activos (chips de lo seleccionado) */}
+      {activeFiltersCount > 0 && (
+        <div className="screen-x mb-3 flex flex-wrap items-center gap-1.5">
+          {filters.meal.map((k) => (
+            <ActiveChip key={`m-${k}`} label={k} onRemove={() => setFilters({ ...filters, meal: filters.meal.filter((x) => x !== k) })} />
+          ))}
+          {filters.cuisines.map((k) => (
+            <ActiveChip key={`c-${k}`} label={k} onRemove={() => setFilters({ ...filters, cuisines: filters.cuisines.filter((x) => x !== k) })} />
+          ))}
+          {filters.promos.map((k) => (
+            <ActiveChip key={`p-${k}`} label={k} onRemove={() => setFilters({ ...filters, promos: filters.promos.filter((x) => x !== k) })} />
+          ))}
+          {filters.neighborhoods.map((k) => (
+            <ActiveChip key={`n-${k}`} label={k} onRemove={() => setFilters({ ...filters, neighborhoods: filters.neighborhoods.filter((x) => x !== k) })} />
+          ))}
+          <button
+            onClick={() => setFilters(EMPTY_FILTERS)}
+            className="text-[12px] text-tx3 font-semibold underline underline-offset-2 ml-1"
+          >
+            Limpiar todos
+          </button>
+        </div>
+      )}
 
       {/* Mapa o Grid */}
       {view === 'map' ? (
@@ -305,5 +336,23 @@ export function HomeClient({ venues }: Props) {
         onChange={setFilters}
       />
     </>
+  )
+}
+
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 bg-sf2 text-tx rounded-full
+                     pl-3 pr-1 py-1 text-[12px] font-semibold capitalize">
+      {label.replace(/_/g, ' ')}
+      <button
+        onClick={onRemove}
+        aria-label={`Quitar filtro ${label}`}
+        className="w-5 h-5 rounded-full hover:bg-white/50 flex items-center justify-center"
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+          <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      </button>
+    </span>
   )
 }

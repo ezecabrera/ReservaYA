@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import type { Venue } from '@/lib/shared'
+import { useFavorites } from '@/lib/favorites'
 
 interface Props {
   venue: Venue
@@ -60,6 +63,26 @@ function NewBadge() {
   )
 }
 
+function HeartButton({ venueId, absolute }: { venueId: string; absolute?: boolean }) {
+  const { isFavorite, toggle } = useFavorites()
+  const saved = isFavorite(venueId)
+  return (
+    <button
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(venueId) }}
+      aria-label={saved ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+      aria-pressed={saved}
+      className={`${absolute ? 'absolute top-3 right-3 ' : ''}w-9 h-9 rounded-full
+                  bg-white/95 backdrop-blur-sm flex items-center justify-center
+                  shadow-sm active:scale-90 transition-transform duration-[180ms]`}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? 'var(--c1)' : 'none'}>
+        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+              stroke={saved ? 'var(--c1)' : 'var(--tx2)'} strokeWidth="2" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
 function PriceTier({ tier }: { tier: number }) {
   return (
     <span className="text-[12px] font-semibold text-tx3">
@@ -81,7 +104,9 @@ export function VenueCardLab({
   // ── HERO ────────────────────────────────────────────────────────────────
   if (variant === 'hero') {
     return (
-      <Link href={`/${venue.id}`} className="block rounded-xl overflow-hidden
+      <div className="relative">
+        <HeartButton venueId={venue.id} absolute />
+        <Link href={`/${venue.id}`} className="block rounded-xl overflow-hidden
                                               border border-[var(--br)] shadow-sm bg-white
                                               active:scale-[0.99] transition-transform duration-[180ms]">
         <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#1A1A2E] to-[#0F3460]">
@@ -124,14 +149,16 @@ export function VenueCardLab({
             <span className="text-[12px] text-tx3">Ver disponibilidad →</span>
           )}
         </div>
-      </Link>
+        </Link>
+      </div>
     )
   }
 
   // ── COMPACT (lista) ─────────────────────────────────────────────────────
   if (variant === 'compact') {
     return (
-      <Link href={`/${venue.id}`} className="flex gap-3 p-2.5 bg-white rounded-lg
+      <div className="relative">
+        <Link href={`/${venue.id}`} className="flex gap-3 p-2.5 bg-white rounded-lg
                                               border border-[var(--br)] shadow-sm
                                               active:scale-[0.98] transition-transform duration-[180ms]">
         <div className="relative w-20 h-20 rounded-md overflow-hidden bg-sf2 flex-shrink-0">
@@ -140,7 +167,7 @@ export function VenueCardLab({
             <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
           )}
         </div>
-        <div className="flex-1 min-w-0 py-0.5">
+        <div className="flex-1 min-w-0 py-0.5 pr-9">
           <div className="flex items-start justify-between gap-2">
             <p className="font-bold text-[14px] text-tx truncate">{venue.name}</p>
             <NewBadge />
@@ -160,13 +187,19 @@ export function VenueCardLab({
             )}
           </div>
         </div>
-      </Link>
+        </Link>
+        <div className="absolute top-2 right-2">
+          <HeartButton venueId={venue.id} />
+        </div>
+      </div>
     )
   }
 
   // ── STANDARD ────────────────────────────────────────────────────────────
   return (
-    <Link href={`/${venue.id}`}
+    <div className="relative">
+      <HeartButton venueId={venue.id} absolute />
+      <Link href={`/${venue.id}`}
           className="block bg-white rounded-xl overflow-hidden border border-[var(--br)]
                      shadow-sm active:scale-[0.99] transition-transform duration-[180ms]">
       <div className="relative aspect-[4/3] overflow-hidden bg-sf2">
@@ -202,6 +235,7 @@ export function VenueCardLab({
           <NewBadge />
         </div>
       </div>
-    </Link>
+      </Link>
+    </div>
   )
 }
