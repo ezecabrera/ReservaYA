@@ -85,8 +85,8 @@ export function FiltersSheet({ open, onClose, value, onChange }: Props) {
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
       />
       {/* Sheet */}
-      <div className="relative bg-bg rounded-t-3xl max-h-[85vh] flex flex-col animate-slide-down"
-           style={{ animationDirection: 'reverse' }}>
+      <div className="relative bg-bg rounded-t-3xl max-h-[85vh]
+                      flex flex-col shadow-[0_-8px_32px_rgba(0,0,0,0.12)]">
         {/* Grabber */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-tx3/40" />

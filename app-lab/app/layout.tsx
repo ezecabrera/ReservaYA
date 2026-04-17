@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from 'next'
-import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
+import { Poppins, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 
-const fraunces = Fraunces({
+const poppins = Poppins({
   subsets: ['latin'],
-  weight: ['700', '900'],
+  weight: ['500', '600', '700', '800', '900'],
   variable: '--font-display',
   display: 'swap',
 })
@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={`${fraunces.variable} ${plusJakarta.variable}`}>
+    <html lang="es" className={`${poppins.variable} ${plusJakarta.variable}`}>
       <body className="font-body bg-bg text-tx min-h-screen">
         <a href="#main" className="skip-link">Saltar al contenido</a>
         <main id="main">{children}</main>

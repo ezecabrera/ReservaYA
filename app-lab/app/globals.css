@@ -52,7 +52,7 @@
     --r-full: 99px;
 
     /* ── Tipografía ── */
-    --font-display: 'Fraunces', serif;
+    --font-display: 'Poppins', system-ui, sans-serif;
     --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
 
     /* ── Transiciones ── */
@@ -111,6 +111,12 @@
            bg-tx text-white text-[13px] font-semibold
            -translate-y-16 focus:translate-y-0 transition-transform;
   }
+
+}
+
+/* ── Bottom sheet ── visible desde el mount, sin animación compleja */
+.sheet-slide-up {
+  transform: translateY(0);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
