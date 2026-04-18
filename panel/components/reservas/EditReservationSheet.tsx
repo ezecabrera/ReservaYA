@@ -34,6 +34,7 @@ export function EditReservationSheet({
   const [tableId, setTableId] = useState<string>('')
   const [notes, setNotes] = useState(r.notes ?? '')
   const [guestPhone, setGuestPhone] = useState(r.guest_phone ?? '')
+  const [durationMinutes, setDurationMinutes] = useState<number>(r.duration_minutes ?? 90)
 
   const [slots, setSlots] = useState<string[]>([])
   const [tables, setTables] = useState<TableOption[]>([])
@@ -83,7 +84,8 @@ export function EditReservationSheet({
     partySize !== r.party_size ||
     (notes ?? '') !== (r.notes ?? '') ||
     (guestPhone ?? '') !== (r.guest_phone ?? '') ||
-    (tableId !== '' && tableId !== r.table_id)
+    (tableId !== '' && tableId !== r.table_id) ||
+    durationMinutes !== (r.duration_minutes ?? 90)
 
   async function handleSubmit() {
     if (!changed || submitting) return
@@ -98,6 +100,9 @@ export function EditReservationSheet({
     }
     if (tableId) payload.table_id = tableId
     if (!r.users) payload.guest_phone = guestPhone.trim() || null
+    if (durationMinutes !== (r.duration_minutes ?? 90)) {
+      payload.duration_minutes = durationMinutes
+    }
 
     const res = await mutateFetch(`/api/reservas/${r.id}`, {
       method: 'PATCH',
@@ -206,6 +211,40 @@ export function EditReservationSheet({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Duración — afecta el ancho del bloque en Timeline view */}
+            <div>
+              <span className="text-[12px] text-tx2 mb-1.5 block flex items-center gap-1.5">
+                Duración
+                <span className="text-tx3 text-[10.5px] font-normal">
+                  (bloquea la mesa)
+                </span>
+              </span>
+              <div className="grid grid-cols-5 gap-1.5">
+                {[
+                  { min: 60, label: '1h' },
+                  { min: 90, label: '1:30' },
+                  { min: 120, label: '2h' },
+                  { min: 150, label: '2:30' },
+                  { min: 180, label: '3h' },
+                ].map(({ min, label }) => (
+                  <button
+                    key={min}
+                    type="button"
+                    onClick={() => setDurationMinutes(min)}
+                    className={`h-10 rounded-lg text-[12.5px] font-semibold font-mono
+                                border transition-colors ${
+                      durationMinutes === min
+                        ? 'bg-tx text-white border-tx'
+                        : 'bg-sf text-tx border-[var(--br)]'
+                    }`}
+                    aria-label={`${min} minutos`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 

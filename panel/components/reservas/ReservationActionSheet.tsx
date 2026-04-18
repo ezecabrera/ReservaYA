@@ -15,6 +15,8 @@ export interface ReservationRow {
   guest_name?: string | null
   guest_phone?: string | null
   notes?: string | null
+  /** Opcional — cuando no viene asumimos 90 min (default DB). */
+  duration_minutes?: number | null
   guest_tag?: GuestTag | null
   tables: { label: string } | null
   users: { name: string; phone?: string | null } | null

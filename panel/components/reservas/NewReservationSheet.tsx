@@ -52,6 +52,9 @@ export function NewReservationSheet({
   const [partySize, setPartySize] = useState(2)
   const [tableId, setTableId] = useState(defaultTableId ?? '')
   const [source, setSource] = useState<PanelSource>('phone')
+  // Duración en minutos — afecta el ancho del bloque en Timeline view.
+  // Default 90 (cena estándar); 60 para café/copa, 120-150 para evento.
+  const [durationMinutes, setDurationMinutes] = useState<number>(90)
 
   const [slots, setSlots] = useState<string[]>([])
   const [tables, setTables] = useState<TableOption[]>([])
@@ -109,6 +112,7 @@ export function NewReservationSheet({
       guest_phone: guestPhone.trim() || undefined,
       notes: notes.trim() || undefined,
       source,
+      duration_minutes: durationMinutes !== 90 ? durationMinutes : undefined,
     }
 
     const res = await mutateFetch('/api/reservas', {
@@ -264,6 +268,40 @@ export function NewReservationSheet({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Duración — afecta el ancho del bloque en Timeline view */}
+            <div>
+              <span className="text-[12px] text-tx2 mb-1.5 block flex items-center gap-1.5">
+                Duración
+                <span className="text-tx3 text-[10.5px] font-normal">
+                  (bloquea la mesa)
+                </span>
+              </span>
+              <div className="grid grid-cols-5 gap-1.5">
+                {[
+                  { min: 60, label: '1h' },
+                  { min: 90, label: '1:30' },
+                  { min: 120, label: '2h' },
+                  { min: 150, label: '2:30' },
+                  { min: 180, label: '3h' },
+                ].map(({ min, label }) => (
+                  <button
+                    key={min}
+                    type="button"
+                    onClick={() => setDurationMinutes(min)}
+                    className={`h-10 rounded-lg text-[12.5px] font-semibold font-mono
+                                border transition-colors ${
+                      durationMinutes === min
+                        ? 'bg-tx text-white border-tx'
+                        : 'bg-sf text-tx border-[var(--br)]'
+                    }`}
+                    aria-label={`${min} minutos`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 

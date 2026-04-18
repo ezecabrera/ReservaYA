@@ -395,6 +395,7 @@ export function SplitDashboard({
         guest_name: r.guest_name,
         guest_phone: r.guest_phone,
         notes: r.notes,
+        duration_minutes: r.duration_minutes,
         guest_tag: r.guest_tag,
         table_id: r.table_id,
         tables: table ? { label: table.label } : null,
