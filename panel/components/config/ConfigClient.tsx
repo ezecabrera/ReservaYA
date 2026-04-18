@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { EmbedWidgetSection } from './EmbedWidgetSection'
 import { WhatsAppSection } from './WhatsAppSection'
+import { PageHero } from '@/components/ui/PageHero'
+import { NumericText } from '@/components/ui/NumericText'
 
 interface StaffMember {
   id: string
@@ -18,10 +20,10 @@ interface Props {
   appBaseUrl: string
 }
 
-const ROLE_LABELS: Record<string, { label: string; desc: string; color: string }> = {
-  owner:        { label: 'Owner',         desc: 'Acceso completo + gestión de staff',    color: 'bg-c5l text-[#6B30CC]' },
-  manager:      { label: 'Manager',       desc: 'Analytics, menú y operaciones',          color: 'bg-c4l text-[#2B5FCC]' },
-  receptionist: { label: 'Recepcionista', desc: 'Mesas, reservas y check-in solamente',   color: 'bg-c2l text-[#15A67A]' },
+const ROLE_LABELS: Record<string, { label: string; desc: string; cls: string }> = {
+  owner:        { label: 'Owner',         desc: 'Acceso completo + gestión de staff',   cls: 'bg-wine/20 text-wine-soft border border-wine/35' },
+  manager:      { label: 'Manager',       desc: 'Analytics, menú y operaciones',         cls: 'bg-olive/22 text-olive border border-olive/35' },
+  receptionist: { label: 'Recepcionista', desc: 'Mesas, reservas y check-in solamente',  cls: 'bg-gold/22 text-gold border border-gold/35' },
 }
 
 const ROLES = ['owner', 'manager', 'receptionist'] as const
@@ -67,100 +69,84 @@ export function ConfigClient({ me, venue, appBaseUrl }: Props) {
   }
 
   return (
-    <div className="min-h-screen pb-28"
-      style={{ background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)' }}>
+    <div className="min-h-screen bg-ink pb-28">
+      <PageHero
+        kicker="Configuración"
+        title="Ajustes"
+        subtitle="Perfil, equipo, restaurante e integraciones"
+        accent="wine"
+      />
 
-      {/* Header */}
-      <div className="px-5 pt-12 pb-6">
-        <h1 className="font-display text-[24px] font-bold text-white tracking-tight">
-          Configuración
-        </h1>
-      </div>
-
-      <div className="px-5 space-y-6">
+      <div className="px-5 lg:px-7 space-y-8 max-w-3xl mx-auto mt-6">
 
         {/* Mi perfil */}
-        <div>
-          <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-3">
-            Mi perfil
-          </p>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-c1 flex items-center justify-center flex-shrink-0">
+        <section>
+          <NumericText label tone="muted" className="mb-3 block">Mi perfil</NumericText>
+          <div className="bg-ink-2 border border-ink-line rounded-2xl p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-wine flex items-center justify-center flex-shrink-0
+                            shadow-[0_6px_16px_-4px_rgba(161,49,67,0.45)]">
               <span className="font-display font-bold text-[18px] text-white">
                 {me.name[0]?.toUpperCase()}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white font-bold text-[15px]">{me.name}</p>
-              <p className="text-white/45 text-[12px]">{me.email}</p>
+              <p className="text-ink-text font-bold text-[15px]">{me.name}</p>
+              <p className="text-ink-text-3 text-[12px]">{me.email}</p>
             </div>
             <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0
-                              ${ROLE_LABELS[me.role]?.color ?? 'bg-sf2 text-tx3'}`}>
+                              ${ROLE_LABELS[me.role]?.cls ?? 'bg-ink-3 text-ink-text-2 border border-ink-line-2'}`}>
               {ROLE_LABELS[me.role]?.label ?? me.role}
             </span>
           </div>
-        </div>
+        </section>
 
         {/* Info del venue */}
-        <div>
-          <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-3">
-            Restaurante
-          </p>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-            <div className="flex justify-between items-start">
-              <span className="text-white/45 text-[13px]">Nombre</span>
-              <span className="text-white font-semibold text-[13px]">{venue.name}</span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-white/45 text-[13px]">Dirección</span>
-              <span className="text-white font-semibold text-[13px] text-right max-w-[60%]">{venue.address}</span>
-            </div>
-            {venue.phone && (
-              <div className="flex justify-between items-start">
-                <span className="text-white/45 text-[13px]">Teléfono</span>
-                <span className="text-white font-semibold text-[13px]">{venue.phone}</span>
-              </div>
-            )}
+        <section>
+          <NumericText label tone="muted" className="mb-3 block">Restaurante</NumericText>
+          <div className="bg-ink-2 border border-ink-line rounded-2xl p-4 space-y-3">
+            <InfoRow label="Nombre" value={venue.name} />
+            <InfoRow label="Dirección" value={venue.address} />
+            {venue.phone && <InfoRow label="Teléfono" value={venue.phone} mono />}
           </div>
-        </div>
+        </section>
 
         {/* Gestión de equipo (owner + manager) */}
         {(isOwner || isManager) && (
-          <div>
-            <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-3">
-              Equipo
-            </p>
+          <section>
+            <NumericText label tone="muted" className="mb-3 block">Equipo</NumericText>
 
             {loadingStaff ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse" />
+                  <div key={i} className="h-16 bg-ink-2 border border-ink-line rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : (
               <div className="space-y-2">
                 {staff.map(member => {
-                  const roleInfo = ROLE_LABELS[member.role] ?? { label: member.role, desc: '', color: 'bg-sf2 text-tx3' }
+                  const roleInfo = ROLE_LABELS[member.role]
+                    ?? { label: member.role, desc: '', cls: 'bg-ink-3 text-ink-text-2 border border-ink-line-2' }
                   const isMe = member.id === me.id
                   return (
                     <div key={member.id}
-                      className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                      className="bg-ink-2 border border-ink-line rounded-2xl p-4
+                                 hover:border-ink-line-2 transition-colors">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
-                          <span className="font-bold text-[13px] text-white">
+                        <div className="w-9 h-9 rounded-full bg-ink-3 border border-ink-line-2
+                                        flex items-center justify-center flex-shrink-0">
+                          <span className="font-bold text-[13px] text-ink-text">
                             {member.name[0]?.toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-white font-semibold text-[14px]">
+                          <p className="text-ink-text font-semibold text-[14px]">
                             {member.name}
-                            {isMe && <span className="text-white/35 text-[11px] ml-1">(vos)</span>}
+                            {isMe && <span className="text-ink-text-3 text-[11px] ml-1">(vos)</span>}
                           </p>
-                          <p className="text-white/40 text-[12px]">{member.email}</p>
+                          <p className="text-ink-text-3 text-[12px]">{member.email}</p>
                         </div>
                       </div>
 
-                      {/* Selector de rol (solo owner y no para sí mismo) */}
                       {isOwner && !isMe ? (
                         editingId === member.id ? (
                           <div className="flex gap-1.5 mt-2">
@@ -170,36 +156,42 @@ export function ConfigClient({ me, venue, appBaseUrl }: Props) {
                                 onClick={() => handleRoleChange(member.id, r)}
                                 disabled={saving}
                                 className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all
-                                            ${member.role === r ? 'bg-c2 text-white' : 'bg-white/10 text-white/50'}`}
+                                            ${member.role === r
+                                              ? 'bg-olive text-white border border-olive'
+                                              : 'bg-ink text-ink-text-2 border border-ink-line-2 hover:text-ink-text'}`}
                               >
                                 {ROLE_LABELS[r].label}
                               </button>
                             ))}
                             <button
                               onClick={() => setEditingId(null)}
-                              className="px-3 py-2 rounded-lg bg-white/5 text-white/40 text-[11px]"
+                              className="px-3 py-2 rounded-lg bg-ink text-ink-text-3 text-[11px]
+                                         border border-ink-line hover:text-ink-text-2 transition-colors"
+                              aria-label="Cancelar"
                             >
                               ✕
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleInfo.color}`}>
+                          <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleInfo.cls}`}>
                                 {roleInfo.label}
                               </span>
-                              <span className="text-white/30 text-[11px]">{roleInfo.desc}</span>
+                              <span className="text-ink-text-3 text-[11px] truncate">{roleInfo.desc}</span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-shrink-0">
                               <button
                                 onClick={() => setEditingId(member.id)}
-                                className="text-[11px] text-white/40 font-semibold hover:text-c2 transition-colors"
+                                className="text-[11px] text-ink-text-2 font-semibold
+                                           hover:text-olive transition-colors"
                               >
                                 Cambiar
                               </button>
                               <button
                                 onClick={() => handleRemove(member.id)}
-                                className="text-[11px] text-c1/60 font-semibold hover:text-c1 transition-colors"
+                                className="text-[11px] text-wine-soft/70 font-semibold
+                                           hover:text-wine-soft transition-colors"
                               >
                                 Quitar
                               </button>
@@ -207,11 +199,11 @@ export function ConfigClient({ me, venue, appBaseUrl }: Props) {
                           </div>
                         )
                       ) : (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleInfo.color}`}>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleInfo.cls}`}>
                             {roleInfo.label}
                           </span>
-                          <span className="text-white/30 text-[11px]">{roleInfo.desc}</span>
+                          <span className="text-ink-text-3 text-[11px]">{roleInfo.desc}</span>
                         </div>
                       )}
                     </div>
@@ -221,13 +213,15 @@ export function ConfigClient({ me, venue, appBaseUrl }: Props) {
             )}
 
             {/* Nota para agregar staff */}
-            <div className="mt-3 bg-white/5 border border-dashed border-white/15 rounded-2xl p-4">
-              <p className="text-white/40 text-[12px] leading-relaxed">
+            <div className="mt-3 bg-ink-2 border border-dashed border-ink-line-2 rounded-2xl p-4">
+              <p className="text-ink-text-3 text-[12px] leading-relaxed">
                 Para agregar un nuevo miembro, pedile que se registre en el panel
-                y luego insertá su ID en la tabla <code className="text-c2 text-[11px]">staff_users</code> con el venue_id correspondiente.
+                y luego insertá su ID en la tabla{' '}
+                <code className="text-olive text-[11.5px] font-mono">staff_users</code>{' '}
+                con el venue_id correspondiente.
               </p>
             </div>
-          </div>
+          </section>
         )}
 
         {/* Widget embebible */}
@@ -241,24 +235,36 @@ export function ConfigClient({ me, venue, appBaseUrl }: Props) {
         <WhatsAppSection venueName={venue.name} />
 
         {/* Roles disponibles (info) */}
-        <div>
-          <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-3">
-            Roles del sistema
-          </p>
+        <section>
+          <NumericText label tone="muted" className="mb-3 block">Roles del sistema</NumericText>
           <div className="space-y-2">
             {ROLES.map(r => (
-              <div key={r} className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${ROLE_LABELS[r].color}`}>
+              <div key={r} className="bg-ink-2 border border-ink-line rounded-xl px-4 py-3 flex items-center gap-3">
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${ROLE_LABELS[r].cls}`}>
                   {ROLE_LABELS[r].label}
                 </span>
-                <span className="text-white/45 text-[12px]">{ROLE_LABELS[r].desc}</span>
+                <span className="text-ink-text-3 text-[12px]">{ROLE_LABELS[r].desc}</span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
       </div>
+    </div>
+  )
+}
 
+function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex justify-between items-start gap-3">
+      <span className="text-ink-text-3 text-[12.5px] flex-shrink-0">{label}</span>
+      <span
+        className={`text-ink-text text-[13px] font-semibold text-right max-w-[70%] ${
+          mono ? 'font-mono tabular-nums' : ''
+        }`}
+      >
+        {value}
+      </span>
     </div>
   )
 }

@@ -124,13 +124,13 @@ export default function PerfilPage() {
                   onChange={e => setNewName(e.target.value)}
                   autoFocus
                   onKeyDown={e => { if (e.key === 'Enter') handleSaveName() }}
-                  className="flex-1 border-b-2 border-c1 bg-transparent text-[18px]
+                  className="flex-1 border-b-2 border-wine bg-transparent text-[18px]
                              font-bold text-tx outline-none pb-0.5"
                 />
                 <button
                   onClick={handleSaveName}
                   disabled={saving}
-                  className="text-[13px] font-bold text-c1"
+                  className="text-[13px] font-bold text-wine-soft"
                 >
                   {saving ? '…' : 'Guardar'}
                 </button>
@@ -177,7 +177,7 @@ export default function PerfilPage() {
             <p className="text-tx3 text-[11px] font-semibold mt-1">Reservas</p>
           </div>
           <div className="card p-3.5 text-center">
-            <p className="font-display text-[26px] font-bold text-c2 leading-none">
+            <p className="font-display text-[26px] font-bold text-olive leading-none">
               {data.stats.checkedIn}
             </p>
             <p className="text-tx3 text-[11px] font-semibold mt-1">Asistidas</p>
@@ -196,7 +196,7 @@ export default function PerfilPage() {
         {/* Venue favorito */}
         {data.stats.favoriteVenue && (
           <div className="card p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-c1l flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-wine/10 border border-wine/25 flex items-center justify-center flex-shrink-0">
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                   fill="var(--c1)" />
@@ -242,8 +242,9 @@ export default function PerfilPage() {
         <button
           onClick={handleSignOut}
           disabled={signingOut}
-          className="w-full py-4 rounded-xl border-2 border-c1/20 text-c1
-                     font-bold text-[15px] active:scale-[0.97] transition-transform
+          className="w-full py-4 rounded-xl border-2 border-wine/25 text-wine-soft
+                     font-bold text-[15px] hover:bg-wine/8
+                     active:scale-[0.97] transition-all
                      disabled:opacity-50"
         >
           {signingOut ? 'Cerrando…' : 'Cerrar sesión'}

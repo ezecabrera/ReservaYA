@@ -95,8 +95,9 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
   if (status === 'rejected') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center screen-x text-center">
-        <div className="w-16 h-16 rounded-full bg-c1l flex items-center justify-center mb-4">
-          <span className="text-[#D63646] text-[28px]">✕</span>
+        <div className="w-16 h-16 rounded-full bg-wine/12 border border-wine/30
+                        flex items-center justify-center mb-4">
+          <span className="text-wine-soft text-[28px]">✕</span>
         </div>
         <h1 className="font-display text-[24px] font-bold text-tx">Pago no aprobado</h1>
         <p className="text-tx2 text-[14px] mt-2">
@@ -110,8 +111,9 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
   if (status === 'pending') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center screen-x text-center">
-        <div className="w-16 h-16 rounded-full bg-c3l flex items-center justify-center mb-4">
-          <span className="text-[#CC7700] text-[28px]">⏳</span>
+        <div className="w-16 h-16 rounded-full bg-gold/15 border border-gold/35
+                        flex items-center justify-center mb-4">
+          <span className="text-gold text-[28px]">⏳</span>
         </div>
         <h1 className="font-display text-[24px] font-bold text-tx">Pago pendiente</h1>
         <p className="text-tx2 text-[14px] mt-2">
@@ -275,7 +277,7 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
             <p className="text-[13px] font-semibold text-tx2">Seña abonada</p>
             <p className="text-[11px] text-tx3 mt-0.5">Se descuenta de tu consumo al llegar</p>
           </div>
-          <span className="font-display text-[20px] font-bold text-c2">
+          <span className="font-display text-[20px] font-bold text-olive">
             ${data.depositAmount.toLocaleString('es-AR')}
           </span>
         </div>

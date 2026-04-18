@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { NumericText } from '@/components/ui/NumericText'
+import { PageHero } from '@/components/ui/PageHero'
 
 interface BillingData {
   status: string
@@ -14,11 +16,11 @@ interface BillingData {
 }
 
 const STATUS_INFO: Record<string, { label: string; color: string; desc: string }> = {
-  trial:     { label: 'Prueba gratuita', color: 'text-c3',  desc: 'Acceso completo durante el período de prueba' },
-  active:    { label: 'Activa',          color: 'text-c2',  desc: 'Suscripción activa — gracias por confiar en ReservaYA' },
-  paused:    { label: 'Pausada',         color: 'text-c3',  desc: 'La suscripción está pausada. Reactivá para seguir recibiendo reservas' },
-  cancelled: { label: 'Cancelada',       color: 'text-c1',  desc: 'La suscripción fue cancelada' },
-  expired:   { label: 'Vencida',         color: 'text-c1',  desc: 'El período de prueba venció' },
+  trial:     { label: 'Prueba gratuita', color: 'text-gold',        desc: 'Acceso completo durante el período de prueba' },
+  active:    { label: 'Activa',          color: 'text-olive',       desc: 'Suscripción activa — gracias por confiar en ReservaYA' },
+  paused:    { label: 'Pausada',         color: 'text-gold',        desc: 'La suscripción está pausada. Reactivá para seguir recibiendo reservas' },
+  cancelled: { label: 'Cancelada',       color: 'text-wine-soft',   desc: 'La suscripción fue cancelada' },
+  expired:   { label: 'Vencida',         color: 'text-wine-soft',   desc: 'El período de prueba venció' },
 }
 
 function formatDate(iso: string) {
@@ -59,53 +61,54 @@ export default function BillingPage() {
   const info = data ? (STATUS_INFO[data.status] ?? STATUS_INFO.trial) : null
 
   return (
-    <div className="min-h-screen pb-28"
-      style={{ background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)' }}>
+    <div className="min-h-screen bg-ink pb-28">
 
-      <div className="px-5 pt-12 pb-6">
-        <h1 className="font-display text-[24px] font-bold text-white tracking-tight">Plan</h1>
-        <p className="text-white/55 text-[13px] mt-0.5">Gestión de tu suscripción</p>
-      </div>
+      <PageHero
+        kicker="Suscripción"
+        title="Plan"
+        subtitle="Gestión de tu suscripción mensual"
+        accent="gold"
+      />
 
       {loading ? (
-        <div className="px-5 space-y-3">
+        <div className="px-5 lg:px-7 space-y-3 mt-6">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse" />
+            <div key={i} className="h-20 bg-ink-2 border border-ink-line rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : !data ? (
-        <p className="text-center text-white/40 mt-20">Error cargando datos</p>
+        <p className="text-center text-ink-text-3 mt-20">Error cargando datos</p>
       ) : (
-        <div className="px-5 space-y-4">
+        <div className="px-5 lg:px-7 space-y-4 max-w-2xl mx-auto mt-6">
 
           {/* Banner de éxito post-suscripción */}
           {justSubscribed && data.status === 'active' && (
-            <div className="bg-c2/15 border border-c2/30 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-c2 flex items-center justify-center flex-shrink-0">
+            <div className="bg-olive/15 border border-olive/35 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-olive flex items-center justify-center flex-shrink-0">
                 <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
                   <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5"
                     strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <p className="text-white font-semibold text-[14px]">
+              <p className="text-ink-text font-semibold text-[14px]">
                 ¡Suscripción activada! Bienvenido al plan mensual.
               </p>
             </div>
           )}
 
           {/* Estado actual */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+          <div className="bg-ink-2 border border-ink-line rounded-2xl p-5 space-y-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-white/40 text-[11px] font-bold uppercase tracking-wider mb-1">Estado</p>
-                <p className={`font-display text-[22px] font-bold ${info?.color ?? 'text-white'}`}>
+                <p className="text-ink-text-3 text-[11px] font-bold uppercase tracking-wider mb-1">Estado</p>
+                <p className={`font-display text-[22px] font-bold ${info?.color ?? 'text-ink-text'}`}>
                   {info?.label}
                 </p>
-                <p className="text-white/40 text-[12px] mt-0.5">{info?.desc}</p>
+                <p className="text-ink-text-3 text-[12px] mt-0.5">{info?.desc}</p>
               </div>
               <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
-                data.status === 'active' ? 'bg-c2 animate-pulse' :
-                data.status === 'trial' ? 'bg-c3 animate-pulse' : 'bg-c1'
+                data.status === 'active' ? 'bg-olive animate-pulse' :
+                data.status === 'trial' ? 'bg-gold animate-pulse' : 'bg-wine-soft'
               }`} />
             </div>
 
@@ -113,18 +116,18 @@ export default function BillingPage() {
             {data.status === 'trial' && data.trialEndsAt && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-white/45 text-[12px]">Prueba gratuita</span>
-                  <span className="text-white font-bold text-[13px]">
-                    {data.trialDaysLeft} día{data.trialDaysLeft !== 1 ? 's' : ''} restantes
+                  <span className="text-ink-text-3 text-[12px]">Prueba gratuita</span>
+                  <span className="text-ink-text font-bold text-[13px]">
+                    <NumericText>{data.trialDaysLeft}</NumericText> día{data.trialDaysLeft !== 1 ? 's' : ''} restantes
                   </span>
                 </div>
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-ink-3 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-c3 transition-all duration-700"
+                    className="h-full rounded-full bg-gold transition-all duration-700"
                     style={{ width: `${Math.min((data.trialDaysLeft / 30) * 100, 100)}%` }}
                   />
                 </div>
-                <p className="text-white/30 text-[11px] mt-1.5">
+                <p className="text-ink-text-3 text-[11px] mt-1.5">
                   Vence el {formatDate(data.trialEndsAt)}
                 </p>
               </div>
@@ -132,9 +135,9 @@ export default function BillingPage() {
 
             {/* Activa: próximo cobro */}
             {data.status === 'active' && data.currentPeriodEnd && (
-              <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                <span className="text-white/45 text-[13px]">Próximo cobro</span>
-                <span className="text-white font-semibold text-[13px]">
+              <div className="flex items-center justify-between pt-3 border-t border-ink-line">
+                <span className="text-ink-text-3 text-[13px]">Próximo cobro</span>
+                <span className="text-ink-text font-semibold text-[13px]">
                   {formatDate(data.currentPeriodEnd)}
                 </span>
               </div>
@@ -142,15 +145,15 @@ export default function BillingPage() {
           </div>
 
           {/* Plan */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <p className="text-white/40 text-[11px] font-bold uppercase tracking-wider mb-3">
+          <div className="bg-ink-2 border border-ink-line rounded-2xl p-5">
+            <p className="text-ink-text-3 text-[11px] font-bold uppercase tracking-wider mb-3">
               Plan mensual
             </p>
             <div className="flex items-end gap-1">
-              <span className="font-display text-[38px] font-bold text-white leading-none">
+              <NumericText large className="font-display text-[38px] font-bold text-ink-text leading-none">
                 ${data.planAmount.toLocaleString('es-AR')}
-              </span>
-              <span className="text-white/40 text-[14px] mb-1.5">/mes</span>
+              </NumericText>
+              <span className="text-ink-text-3 text-[14px] mb-1.5">/mes</span>
             </div>
             <div className="mt-3 space-y-2">
               {[
@@ -163,10 +166,10 @@ export default function BillingPage() {
               ].map(feature => (
                 <div key={feature} className="flex items-center gap-2">
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-                    <path d="M5 13l4 4L19 7" stroke="var(--c2)"
+                    <path d="M5 13l4 4L19 7" stroke="var(--olive)"
                       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="text-white/60 text-[13px]">{feature}</span>
+                  <span className="text-ink-text-2 text-[13px]">{feature}</span>
                 </div>
               ))}
             </div>
@@ -178,13 +181,14 @@ export default function BillingPage() {
               <button
                 onClick={handleSubscribe}
                 disabled={subscribing}
-                className="w-full py-4 rounded-xl bg-c1 text-white font-bold text-[15px]
-                           shadow-[0_4px_20px_rgba(255,71,87,0.3)] disabled:opacity-50
-                           active:scale-[0.97] transition-all duration-[180ms]"
+                className="w-full py-4 rounded-xl bg-wine text-white font-bold text-[15px]
+                           shadow-[0_6px_20px_-4px_rgba(161,49,67,0.55)] disabled:opacity-50
+                           hover:brightness-110 active:scale-[0.97]
+                           transition-all duration-[180ms]"
               >
                 {subscribing ? 'Redirigiendo a Mercado Pago…' : 'Activar suscripción →'}
               </button>
-              <p className="text-center text-white/30 text-[11px]">
+              <p className="text-center text-ink-text-3 text-[11px]">
                 Pago seguro vía Mercado Pago · Cancelás cuando quieras
               </p>
             </div>
@@ -193,15 +197,15 @@ export default function BillingPage() {
           {data.status === 'paused' && data.isOwner && (
             <button
               onClick={handleSubscribe}
-              className="w-full py-4 rounded-xl bg-c3 text-white font-bold text-[15px]
-                         active:scale-[0.97] transition-transform"
+              className="w-full py-4 rounded-xl bg-gold text-ink font-bold text-[15px]
+                         hover:brightness-110 active:scale-[0.97] transition-all duration-150"
             >
               Reactivar suscripción →
             </button>
           )}
 
           {data.status === 'active' && (
-            <p className="text-center text-white/25 text-[12px]">
+            <p className="text-center text-ink-text-3 text-[12px]">
               Para cancelar o modificar, accedé a tu cuenta de Mercado Pago.
             </p>
           )}

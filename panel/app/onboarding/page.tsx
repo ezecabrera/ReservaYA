@@ -61,15 +61,15 @@ function StepHeader({ step, title, sub }: { step: Step; title: string; sub: stri
         {([1,2,3,4,5] as Step[]).map(s => (
           <div key={s}
             className={`h-1 flex-1 rounded-full transition-all duration-300
-                        ${s <= step ? 'bg-c1' : 'bg-white/15'}`}
+                        ${s <= step ? 'bg-wine' : 'bg-ink-line-2'}`}
           />
         ))}
       </div>
-      <p className="text-white/40 text-[12px] font-bold uppercase tracking-wider mb-1">
+      <p className="text-ink-text-3 text-[11px] font-bold uppercase tracking-[0.12em] mb-1">
         Paso {step} de 5
       </p>
-      <h2 className="font-display text-[22px] font-bold text-white">{title}</h2>
-      <p className="text-white/50 text-[13px] mt-0.5">{sub}</p>
+      <h2 className="font-display text-[24px] font-bold text-ink-text leading-tight">{title}</h2>
+      <p className="text-ink-text-2 text-[13px] mt-1">{sub}</p>
     </div>
   )
 }
@@ -77,7 +77,7 @@ function StepHeader({ step, title, sub }: { step: Step; title: string; sub: stri
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[11px] font-bold text-white/40 uppercase tracking-wider mb-1.5">
+      <label className="block text-[11px] font-bold text-ink-text-3 uppercase tracking-[0.1em] mb-1.5">
         {label}
       </label>
       {children}
@@ -85,9 +85,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const inputCls = `w-full rounded-xl bg-white/10 border border-white/15 px-4 py-3.5
-                  text-[14px] text-white placeholder-white/30 outline-none
-                  focus:border-c1/50 focus:ring-2 focus:ring-c1/20 transition-all`
+const inputCls = `w-full rounded-xl bg-ink-2 border border-ink-line-2 px-4 py-3.5
+                  text-[14px] text-ink-text placeholder-ink-text-3 outline-none
+                  focus:border-wine/50 focus:ring-2 focus:ring-wine/20 transition-all`
 
 // ── Componente principal ─────────────────────────────────────────────────────
 
@@ -110,7 +110,6 @@ export default function OnboardingPage() {
     if (s.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return }
     setLoading(true); setError(null)
 
-    // Intentar sign-up primero
     const { error: signUpError } = await supabase.auth.signUp({
       email: s.email,
       password: s.password,
@@ -122,8 +121,6 @@ export default function OnboardingPage() {
       return
     }
 
-    // Iniciar sesión inmediatamente (por si email confirmation está desactivado
-    // o si la cuenta ya existía)
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: s.email,
       password: s.password,
@@ -145,7 +142,6 @@ export default function OnboardingPage() {
     }
     setLoading(true); setError(null)
     try {
-      // Obtener el token vigente (puede haber refrescado desde el paso 1)
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       const token = currentSession?.access_token ?? accessToken
 
@@ -226,9 +222,10 @@ export default function OnboardingPage() {
     <button
       onClick={onClick}
       disabled={loading || disabled}
-      className="w-full py-4 rounded-xl bg-c1 text-white font-bold text-[15px]
-                 shadow-[0_4px_20px_rgba(255,71,87,0.3)] disabled:opacity-50
-                 active:scale-[0.97] transition-all duration-[180ms] mt-2"
+      className="w-full py-4 rounded-xl bg-wine text-white font-bold text-[15px]
+                 shadow-[0_8px_24px_-6px_rgba(161,49,67,0.55)] disabled:opacity-50
+                 hover:brightness-110 active:scale-[0.97]
+                 transition-all duration-[180ms] mt-2"
     >
       {loading ? 'Un momento…' : label}
     </button>
@@ -237,31 +234,41 @@ export default function OnboardingPage() {
   const btnBack = () => (
     <button
       onClick={() => { setStep(s => (s - 1) as Step); setError(null) }}
-      className="w-full py-3 rounded-xl bg-white/5 text-white/50 text-[14px] font-semibold
-                 active:scale-[0.97] transition-transform"
+      className="w-full py-3 rounded-xl bg-ink-2 border border-ink-line text-ink-text-2
+                 text-[14px] font-semibold hover:text-ink-text hover:bg-ink-3
+                 active:scale-[0.97] transition-all"
     >
       ← Volver
     </button>
   )
 
   return (
-    <div className="min-h-screen pb-10 px-5"
-      style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}>
+    <div className="min-h-screen bg-ink pb-10 px-5 relative overflow-hidden">
+      {/* Subtle accent en top-right para romper el flat oscuro */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(70% 50% at 100% 0%, rgba(161,49,67,0.16) 0%, transparent 60%)',
+        }}
+      />
 
-      <div className="max-w-md mx-auto pt-14 space-y-4">
+      <div className="max-w-md mx-auto pt-14 space-y-4 relative">
 
         {/* Logo / marca */}
         {step === 1 && (
           <div className="text-center mb-8">
-            <h1 className="font-display text-[32px] font-bold text-white tracking-tight">
-              Reserva<span className="text-c1">YA</span>
+            <h1 className="font-display text-[32px] font-bold text-ink-text tracking-tight">
+              Reserva<span className="text-wine-soft">YA</span>
             </h1>
-            <p className="text-white/45 text-[14px] mt-1">Panel para restaurantes</p>
+            <p className="text-ink-text-3 text-[13px] mt-1">Panel para restaurantes</p>
           </div>
         )}
 
         {error && (
-          <div className="bg-c1/15 border border-c1/30 rounded-xl px-4 py-3 text-c1 text-[13px] font-semibold">
+          <div className="bg-wine/18 border border-wine/35 rounded-xl px-4 py-3
+                          text-wine-soft text-[13px] font-semibold">
             {error}
           </div>
         )}
@@ -287,9 +294,11 @@ export default function OnboardingPage() {
               </Field>
             </div>
             {btnNext(handleStep1)}
-            <p className="text-center text-white/30 text-[12px]">
+            <p className="text-center text-ink-text-3 text-[12px]">
               ¿Ya tenés cuenta?{' '}
-              <a href="/login" className="text-c1 font-semibold">Iniciá sesión</a>
+              <a href="/login" className="text-wine-soft font-semibold hover:brightness-110 transition-all">
+                Iniciá sesión
+              </a>
             </p>
           </>
         )}
@@ -336,15 +345,14 @@ export default function OnboardingPage() {
               title="Días y turnos"
               sub="¿Cuándo atiende tu restaurante?" />
 
-            {/* Días */}
             <Field label="Días que abrís">
               <div className="flex gap-2 flex-wrap mt-1">
                 {DAYS_ES.map((d, i) => (
                   <button key={i} onClick={() => toggleDay(i)}
                     className={`w-10 h-10 rounded-full font-bold text-[13px] border-2 transition-all
                                 ${s.days.includes(i)
-                                  ? 'bg-c1 border-c1 text-white'
-                                  : 'bg-white/5 border-white/15 text-white/40'
+                                  ? 'bg-wine border-wine text-white'
+                                  : 'bg-ink-2 border-ink-line-2 text-ink-text-3 hover:text-ink-text'
                                 }`}>
                     {d}
                   </button>
@@ -353,13 +361,13 @@ export default function OnboardingPage() {
             </Field>
 
             {/* Almuerzo */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+            <div className="bg-ink-2 border border-ink-line rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-white font-semibold text-[14px]">Almuerzo</span>
+                <span className="text-ink-text font-semibold text-[14px]">Almuerzo</span>
                 <button
                   onClick={() => update({ lunch: s.lunch ? null : { opens_at: '12:00', closes_at: '15:30' } })}
                   className={`w-11 h-6 rounded-full transition-all duration-200 relative
-                              ${s.lunch ? 'bg-c1' : 'bg-white/15'}`}
+                              ${s.lunch ? 'bg-wine' : 'bg-ink-3 border border-ink-line-2'}`}
                 >
                   <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200
                                     ${s.lunch ? 'left-[22px]' : 'left-0.5'}`} />
@@ -382,13 +390,13 @@ export default function OnboardingPage() {
             </div>
 
             {/* Cena */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+            <div className="bg-ink-2 border border-ink-line rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-white font-semibold text-[14px]">Cena</span>
+                <span className="text-ink-text font-semibold text-[14px]">Cena</span>
                 <button
                   onClick={() => update({ dinner: s.dinner ? null : { opens_at: '20:00', closes_at: '23:30' } })}
                   className={`w-11 h-6 rounded-full transition-all duration-200 relative
-                              ${s.dinner ? 'bg-c1' : 'bg-white/15'}`}
+                              ${s.dinner ? 'bg-wine' : 'bg-ink-3 border border-ink-line-2'}`}
                 >
                   <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200
                                     ${s.dinner ? 'left-[22px]' : 'left-0.5'}`} />
@@ -430,8 +438,7 @@ export default function OnboardingPage() {
 
             <div className="space-y-4">
               {s.zones.map((zone, zi) => (
-                <div key={zi} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-                  {/* Cabecera de zona */}
+                <div key={zi} className="bg-ink-2 border border-ink-line rounded-2xl p-4 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Nombre de la zona">
                       <input value={zone.name}
@@ -453,8 +460,7 @@ export default function OnboardingPage() {
                     </Field>
                   </div>
 
-                  {/* Mesas */}
-                  <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider">
+                  <p className="text-[11px] font-bold text-ink-text-3 uppercase tracking-[0.1em]">
                     Mesas ({zone.tables.length})
                   </p>
                   <div className="space-y-2">
@@ -462,21 +468,27 @@ export default function OnboardingPage() {
                       <div key={ti} className="flex items-center gap-2">
                         <input value={table.label}
                           onChange={e => updateTable(zi, ti, { label: e.target.value })}
-                          className="w-16 rounded-lg bg-white/10 border border-white/15 px-2 py-2
-                                     text-[13px] text-white text-center outline-none focus:border-c1/50"
+                          className="w-16 rounded-lg bg-ink border border-ink-line-2 px-2 py-2
+                                     text-[13px] text-ink-text text-center font-mono tabular-nums
+                                     outline-none focus:border-wine/50 transition-colors"
                         />
                         <div className="flex items-center gap-1.5 flex-1">
                           {[2, 4, 6, 8].map(cap => (
                             <button key={cap} onClick={() => updateTable(zi, ti, { capacity: cap })}
                               className={`flex-1 py-2 rounded-lg text-[12px] font-bold transition-all
-                                          ${table.capacity === cap ? 'bg-c1 text-white' : 'bg-white/10 text-white/40'}`}>
-                              {cap}👤
+                                          ${table.capacity === cap
+                                            ? 'bg-wine text-white border border-wine'
+                                            : 'bg-ink text-ink-text-3 border border-ink-line-2 hover:text-ink-text'}`}>
+                              {cap}p
                             </button>
                           ))}
                         </div>
                         <button onClick={() => removeTable(zi, ti)}
-                          className="w-8 h-8 rounded-lg bg-c1/15 text-c1 flex items-center justify-center
-                                     text-[16px] active:scale-90 transition-transform flex-shrink-0">
+                          className="w-8 h-8 rounded-lg bg-wine/15 border border-wine/30 text-wine-soft
+                                     flex items-center justify-center text-[16px]
+                                     hover:bg-wine/25 active:scale-90 transition-all flex-shrink-0"
+                          aria-label="Quitar mesa"
+                        >
                           ×
                         </button>
                       </div>
@@ -484,16 +496,19 @@ export default function OnboardingPage() {
                   </div>
 
                   <button onClick={() => addTable(zi)}
-                    className="w-full py-2.5 rounded-xl border border-dashed border-white/20
-                               text-white/40 text-[13px] font-semibold active:scale-[0.97] transition-transform">
+                    className="w-full py-2.5 rounded-xl border border-dashed border-ink-line-2
+                               text-ink-text-3 text-[13px] font-semibold
+                               hover:text-ink-text hover:border-ink-line-2/80
+                               active:scale-[0.97] transition-all">
                     + Agregar mesa
                   </button>
                 </div>
               ))}
 
               <button onClick={addZone}
-                className="w-full py-3 rounded-xl border border-dashed border-c1/30
-                           text-c1 text-[13px] font-semibold active:scale-[0.97] transition-transform">
+                className="w-full py-3 rounded-xl border border-dashed border-wine/35
+                           text-wine-soft text-[13px] font-semibold
+                           hover:bg-wine/10 active:scale-[0.97] transition-all">
                 + Agregar zona (terraza, privado…)
               </button>
             </div>
@@ -521,7 +536,7 @@ export default function OnboardingPage() {
                 <input type="number" value={s.depositAmount}
                   onChange={e => update({ depositAmount: Number(e.target.value) })}
                   className={inputCls} />
-                <p className="text-white/30 text-[11px] mt-1.5">
+                <p className="text-ink-text-3 text-[11px] mt-1.5">
                   Se descuenta del consumo al llegar. Pagado via Mercado Pago.
                 </p>
               </Field>
@@ -532,40 +547,47 @@ export default function OnboardingPage() {
                     <button key={min} onClick={() => update({ cutOffMinutes: min })}
                       className={`flex-1 py-3 rounded-xl text-[13px] font-bold border-2 transition-all
                                   ${s.cutOffMinutes === min
-                                    ? 'bg-c1 border-c1 text-white'
-                                    : 'bg-white/5 border-white/15 text-white/50'
+                                    ? 'bg-wine border-wine text-white'
+                                    : 'bg-ink-2 border-ink-line-2 text-ink-text-2 hover:text-ink-text'
                                   }`}>
                       {min}m
                     </button>
                   ))}
                 </div>
-                <p className="text-white/30 text-[11px] mt-1.5">
+                <p className="text-ink-text-3 text-[11px] mt-1.5">
                   Recomendado: 60 min. Así el restaurante puede prepararse.
                 </p>
               </Field>
 
               {/* Resumen */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
-                <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-2">Resumen</p>
+              <div className="bg-ink-2 border border-ink-line rounded-2xl p-4 space-y-2">
+                <p className="text-[11px] font-bold text-ink-text-3 uppercase tracking-[0.1em] mb-2">Resumen</p>
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Restaurante</span>
-                  <span className="text-white font-semibold">{s.venueName}</span>
+                  <span className="text-ink-text-3">Restaurante</span>
+                  <span className="text-ink-text font-semibold">{s.venueName}</span>
                 </div>
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Mesas</span>
-                  <span className="text-white font-semibold">
-                    {s.zones.reduce((sum, z) => sum + z.tables.length, 0)} en {s.zones.length} zona{s.zones.length !== 1 ? 's' : ''}
+                  <span className="text-ink-text-3">Mesas</span>
+                  <span className="text-ink-text font-semibold">
+                    <span className="font-mono tabular-nums">
+                      {s.zones.reduce((sum, z) => sum + z.tables.length, 0)}
+                    </span>
+                    {' '}en{' '}
+                    <span className="font-mono tabular-nums">{s.zones.length}</span>
+                    {' '}zona{s.zones.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Turnos</span>
-                  <span className="text-white font-semibold">
+                  <span className="text-ink-text-3">Turnos</span>
+                  <span className="text-ink-text font-semibold">
                     {[s.lunch && 'almuerzo', s.dinner && 'cena'].filter(Boolean).join(' + ')}
                   </span>
                 </div>
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Seña</span>
-                  <span className="text-white font-semibold">${s.depositAmount.toLocaleString('es-AR')}</span>
+                  <span className="text-ink-text-3">Seña</span>
+                  <span className="text-ink-text font-semibold font-mono tabular-nums">
+                    ${s.depositAmount.toLocaleString('es-AR')}
+                  </span>
                 </div>
               </div>
             </div>

@@ -266,7 +266,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                   className={`flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl
                               px-3 py-2.5 min-w-[56px] border-2 transition-all duration-[180ms]
                               ${isSelected
-                                ? 'bg-c1 border-c1 text-white shadow-c1'
+                                ? 'bg-wine border-wine text-white shadow-[0_6px_18px_-4px_rgba(161,49,67,0.5)]'
                                 : 'bg-white border-[var(--br)] text-tx2'
                               }`}
                 >
@@ -284,7 +284,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
           <div>
             <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Horario</p>
             {availableSlots.length === 0 ? (
-              <div className="bg-c3l border border-[rgba(255,184,0,0.3)] rounded-xl p-4 text-center">
+              <div className="bg-gold/12 border border-gold/30 rounded-xl p-4 text-center">
                 <p className="text-[#CC7700] text-[13px] font-semibold">
                   Las reservas para este turno ya cerraron. Elegí otro día.
                 </p>
@@ -317,7 +317,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                   className={`w-11 h-11 rounded-full font-bold text-[15px] border-2
                               transition-all duration-[180ms]
                               ${state.partySize === n
-                                ? 'bg-c1 border-c1 text-white shadow-c1'
+                                ? 'bg-wine border-wine text-white shadow-[0_6px_18px_-4px_rgba(161,49,67,0.5)]'
                                 : 'bg-white border-[var(--br)] text-tx2'
                               }`}
                 >
@@ -378,7 +378,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                     No hay mesas disponibles para este horario.
                   </p>
                   <button onClick={() => setStep('datetime')}
-                    className="text-c4 text-[13px] mt-2 font-semibold">
+                    className="text-olive text-[13px] mt-2 font-semibold">
                     Cambiar horario →
                   </button>
                 </div>
@@ -388,7 +388,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                   key={table.id}
                   onClick={() => handleSelectTable(table)}
                   className="flex flex-col items-center justify-center gap-1.5
-                             rounded-xl border-2 border-c2/30 bg-c2l
+                             rounded-xl border-2 border-olive/35 bg-olive/12
                              active:scale-95 transition-transform duration-[180ms]"
                   style={{ aspectRatio: '1' }}
                 >
@@ -404,7 +404,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
         </div>
 
         <div className="flex items-center gap-2 text-[12px] text-tx3">
-          <span className="w-3 h-3 rounded-full bg-c2l border-2 border-c2/30 inline-block" />
+          <span className="w-3 h-3 rounded-full bg-olive/15 border-2 border-olive/35 inline-block" />
           Disponible
           <span className="w-3 h-3 rounded-full bg-sf2 border-2 border-[var(--br)] inline-block ml-2" />
           No disponible
@@ -450,7 +450,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
           <div className="space-y-6">
             {/* Banner "Lo de siempre" */}
             {lastOrder.length > 0 && state.orderItems.length === 0 && (
-              <div className="card p-4 border-2 border-c3/30 bg-c3l">
+              <div className="card p-4 border-2 border-gold/35 bg-gold/12">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-[13px] text-[#996600]">¿Lo de siempre?</p>
@@ -460,7 +460,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                   </div>
                   <button
                     onClick={() => setState(s => ({ ...s, orderItems: lastOrder }))}
-                    className="flex-shrink-0 px-3 py-2 rounded-lg bg-c3 text-white
+                    className="flex-shrink-0 px-3 py-2 rounded-lg bg-gold text-ink
                                text-[12px] font-bold active:scale-95 transition-transform"
                   >
                     Sí, ese →
@@ -495,7 +495,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                                 {item.description}
                               </p>
                             )}
-                            <p className="text-c1 font-bold text-[14px] mt-1">
+                            <p className="text-wine-soft font-bold text-[14px] mt-1">
                               ${item.price.toLocaleString('es-AR')}
                             </p>
                           </div>
@@ -516,7 +516,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                             )}
                             <button
                               onClick={() => adjustQty(item, 1)}
-                              className="w-8 h-8 rounded-full bg-c1 flex items-center justify-center
+                              className="w-8 h-8 rounded-full bg-wine flex items-center justify-center
                                          font-bold text-white text-[18px] active:scale-90 transition-transform"
                             >
                               +
@@ -580,7 +580,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-semibold text-tx2">Mesa</span>
-          <span className="font-display text-[18px] font-bold text-c2">
+          <span className="font-display text-[18px] font-bold text-olive">
             {state.selectedTable?.label}
           </span>
         </div>
@@ -603,7 +603,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
       {/* Timer del lock */}
       {lockTimer !== null && lockTimer > 0 && (
         <div className="flex items-center gap-3 rounded-xl px-4 py-3
-                        bg-c3l border border-[rgba(255,184,0,0.25)]">
+                        bg-gold/10 border border-gold/25">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="9" stroke="#CC7700" strokeWidth="2" />
             <path d="M12 7v5l3 3" stroke="#CC7700" strokeWidth="2"
@@ -624,7 +624,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
           <div className="flex items-center justify-between mb-1">
             <p className="text-[13px] font-bold text-tx2">Pre-pedido</p>
             <button onClick={() => setStep('menu')}
-              className="text-[12px] text-c4 font-semibold">Editar</button>
+              className="text-[12px] text-olive font-semibold">Editar</button>
           </div>
           {state.orderItems.map(item => (
             <div key={item.menu_item_id} className="flex items-center justify-between">

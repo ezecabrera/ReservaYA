@@ -66,18 +66,18 @@ export function WhatsAppSection({ venueName }: Props) {
 
   return (
     <div>
-      <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-3">
+      <p className="text-[11px] font-bold text-ink-text-3 uppercase tracking-[0.12em] mb-3">
         Mensajes automáticos (WhatsApp)
       </p>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
+      <div className="bg-ink-2 border border-ink-line rounded-2xl p-4 space-y-4">
         <div>
-          <p className="text-white font-semibold text-[14px]">
+          <p className="text-ink-text font-semibold text-[14px]">
             Así se ven los mensajes que tus clientes reciben
           </p>
-          <p className="text-white/55 text-[12.5px] leading-snug mt-1">
+          <p className="text-ink-text-2 text-[12.5px] leading-snug mt-1">
             Los textos son templates aprobados por Meta. {'{VENUE}'} se reemplaza por
-            <span className="font-bold"> {venueName}</span>. Los reminders respetan la fecha real
+            <span className="font-bold text-ink-text"> {venueName}</span>. Los reminders respetan la fecha real
             de cada reserva.
           </p>
         </div>
@@ -88,14 +88,14 @@ export function WhatsAppSection({ venueName }: Props) {
             const preview = PREVIEWS[code]
             const meta = TEMPLATE_REGISTRY[code]
             return (
-              <div key={code} className="bg-black/25 border border-white/10 rounded-xl px-3.5 py-3">
+              <div key={code} className="bg-ink border border-ink-line rounded-xl px-3.5 py-3">
                 <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                  <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-ink-text-2 uppercase tracking-[0.12em]">
                     {preview.title}
                   </span>
-                  <span className="text-[9.5px] font-mono text-white/30">{meta.meta_name}</span>
+                  <span className="text-[9.5px] font-mono text-ink-text-3">{meta.meta_name}</span>
                 </div>
-                <p className="text-white/85 text-[13px] leading-snug">
+                <p className="text-ink-text/90 text-[13px] leading-snug">
                   {preview.body.replace('{VENUE}', venueName)}
                 </p>
               </div>
@@ -104,8 +104,8 @@ export function WhatsAppSection({ venueName }: Props) {
         </div>
 
         {/* Test message */}
-        <div className="pt-3 border-t border-white/10">
-          <span className="text-[11px] font-bold text-white/45 uppercase tracking-wider mb-1.5 block">
+        <div className="pt-3 border-t border-ink-line">
+          <span className="text-[10.5px] font-bold text-ink-text-3 uppercase tracking-[0.12em] mb-1.5 block">
             Probar el envío
           </span>
           <div className="flex gap-2">
@@ -115,26 +115,27 @@ export function WhatsAppSection({ venueName }: Props) {
               value={testPhone}
               onChange={(e) => setTestPhone(e.target.value)}
               placeholder="+54 9 11…"
-              className="flex-1 rounded-xl bg-white/10 border border-white/15 px-3 py-2.5
-                         text-[13px] text-white placeholder:text-white/35 outline-none
-                         focus:border-c2/50"
+              className="flex-1 rounded-xl bg-ink border border-ink-line-2 px-3 py-2.5
+                         text-[13px] text-ink-text placeholder:text-ink-text-3 outline-none
+                         focus:border-olive/50 transition-colors"
             />
             <button
               type="button"
               onClick={sendTest}
               disabled={sending || !testPhone.trim()}
-              className="px-4 rounded-xl bg-c2/25 border border-c2/40 text-white text-[12.5px]
-                         font-bold disabled:opacity-50"
+              className="px-4 rounded-xl bg-olive/25 border border-olive/45 text-olive text-[12.5px]
+                         font-bold disabled:opacity-50
+                         hover:bg-olive/35 transition-colors"
             >
               {sending ? 'Enviando…' : 'Probar'}
             </button>
           </div>
           {result && (
-            <p className={`mt-2 text-[12px] ${result.ok ? 'text-c2' : 'text-c1l'}`}>
+            <p className={`mt-2 text-[12px] ${result.ok ? 'text-olive' : 'text-wine-soft'}`}>
               {result.message}
             </p>
           )}
-          <p className="mt-1.5 text-[10.5px] text-white/35 leading-snug">
+          <p className="mt-1.5 text-[10.5px] text-ink-text-3 leading-snug">
             Si todavía no configuraste credenciales de Meta, el envío hace no-op en dev y
             se registra con id sintético.
           </p>

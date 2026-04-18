@@ -33,11 +33,26 @@ const config: Config = {
         tx: 'var(--tx)',
         tx2: 'var(--tx2)',
         tx3: 'var(--tx3)',
+        // Sistema editorial ink — compartido con panel para pages oscuras
+        ink:         'var(--ink)',
+        'ink-2':     'var(--ink-2)',
+        'ink-3':     'var(--ink-3)',
+        wine:        'var(--wine)',
+        'wine-soft': 'var(--wine-soft)',
+        olive:       'var(--olive)',
+        gold:        'var(--gold)',
+        terracotta:  'var(--terracotta)',
+        'ink-text':   'var(--ink-text)',
+        'ink-text-2': 'var(--ink-text-2)',
+        'ink-text-3': 'var(--ink-text-3)',
+        'ink-line':   'var(--ink-line)',
+        'ink-line-2': 'var(--ink-line-2)',
       },
       // ── Tipografía del design system ────────────────────────────────────
       fontFamily: {
-        display: ['var(--font-display)', 'serif'],
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
         body: ['var(--font-body)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       // ── Border radius del design system ─────────────────────────────────
       borderRadius: {

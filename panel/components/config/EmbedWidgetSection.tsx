@@ -34,18 +34,18 @@ export function EmbedWidgetSection({ venueId, venueName, appBaseUrl }: Props) {
 
   return (
     <div>
-      <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-3">
+      <p className="text-[11px] font-bold text-ink-text-3 uppercase tracking-[0.12em] mb-3">
         Widget embebible
       </p>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
+      <div className="bg-ink-2 border border-ink-line rounded-2xl p-4 space-y-4">
         <div>
-          <p className="text-white font-semibold text-[14px]">
+          <p className="text-ink-text font-semibold text-[14px]">
             Reservas desde tu web o Instagram
           </p>
-          <p className="text-white/55 text-[12.5px] leading-snug mt-1">
+          <p className="text-ink-text-2 text-[12.5px] leading-snug mt-1">
             Pegá este código en tu sitio o usalo como link desde tu bio de
-            Instagram. Las reservas que entren por acá son <span className="font-bold">tuyas</span>,
+            Instagram. Las reservas que entren por acá son <span className="font-bold text-ink-text">tuyas</span>,
             sin comisión.
           </p>
         </div>
@@ -53,19 +53,19 @@ export function EmbedWidgetSection({ venueId, venueName, appBaseUrl }: Props) {
         {/* Snippet HTML */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-bold text-white/45 uppercase tracking-wider">
+            <span className="text-[10.5px] font-bold text-ink-text-3 uppercase tracking-[0.12em]">
               HTML para tu sitio
             </span>
             <button
               type="button"
               onClick={() => copy(snippet, 'snippet')}
-              className="text-[11px] font-bold text-c2 hover:underline"
+              className="text-[11px] font-bold text-olive hover:brightness-110 transition-all"
             >
               {copied === 'snippet' ? '¡Copiado!' : 'Copiar'}
             </button>
           </div>
-          <pre className="bg-black/35 border border-white/10 rounded-xl p-3
-                          text-[11px] text-white/80 font-mono overflow-x-auto whitespace-pre">
+          <pre className="bg-ink border border-ink-line-2 rounded-xl p-3
+                          text-[11px] text-ink-text/85 font-mono overflow-x-auto whitespace-pre">
 {snippet}
           </pre>
         </div>
@@ -73,19 +73,19 @@ export function EmbedWidgetSection({ venueId, venueName, appBaseUrl }: Props) {
         {/* Direct link (para Instagram link-in-bio) */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-bold text-white/45 uppercase tracking-wider">
+            <span className="text-[10.5px] font-bold text-ink-text-3 uppercase tracking-[0.12em]">
               Link directo (para Instagram bio)
             </span>
             <button
               type="button"
               onClick={() => copy(iframeUrl, 'iframe')}
-              className="text-[11px] font-bold text-c2 hover:underline"
+              className="text-[11px] font-bold text-olive hover:brightness-110 transition-all"
             >
               {copied === 'iframe' ? '¡Copiado!' : 'Copiar'}
             </button>
           </div>
-          <div className="bg-black/35 border border-white/10 rounded-xl px-3 py-2.5
-                          text-[12px] text-white/80 font-mono break-all">
+          <div className="bg-ink border border-ink-line-2 rounded-xl px-3 py-2.5
+                          text-[12px] text-ink-text/85 font-mono break-all">
             {iframeUrl}
           </div>
         </div>
@@ -95,15 +95,16 @@ export function EmbedWidgetSection({ venueId, venueName, appBaseUrl }: Props) {
             href={iframeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-center py-2.5 rounded-xl bg-c2/20 border border-c2/35
-                       text-white text-[13px] font-bold"
+            className="flex-1 text-center py-2.5 rounded-xl bg-olive/20 border border-olive/35
+                       text-olive text-[13px] font-bold
+                       hover:bg-olive/28 transition-colors"
           >
             Ver preview
           </a>
         </div>
 
-        <p className="text-[10.5px] text-white/35 italic">
-          {venueName} · ID: {venueId}
+        <p className="text-[10.5px] text-ink-text-3 italic">
+          {venueName} · ID: <span className="font-mono">{venueId}</span>
         </p>
       </div>
     </div>

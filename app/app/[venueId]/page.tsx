@@ -49,31 +49,49 @@ export default async function VenueDetailPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-bg pb-28">
-      {/* Hero del restaurante */}
-      <div className="relative h-52 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460]">
+      {/* Hero del restaurante — ink con accent wine sutil si no hay imagen */}
+      <div
+        className="relative h-52 bg-ink overflow-hidden"
+        style={{
+          backgroundImage: v.image_url
+            ? undefined
+            : 'radial-gradient(80% 100% at 100% 0%, rgba(161,49,67,0.28) 0%, transparent 60%)',
+        }}
+      >
         {v.image_url && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={v.image_url} alt={v.name}
-            className="w-full h-full object-cover opacity-70" />
+          <img
+            src={v.image_url}
+            alt={v.name}
+            className="w-full h-full object-cover opacity-75"
+          />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        {/* Gradient reading del nombre — más fuerte con imagen, sutil sin ella */}
+        <div className={`absolute inset-0 ${v.image_url ? 'bg-gradient-to-t from-black/70 to-transparent' : 'bg-gradient-to-t from-black/40 to-transparent'}`} />
+
         {/* Back button */}
         <a
           href="/"
-          className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/40
-                     backdrop-blur-sm flex items-center justify-center"
+          className="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/45
+                     backdrop-blur-sm flex items-center justify-center
+                     border border-white/10 hover:bg-black/60 transition-colors"
+          aria-label="Volver"
         >
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
             <path d="M15 18l-6-6 6-6" stroke="white"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </a>
+
         {/* Venue name overlay */}
         <div className="absolute bottom-4 left-4 right-4">
-          <h1 className="font-display text-[26px] font-bold text-white tracking-tight">
+          <p className="text-white/65 text-[10.5px] font-bold uppercase tracking-[0.14em] mb-1">
+            Restaurante
+          </p>
+          <h1 className="font-display text-[26px] font-bold text-white tracking-tight leading-tight">
             {v.name}
           </h1>
-          <p className="text-white/70 text-[13px] mt-0.5">{v.address}</p>
+          <p className="text-white/75 text-[13px] mt-0.5">{v.address}</p>
         </div>
       </div>
 

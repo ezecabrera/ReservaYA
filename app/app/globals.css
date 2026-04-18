@@ -52,13 +52,31 @@
     --r-full: 99px;
 
     /* ── Tipografía ── */
-    --font-display: 'Fraunces', serif;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
     --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
     /* ── Transiciones ── */
     --ease-snap:   cubic-bezier(0.32, 0.72, 0, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --ease-ui:     0.18s ease;
+
+    /* ── Sistema editorial ink (compartido con panel) ──────────────────────
+       Usado en pages oscuras del cliente (detalle de venue, wizard, embed).
+       En light pages seguimos con --bg/--tx/etc. */
+    --ink:         #1A1B21;
+    --ink-2:       #22232A;
+    --ink-3:       #2C2D34;
+    --wine:        #A13143;
+    --wine-soft:   #C36878;
+    --olive:       #4F8A5F;
+    --gold:        #C99130;
+    --terracotta:  #D66A3F;
+    --ink-text:    #F3F0EA;
+    --ink-text-2:  rgba(243, 240, 234, 0.65);
+    --ink-text-3:  rgba(243, 240, 234, 0.40);
+    --ink-line:    rgba(243, 240, 234, 0.07);
+    --ink-line-2:  rgba(243, 240, 234, 0.13);
   }
 
   /* Fuente base para todo el body */
