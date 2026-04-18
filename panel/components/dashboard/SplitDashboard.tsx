@@ -11,6 +11,7 @@ import { TimelineView } from './TimelineView'
 import { RightActionPanel } from './RightActionPanel'
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber'
 import { IconWineGlass, IconChair } from '@/components/ui/Icons'
+import { ShareServiceButton } from './ShareServiceButton'
 import { pushToast } from '@/lib/toast'
 import {
   ReservationActionSheet,
@@ -400,6 +401,16 @@ export function SplitDashboard({
         mode={mode}
         shiftLabel={shiftLabel}
         venueName={venueName}
+        actions={
+          <ShareServiceButton
+            venueName={venueName}
+            date={date}
+            shiftLabel={shiftLabel}
+            reservations={reservations}
+            displayName={displayName}
+            tableLabelById={(id) => localTables.find((t) => t.id === id)?.label ?? null}
+          />
+        }
       />
 
       {/* Grid principal desktop — sidebar fijo + canvas fluid */}
