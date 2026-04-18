@@ -126,15 +126,36 @@ export function NewReservationTrigger({
           type="button"
           onClick={() => { setPrefilled({}); setOpen(true) }}
           aria-label="Nueva reserva"
-          className={`fixed right-5 bottom-24 z-40 w-14 h-14 rounded-full bg-wine text-white
+          className={`group fixed right-5 bottom-24 z-40 w-14 h-14 rounded-full bg-wine text-white
                       shadow-[0_12px_28px_-4px_rgba(161,49,67,0.65)]
-                      flex items-center justify-center active:scale-95
-                      transition-transform lg:hidden ${className}`}
+                      flex items-center justify-center
+                      hover:scale-[1.06] hover:shadow-[0_16px_34px_-4px_rgba(161,49,67,0.75)]
+                      active:scale-95
+                      transition-all duration-200 lg:hidden ${className}`}
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 92px)' }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <svg
+            width="22" height="22" viewBox="0 0 24 24" fill="none"
+            className="transition-transform duration-200 group-hover:rotate-90"
+          >
             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
           </svg>
+
+          {/* Tooltip — sólo visible en tablet con hover real (no en touch puro) */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute right-full mr-3 px-2.5 py-1
+                       rounded-md bg-ink border border-ink-line-2
+                       text-[11px] font-semibold text-ink-text whitespace-nowrap
+                       opacity-0 translate-x-2
+                       group-hover:opacity-100 group-hover:translate-x-0
+                       transition-all duration-150
+                       hidden md:block"
+          >
+            Nueva reserva
+            <kbd className="ml-1.5 text-[10px] font-mono text-ink-text-3 bg-ink-2
+                             border border-ink-line rounded px-1 py-0.5">N</kbd>
+          </span>
         </button>
       )}
 

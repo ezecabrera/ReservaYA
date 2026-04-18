@@ -21,11 +21,12 @@ export function VenueRatingBlock({ stats }: VenueRatingBlockProps) {
   const starsFloor = stats.avg_stars !== null ? Math.round(stats.avg_stars) : 0
 
   return (
-    <div className="rounded-2xl border border-[var(--br)] bg-white p-4 space-y-3">
+    <div className="rounded-2xl border border-[var(--br)] bg-white p-4 space-y-3
+                    view-enter">
       {hasRatings && (
         <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-1.5">
-            <span className="font-display text-[28px] font-bold leading-none text-tx">
+            <span className="font-display text-[28px] font-bold leading-none text-tx tabular-nums">
               {stats.avg_stars!.toFixed(1)}
             </span>
             <div className="flex gap-0.5">
@@ -33,7 +34,7 @@ export function VenueRatingBlock({ stats }: VenueRatingBlockProps) {
                 const filled = n <= starsFloor
                 return (
                   <svg key={n} width="13" height="13" viewBox="0 0 24 24"
-                    fill={filled ? '#E8B51A' : 'rgba(0,0,0,0.12)'}>
+                    fill={filled ? 'var(--gold)' : 'rgba(0,0,0,0.12)'}>
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                   </svg>
                 )
@@ -41,7 +42,8 @@ export function VenueRatingBlock({ stats }: VenueRatingBlockProps) {
             </div>
           </div>
           <p className="text-tx2 text-[13px]">
-            {stats.total_ratings} reseña{stats.total_ratings !== 1 ? 's' : ''} de clientes
+            <span className="font-mono tabular-nums">{stats.total_ratings}</span>{' '}
+            reseña{stats.total_ratings !== 1 ? 's' : ''} de clientes
           </p>
         </div>
       )}
@@ -53,12 +55,12 @@ export function VenueRatingBlock({ stats }: VenueRatingBlockProps) {
               Cancelaciones del local <br />
               <span className="text-tx3 text-[11px]">últ. 180 días</span>
             </span>
-            <span className={`font-display font-bold text-[18px] ${
+            <span className={`font-display font-bold text-[18px] tabular-nums ${
               stats.unilateral_cancel_pct! >= 5
-                ? 'text-c1'
+                ? 'text-wine'
                 : stats.unilateral_cancel_pct! >= 2
-                  ? 'text-c3'
-                  : 'text-c2'
+                  ? 'text-gold'
+                  : 'text-olive'
             }`}>
               {stats.unilateral_cancel_pct!.toFixed(1)}%
             </span>
@@ -69,7 +71,7 @@ export function VenueRatingBlock({ stats }: VenueRatingBlockProps) {
             </p>
           )}
           {stats.unilateral_cancel_pct! >= 5 && (
-            <p className="text-[11px] text-c1 mt-1.5">
+            <p className="text-[11px] text-wine mt-1.5">
               Cancela sus reservas con frecuencia — tenelo en cuenta.
             </p>
           )}
