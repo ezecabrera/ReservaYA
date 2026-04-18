@@ -6,6 +6,7 @@ import { NumericText } from '@/components/ui/NumericText'
 import { PageHero } from '@/components/ui/PageHero'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IconPlateCutlery } from '@/components/ui/Icons'
+import { pushToast } from '@/lib/toast'
 
 interface Props {
   venueId: string
@@ -26,10 +27,52 @@ type FormMode =
   | { type: 'add-category' }
 
 export function MenuManager({ venueId, initialCategories, initialItems }: Props) {
-  const [categories, setCategories] = useState(initialCategories)
+  const [categories, setCategories] = useState(
+    // Normalizar sort_order: algunos venues piloto vienen con valores duplicados
+    [...initialCategories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+  )
   const [items, setItems] = useState(initialItems)
   const [mode, setMode] = useState<FormMode>({ type: 'none' })
   const [saving, setSaving] = useState(false)
+
+  // ── Drag-reorder categorías ────────────────────────────────────────────────
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+
+  async function persistReorder(next: MenuCategory[]) {
+    const orders = next.map((c, i) => ({ id: c.id, sort_order: i }))
+    const res = await fetch('/api/menu/categories/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orders }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      pushToast({
+        tone: 'error',
+        text: body.error ?? 'No se pudo reordenar',
+        hint: 'Volvimos al orden anterior.',
+      })
+      // Rollback visual
+      setCategories([...categories])
+    } else {
+      pushToast({ tone: 'ok', text: 'Orden actualizado' })
+    }
+  }
+
+  function handleCategoryDrop(fromIdx: number, toIdx: number) {
+    setDragIndex(null)
+    setOverIndex(null)
+    if (fromIdx === toIdx) return
+
+    const copy = [...categories]
+    const [moved] = copy.splice(fromIdx, 1)
+    copy.splice(toIdx, 0, moved)
+    // Optimistic update — normalizamos sort_order localmente
+    const normalized = copy.map((c, i) => ({ ...c, sort_order: i }))
+    setCategories(normalized)
+    persistReorder(normalized)
+  }
 
   // ── Form state ──────────────────────────────────────────────────────────────
   const [formName, setFormName] = useState('')
@@ -155,10 +198,60 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
       />
 
       <div className="px-5 lg:px-7 space-y-8 max-w-3xl mx-auto mt-6">
-        {categories.map(cat => (
-          <section key={cat.id}>
+        {categories.map((cat, idx) => (
+          <section
+            key={cat.id}
+            draggable
+            onDragStart={(e) => {
+              setDragIndex(idx)
+              e.dataTransfer.effectAllowed = 'move'
+              e.dataTransfer.setData('text/category-id', cat.id)
+              // Ghost mínimo — el propio section ya hace de preview
+              const img = new Image()
+              img.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+              e.dataTransfer.setDragImage(img, 0, 0)
+            }}
+            onDragOver={(e) => {
+              if (dragIndex === null) return
+              e.preventDefault()
+              setOverIndex(idx)
+            }}
+            onDragEnd={() => { setDragIndex(null); setOverIndex(null) }}
+            onDrop={(e) => {
+              e.preventDefault()
+              if (dragIndex === null) return
+              handleCategoryDrop(dragIndex, idx)
+            }}
+            className={`transition-all duration-150
+                        ${dragIndex === idx ? 'opacity-45' : ''}
+                        ${overIndex === idx && dragIndex !== null && dragIndex !== idx
+                          ? 'scale-[1.01]'
+                          : ''}`}
+          >
+            {/* Línea drop-target: se ilumina arriba de la categoría donde se soltaría */}
+            {overIndex === idx && dragIndex !== null && dragIndex !== idx && (
+              <div className="h-0.5 bg-wine-soft rounded-full mb-2
+                              shadow-[0_0_12px_rgba(195,104,120,0.7)]" />
+            )}
             <div className="flex items-center justify-between mb-3">
-              <NumericText label tone="muted">{cat.name}</NumericText>
+              <div className="flex items-center gap-2">
+                {/* Drag handle — cursor grab cuando se hover */}
+                <span
+                  aria-hidden
+                  className="text-ink-text-3 cursor-grab active:cursor-grabbing
+                             hover:text-ink-text-2 transition-colors"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="9" cy="6" r="1.5" />
+                    <circle cx="15" cy="6" r="1.5" />
+                    <circle cx="9" cy="12" r="1.5" />
+                    <circle cx="15" cy="12" r="1.5" />
+                    <circle cx="9" cy="18" r="1.5" />
+                    <circle cx="15" cy="18" r="1.5" />
+                  </svg>
+                </span>
+                <NumericText label tone="muted">{cat.name}</NumericText>
+              </div>
               <button
                 onClick={() => openAddItem(cat.id)}
                 className="text-[12px] text-olive font-semibold
