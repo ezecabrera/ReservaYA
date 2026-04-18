@@ -6,14 +6,20 @@
  * Coherente con el del panel (dark) — misma estructura, distinto color base.
  */
 
-type Accent = 'coral' | 'sage' | 'amber' | 'blue' | 'mauve'
+type Accent = 'coral' | 'sage' | 'amber' | 'blue' | 'mauve' | 'wine' | 'olive' | 'gold' | 'terracotta'
 
+// Aliases legacy (coral/sage/amber) mapean al sistema ink — wine/olive/gold.
+// Los nuevos pasan directo. Tonos discretos para light theme (0.12-0.16 alpha).
 const ACCENTS: Record<Accent, string> = {
-  coral:  'rgba(255, 71, 87, 0.12)',
-  sage:   'rgba(46, 216, 168, 0.12)',
-  amber:  'rgba(255, 184, 0, 0.14)',
-  blue:   'rgba(78, 142, 255, 0.12)',
-  mauve:  'rgba(155, 89, 255, 0.12)',
+  coral:      'rgba(161, 49, 67, 0.12)',   // wine
+  wine:       'rgba(161, 49, 67, 0.12)',
+  sage:       'rgba(79, 138, 95, 0.14)',   // olive
+  olive:      'rgba(79, 138, 95, 0.14)',
+  amber:      'rgba(201, 145, 48, 0.16)',  // gold (un poco más fuerte)
+  gold:       'rgba(201, 145, 48, 0.16)',
+  terracotta: 'rgba(214, 106, 63, 0.14)',
+  blue:       'rgba(79, 138, 95, 0.12)',   // fallback olive light
+  mauve:      'rgba(161, 49, 67, 0.10)',   // fallback wine light
 }
 
 interface Props {

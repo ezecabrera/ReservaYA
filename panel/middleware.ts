@@ -35,7 +35,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isPublic = pathname === '/login'
+  const isPublic = pathname === '/'
+    || pathname === '/login'
+    || pathname === '/landing'
     || pathname.startsWith('/onboarding')
     || pathname.startsWith('/api/onboarding')
     || pathname.startsWith('/api/webhooks')
@@ -43,9 +45,11 @@ export async function middleware(request: NextRequest) {
     || pathname.startsWith('/api/debug-admin')
 
   if (!user && !isPublic) {
-    const loginUrl = request.nextUrl.clone()
-    loginUrl.pathname = '/login'
-    return NextResponse.redirect(loginUrl)
+    // No logueado + ruta protegida → primero pasa por landing. Si ya sabe
+    // que tiene cuenta, el CTA "Ingresar" lo lleva a /login.
+    const landingUrl = request.nextUrl.clone()
+    landingUrl.pathname = '/landing'
+    return NextResponse.redirect(landingUrl)
   }
 
   if (user && pathname === '/login') {

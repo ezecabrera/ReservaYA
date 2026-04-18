@@ -1,8 +1,10 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { VenueCard } from '@/components/home/VenueCard'
 import { BottomNav } from '@/components/ui/BottomNav'
 import { PageHero } from '@/components/ui/PageHero'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { IconWineGlass } from '@/components/ui/Icons'
 import type { Venue } from '@/lib/shared'
 
 export const revalidate = 60
@@ -43,16 +45,22 @@ export default async function HomePage() {
         )}
       />
 
-      {/* Barra de búsqueda */}
+      {/* Barra de búsqueda — tap → /buscar */}
       <div className="screen-x pt-5 mb-5">
-        <div className="flex items-center gap-3 bg-white border border-[var(--br)]
-                        rounded-full px-4 py-3 shadow-[var(--sh-sm)]">
+        <Link
+          href="/buscar"
+          aria-label="Ir al buscador"
+          className="flex items-center gap-3 bg-white border border-[var(--br)]
+                     rounded-full px-4 py-3 shadow-[var(--sh-sm)]
+                     hover:border-wine/30 hover:shadow-[var(--sh-md)]
+                     active:scale-[0.99] transition-all"
+        >
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-tx3 flex-shrink-0">
             <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
             <path d="M20 20l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
           <span className="text-tx3 text-[14px]">Buscar restaurante o dirección…</span>
-        </div>
+        </Link>
       </div>
 
       {/* Chips de categoría */}
@@ -100,14 +108,7 @@ export default async function HomePage() {
             accent="coral"
             title="Próximamente"
             description="Los primeros restaurantes piloto se suman pronto."
-            icon={(
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                />
-              </svg>
-            )}
+            icon={<IconWineGlass size={28} />}
           />
         )}
       </div>
