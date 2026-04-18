@@ -27,6 +27,12 @@ interface Props {
   className?: string
 }
 
+interface PrefilledState {
+  tableId?: string
+  timeSlot?: string
+  date?: string
+}
+
 export function NewReservationTrigger({
   variant = 'pill',
   defaultDate,
@@ -34,6 +40,7 @@ export function NewReservationTrigger({
   className = '',
 }: Props) {
   const [open, setOpen] = useState(false)
+  const [prefilled, setPrefilled] = useState<PrefilledState>({})
 
   // Keyboard shortcut "N"
   useEffect(() => {
@@ -46,13 +53,30 @@ export function NewReservationTrigger({
       if (tag === 'input' || tag === 'textarea' || target.isContentEditable) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
       e.preventDefault()
+      setPrefilled({})
       setOpen(true)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const date = defaultDate ?? new Date().toISOString().slice(0, 10)
+  // Evento "open:new-reservation" con detail { table_id, time_slot, date }.
+  // Disparado, por ejemplo, desde TimelineView al click en una celda vacía.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ table_id?: string; time_slot?: string; date?: string }>
+      setPrefilled({
+        tableId: custom.detail?.table_id,
+        timeSlot: custom.detail?.time_slot,
+        date: custom.detail?.date,
+      })
+      setOpen(true)
+    }
+    window.addEventListener('open:new-reservation', handler as EventListener)
+    return () => window.removeEventListener('open:new-reservation', handler as EventListener)
+  }, [])
+
+  const date = prefilled.date ?? defaultDate ?? new Date().toISOString().slice(0, 10)
 
   const plus = (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -65,7 +89,7 @@ export function NewReservationTrigger({
       {variant === 'pill' && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => { setPrefilled({}); setOpen(true) }}
           className={`w-full h-10 rounded-lg bg-wine text-white
                       flex items-center justify-center gap-2
                       text-[13px] font-bold
@@ -85,7 +109,7 @@ export function NewReservationTrigger({
       {variant === 'inline' && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => { setPrefilled({}); setOpen(true) }}
           className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg
                       bg-wine text-white text-[12.5px] font-bold
                       shadow-[0_3px_10px_-2px_rgba(161,49,67,0.50)]
@@ -100,7 +124,7 @@ export function NewReservationTrigger({
       {variant === 'fab' && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => { setPrefilled({}); setOpen(true) }}
           aria-label="Nueva reserva"
           className={`fixed right-5 bottom-24 z-40 w-14 h-14 rounded-full bg-wine text-white
                       shadow-[0_12px_28px_-4px_rgba(161,49,67,0.65)]
@@ -117,9 +141,12 @@ export function NewReservationTrigger({
       {open && (
         <NewReservationSheet
           defaultDate={date}
-          onClose={() => setOpen(false)}
+          defaultTableId={prefilled.tableId}
+          defaultTimeSlot={prefilled.timeSlot}
+          onClose={() => { setOpen(false); setPrefilled({}) }}
           onCreated={() => {
             setOpen(false)
+            setPrefilled({})
             // Evento global: cualquier página con lista de reservas lo escucha
             // y refresca (sin prop drilling o context).
             window.dispatchEvent(new CustomEvent('reservation:created'))

@@ -233,6 +233,7 @@ export async function POST(request: NextRequest) {
     guest_phone,
     notes,
     source = 'panel',
+    duration_minutes,
   } = body
 
   // Validación de campos mínimos
@@ -245,6 +246,16 @@ export async function POST(request: NextRequest) {
 
   if (party_size < 1 || party_size > 40) {
     return NextResponse.json({ error: 'Cantidad de personas inválida' }, { status: 400 })
+  }
+
+  // Validación de duración (si viene). Si no viene, la DB usa su DEFAULT 90.
+  if (duration_minutes !== undefined) {
+    if (!Number.isInteger(duration_minutes) || duration_minutes < 15 || duration_minutes > 480) {
+      return NextResponse.json(
+        { error: 'Duración inválida (debe estar entre 15 y 480 minutos)' },
+        { status: 400 },
+      )
+    }
   }
 
   const allowedSources: ReservationSource[] = ['panel', 'walkin', 'phone']
@@ -291,25 +302,42 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Crear la reserva en estado confirmed (sin flujo de pago)
-  const { data: reservation, error: insertError } = await admin
+  // Crear la reserva en estado confirmed (sin flujo de pago).
+  // duration_minutes sólo se manda si viene en el body; si no, la DB usa
+  // DEFAULT 90. Si la columna no existe todavía (migration 012 pendiente),
+  // reintentamos sin ese campo para no romper el flujo.
+  const baseInsert = {
+    venue_id: staffUser.venue_id,
+    table_id,
+    user_id: null,
+    date,
+    time_slot,
+    party_size,
+    status: 'confirmed',
+    qr_token: '',
+    source,
+    guest_name: guest_name.trim(),
+    guest_phone: guest_phone?.trim() || null,
+    notes: notes?.trim() || null,
+  }
+  const insertPayload: Record<string, unknown> = { ...baseInsert }
+  if (duration_minutes !== undefined) insertPayload.duration_minutes = duration_minutes
+
+  let { data: reservation, error: insertError } = await admin
     .from('reservations')
-    .insert({
-      venue_id: staffUser.venue_id,
-      table_id,
-      user_id: null,
-      date,
-      time_slot,
-      party_size,
-      status: 'confirmed',
-      qr_token: '',
-      source,
-      guest_name: guest_name.trim(),
-      guest_phone: guest_phone?.trim() || null,
-      notes: notes?.trim() || null,
-    })
+    .insert(insertPayload)
     .select()
     .single()
+
+  if (insertError?.message?.includes('duration_minutes')) {
+    const fallback = await admin
+      .from('reservations')
+      .insert(baseInsert)
+      .select()
+      .single()
+    reservation = fallback.data
+    insertError = fallback.error
+  }
 
   if (insertError || !reservation) {
     return NextResponse.json(

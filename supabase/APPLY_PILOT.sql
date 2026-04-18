@@ -459,3 +459,15 @@ BEGIN
   ON CONFLICT (id) DO UPDATE SET venue_id = EXCLUDED.venue_id, role = EXCLUDED.role;
   RAISE NOTICE 'Staff user % vinculado a venue %', v_user_id, v_venue_id;
 END $$;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  ReservaYa — Duración estimada de la reserva (migration 012)
+--
+--  duration_minutes permite al staff cargar reservas más cortas (café, copa)
+--  o más largas (eventos, cumpleaños). Default 90 min (cena estándar en AR).
+--  El Timeline view usa este valor para calcular el ancho del bloque.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+ALTER TABLE reservations
+  ADD COLUMN IF NOT EXISTS duration_minutes INTEGER NOT NULL DEFAULT 90
+    CHECK (duration_minutes BETWEEN 15 AND 480);

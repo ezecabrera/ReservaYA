@@ -28,7 +28,8 @@ const ROW_HEIGHT = 54
 const LABEL_WIDTH = 84
 const HEADER_HEIGHT = 32
 const COL_WIDTH = 60  // cada 30 min
-const DEFAULT_DURATION_MIN = 90
+const SLOT_MINUTES = 30
+const FALLBACK_DURATION_MIN = 90 // para reservas legacy sin duration_minutes
 const START_MIN = 12 * 60  // 12:00
 const END_MIN = 24 * 60    // 00:00 (medianoche)
 
@@ -39,8 +40,16 @@ interface Props {
   displayName: (r: SplitReservation) => string
   /** Callback cuando se clickea una celda vacía — pasa mesa + hora prefilled */
   onEmptyCellClick?: (tableId: string, timeSlot: string) => void
-  /** Callback cuando se drag-drop una reserva sobre otra mesa */
-  onReassign?: (reservationId: string, newTableId: string) => void
+  /**
+   * Callback cuando se drag-drop una reserva.
+   * `newTimeSlot` se pasa cuando el drop en Timeline también reprograma la hora
+   * (cambio horizontal). Si sólo cambió la mesa, `newTimeSlot` es null.
+   */
+  onReassign?: (
+    reservationId: string,
+    newTableId: string,
+    newTimeSlot: string | null,
+  ) => void
   /** Notifica al padre que el drag arrancó — para el preview flotante */
   onDragBegin?: (preview: { name: string; time: string; party: string }) => void
   /** Hora actual — dibuja una línea vertical marker */
@@ -73,7 +82,7 @@ export function TimelineView({
   // Generar columnas (cada 30 min)
   const columns = useMemo(() => {
     const cols: { min: number; label: string; isHourStart: boolean }[] = []
-    for (let m = START_MIN; m < END_MIN; m += 30) {
+    for (let m = START_MIN; m < END_MIN; m += SLOT_MINUTES) {
       cols.push({ min: m, label: minToSlot(m), isHourStart: m % 60 === 0 })
     }
     return cols
@@ -114,22 +123,36 @@ export function TimelineView({
   const nowLineLeft = useMemo(() => {
     const nowMin = now.getHours() * 60 + now.getMinutes()
     if (nowMin < START_MIN || nowMin > END_MIN) return null
-    return LABEL_WIDTH + ((nowMin - START_MIN) / 30) * COL_WIDTH
+    return LABEL_WIDTH + ((nowMin - START_MIN) / SLOT_MINUTES) * COL_WIDTH
   }, [now])
 
   const handleCellClick = useCallback(
     (tableId: string, col: number) => {
-      const timeMin = START_MIN + col * 30
+      const timeMin = START_MIN + col * SLOT_MINUTES
       onEmptyCellClick?.(tableId, minToSlot(timeMin))
     },
     [onEmptyCellClick],
   )
 
   const handleDrop = useCallback(
-    (e: React.DragEvent, tableId: string) => {
+    (e: React.DragEvent<HTMLDivElement>, tableId: string) => {
       e.preventDefault()
       const reservationId = e.dataTransfer.getData('text/reservation-id')
-      if (reservationId) onReassign?.(reservationId, tableId)
+      if (!reservationId) return
+
+      // Calcular el nuevo time_slot según la posición X del drop relativa a la
+      // row. clientX - bounding.left da el offset dentro del área de celdas
+      // (ya excluye el label sticky izquierdo). Snap a slot de 30 min.
+      const bounding = e.currentTarget.getBoundingClientRect()
+      const offsetX = e.clientX - bounding.left
+      let newTimeSlot: string | null = null
+      if (offsetX >= 0) {
+        const rawCol = Math.floor(offsetX / COL_WIDTH)
+        const clampedCol = Math.max(0, Math.min(rawCol, (END_MIN - START_MIN) / SLOT_MINUTES - 1))
+        const newMin = START_MIN + clampedCol * SLOT_MINUTES
+        newTimeSlot = minToSlot(newMin)
+      }
+      onReassign?.(reservationId, tableId, newTimeSlot)
     },
     [onReassign],
   )
@@ -228,9 +251,9 @@ export function TimelineView({
                 {reservationsInRow.map((r) => {
                   const startMin = timeToMin(r.time_slot)
                   if (startMin < START_MIN || startMin >= END_MIN) return null
-                  const left = ((startMin - START_MIN) / 30) * COL_WIDTH
-                  const widthMin = DEFAULT_DURATION_MIN
-                  const width = (widthMin / 30) * COL_WIDTH
+                  const left = ((startMin - START_MIN) / SLOT_MINUTES) * COL_WIDTH
+                  const widthMin = r.duration_minutes || FALLBACK_DURATION_MIN
+                  const width = (widthMin / SLOT_MINUTES) * COL_WIDTH
 
                   return (
                     <TimelineBlock

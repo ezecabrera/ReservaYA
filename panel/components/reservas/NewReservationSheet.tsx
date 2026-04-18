@@ -13,6 +13,10 @@ interface TableOption {
 interface NewReservationSheetProps {
   /** Fecha precargada en el form (YYYY-MM-DD). */
   defaultDate: string
+  /** Mesa precargada (opcional) — viene del click en celda vacía del Timeline. */
+  defaultTableId?: string
+  /** Horario precargado (HH:MM) — también del Timeline. */
+  defaultTimeSlot?: string
   onClose: () => void
   onCreated: () => void
 }
@@ -35,6 +39,8 @@ const SOURCE_LABEL: Record<PanelSource, string> = {
  */
 export function NewReservationSheet({
   defaultDate,
+  defaultTableId,
+  defaultTimeSlot,
   onClose,
   onCreated,
 }: NewReservationSheetProps) {
@@ -42,9 +48,9 @@ export function NewReservationSheet({
   const [guestPhone, setGuestPhone] = useState('')
   const [notes, setNotes] = useState('')
   const [date, setDate] = useState(defaultDate)
-  const [timeSlot, setTimeSlot] = useState('')
+  const [timeSlot, setTimeSlot] = useState(defaultTimeSlot ?? '')
   const [partySize, setPartySize] = useState(2)
-  const [tableId, setTableId] = useState('')
+  const [tableId, setTableId] = useState(defaultTableId ?? '')
   const [source, setSource] = useState<PanelSource>('phone')
 
   const [slots, setSlots] = useState<string[]>([])

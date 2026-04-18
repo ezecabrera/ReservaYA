@@ -41,6 +41,8 @@ export interface SplitReservation {
   guest_name: string | null
   guest_phone: string | null
   notes: string | null
+  /** Duración estimada en minutos — controla el ancho del bloque en Timeline. */
+  duration_minutes: number
   guest_tag: GuestTag | null
   user_name: string | null
 }
@@ -199,22 +201,46 @@ export function SplitDashboard({
     return { confirmed, checkedIn, totalGuests }
   }, [reservations])
 
-  // Handler drag-drop: asignar reserva a otra mesa
+  // Handler drag-drop: asignar reserva a otra mesa (y opcionalmente a otra hora
+  // si el drop viene del Timeline view, donde el eje X es tiempo).
   const handleDrop = useCallback(
-    async (reservationId: string, newTableId: string) => {
+    async (
+      reservationId: string,
+      newTableId: string,
+      newTimeSlot: string | null = null,
+    ) => {
       setDropTargetId(null)
       const reservation = reservations.find((r) => r.id === reservationId)
-      if (!reservation || reservation.table_id === newTableId) return
+      if (!reservation) return
+
+      const tableChanged = reservation.table_id !== newTableId
+      const slotChanged =
+        newTimeSlot !== null && newTimeSlot !== reservation.time_slot.slice(0, 5)
+      if (!tableChanged && !slotChanged) return
 
       // Optimistic update
+      const prevTableId = reservation.table_id
+      const prevTimeSlot = reservation.time_slot
       setReservations((prev) =>
-        prev.map((r) => (r.id === reservationId ? { ...r, table_id: newTableId } : r)),
+        prev.map((r) =>
+          r.id === reservationId
+            ? {
+                ...r,
+                table_id: newTableId,
+                time_slot: newTimeSlot ? `${newTimeSlot}:00` : r.time_slot,
+              }
+            : r,
+        ),
       )
+
+      const payload: Record<string, unknown> = {}
+      if (tableChanged) payload.table_id = newTableId
+      if (slotChanged && newTimeSlot) payload.time_slot = newTimeSlot
 
       const res = await mutateFetch(`/api/reservas/${reservationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table_id: newTableId }),
+        body: JSON.stringify(payload),
       })
 
       if (!res.ok) {
@@ -222,7 +248,9 @@ export function SplitDashboard({
         // Rollback
         setReservations((prev) =>
           prev.map((r) =>
-            r.id === reservationId ? { ...r, table_id: reservation.table_id } : r,
+            r.id === reservationId
+              ? { ...r, table_id: prevTableId, time_slot: prevTimeSlot }
+              : r,
           ),
         )
         setToast({ tone: 'error', text: body.error ?? 'No se pudo reasignar' })
@@ -230,7 +258,12 @@ export function SplitDashboard({
         return
       }
 
-      setToast({ tone: 'ok', text: 'Mesa reasignada' })
+      const msg = slotChanged && tableChanged
+        ? 'Reserva reprogramada'
+        : slotChanged
+          ? `Movida a ${newTimeSlot}`
+          : 'Mesa reasignada'
+      setToast({ tone: 'ok', text: msg })
       setTimeout(() => setToast(null), 2000)
     },
     [reservations],
@@ -452,12 +485,13 @@ export function SplitDashboard({
                 zones={zones}
                 reservations={reservations}
                 displayName={displayName}
-                onReassign={(rid, tid) => handleDrop(rid, tid)}
+                onReassign={(rid, tid, slot) => handleDrop(rid, tid, slot)}
                 onDragBegin={(preview) => setDragPreview(preview)}
-                onEmptyCellClick={(_tid, _slot) => {
-                  // TODO prefilled sheet — por ahora abrimos el global trigger vía evento
+                onEmptyCellClick={(tid, slot) => {
+                  // El NewReservationTrigger (global en el layout) escucha este
+                  // evento y abre el sheet con mesa + hora prefilled.
                   window.dispatchEvent(new CustomEvent('open:new-reservation', {
-                    detail: { table_id: _tid, time_slot: _slot },
+                    detail: { table_id: tid, time_slot: slot, date },
                   }))
                 }}
               />

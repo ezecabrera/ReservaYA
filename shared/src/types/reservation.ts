@@ -30,6 +30,8 @@ export interface Reservation {
   notes: string | null
   /** Quién canceló (si status = 'cancelled'). `venue` es unilateral. */
   cancelled_by: 'user' | 'venue' | 'system' | null
+  /** Duración estimada en minutos — alimenta el ancho del bloque en Timeline view. */
+  duration_minutes: number
   created_at: string
 }
 
@@ -45,6 +47,8 @@ export interface ManualReservationInput {
   guest_phone?: string
   notes?: string
   source?: Extract<ReservationSource, 'panel' | 'walkin' | 'phone'>
+  /** Duración estimada en minutos. Default 90 si se omite. Rango válido: 15-480. */
+  duration_minutes?: number
 }
 
 /** Payload del QR JWT — verificable sin DB, funciona offline */

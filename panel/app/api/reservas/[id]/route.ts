@@ -74,6 +74,7 @@ interface PatchBody {
   notes?: string | null
   guest_name?: string
   guest_phone?: string | null
+  duration_minutes?: number
 }
 
 const VALID_STATUSES: ReservationStatus[] = [
@@ -123,6 +124,19 @@ export async function PATCH(
 
   if (body.status && !VALID_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: 'Status inválido' }, { status: 400 })
+  }
+
+  if (body.duration_minutes !== undefined) {
+    if (
+      !Number.isInteger(body.duration_minutes)
+      || body.duration_minutes < 15
+      || body.duration_minutes > 480
+    ) {
+      return NextResponse.json(
+        { error: 'Duración inválida (debe estar entre 15 y 480 minutos)' },
+        { status: 400 },
+      )
+    }
   }
 
   const next = {
@@ -188,6 +202,7 @@ export async function PATCH(
   if (body.notes !== undefined)          update.notes       = body.notes
   if (body.guest_name)                   update.guest_name  = body.guest_name.trim()
   if (body.guest_phone !== undefined)    update.guest_phone = body.guest_phone?.trim() || null
+  if (body.duration_minutes !== undefined) update.duration_minutes = body.duration_minutes
 
   // Si la transición es a 'cancelled' desde el panel, marcar como unilateral.
   // Esta es la señal que alimenta el % público de cancelaciones del venue.

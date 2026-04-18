@@ -84,25 +84,38 @@ export default async function DashboardPage() {
     admin.from('zones').select('id, name, prefix').eq('venue_id', venue.id),
     admin.from('tables').select('id, label, capacity, zone_id, is_occupied, position_order')
       .eq('venue_id', venue.id).eq('is_active', true).order('position_order'),
-    // Reservas del día. Fallback legacy si migration 006 no aplicada.
+    // Reservas del día. Fallback legacy si migration 006+ o 012 no aplicadas.
     (async () => {
       const withNew = await admin
         .from('reservations')
         .select(`id, status, time_slot, party_size, table_id,
-                 guest_name, guest_phone, notes, user_id,
+                 guest_name, guest_phone, notes, user_id, duration_minutes,
                  users(name, phone)`)
         .eq('venue_id', venue.id)
         .eq('date', todayDate)
         .order('time_slot', { ascending: true })
 
       if (withNew.error?.message?.includes('does not exist')) {
-        return admin
+        // Fallback: intentar sin duration_minutes (migration 012 pendiente)
+        const withoutDuration = await admin
           .from('reservations')
-          .select(`id, status, time_slot, party_size, table_id, user_id,
+          .select(`id, status, time_slot, party_size, table_id,
+                   guest_name, guest_phone, notes, user_id,
                    users(name, phone)`)
           .eq('venue_id', venue.id)
           .eq('date', todayDate)
           .order('time_slot', { ascending: true })
+
+        if (withoutDuration.error?.message?.includes('does not exist')) {
+          return admin
+            .from('reservations')
+            .select(`id, status, time_slot, party_size, table_id, user_id,
+                     users(name, phone)`)
+            .eq('venue_id', venue.id)
+            .eq('date', todayDate)
+            .order('time_slot', { ascending: true })
+        }
+        return withoutDuration
       }
       return withNew
     })(),
@@ -166,6 +179,7 @@ export default async function DashboardPage() {
     guest_name?: string | null
     guest_phone?: string | null
     notes?: string | null
+    duration_minutes?: number | null
     users: { name: string | null; phone: string | null } | null
   }
   const reservations: SplitReservation[] = (reservationsResult.data as unknown as TodayRow[] ?? []).map((r) => {
@@ -189,6 +203,7 @@ export default async function DashboardPage() {
       guest_name: r.guest_name ?? null,
       guest_phone: r.guest_phone ?? null,
       notes: r.notes ?? null,
+      duration_minutes: r.duration_minutes ?? 90,
       guest_tag: tagByKey.get(key) ?? null,
       user_name: r.users?.name ?? null,
     }
