@@ -32,8 +32,30 @@
     --r-lg:   18px;
     --r-xl:   20px;
     --r-full: 99px;
-    --font-display: 'Fraunces', serif;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
     --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+
+    /* ── Sistema editorial 2.0 — dark gray neutral + fills saturados ──── */
+    /* Paleta gris oscuro (sin tinte warm brown) con acentos saturados para
+       que las cards de reserva/ocupada "salten" visualmente (inspirado en
+       reference Resy/Toast). */
+    --ink:         #1A1B21;   /* base gris oscuro neutral */
+    --ink-2:       #22232A;   /* elevación 1 — cards */
+    --ink-3:       #2C2D34;   /* elevación 2 — hover / active */
+    --paper:       #F7F5F0;   /* off-white cálido */
+    --paper-2:     #EDEAE2;
+    --wine:        #A13143;   /* vino tinto — accent de marca */
+    --wine-soft:   #C36878;
+    --olive:       #4F8A5F;   /* verde saturado para reservadas (fill) */
+    --olive-ink:   #0F3A22;   /* olive oscuro para texto sobre olive */
+    --gold:        #C99130;   /* ámbar cálido */
+    --terracotta:  #D66A3F;   /* terracota saturado para ocupadas */
+    --terra-ink:   #4A1E0C;
+    --ink-text:    #F3F0EA;
+    --ink-text-2:  rgba(243, 240, 234, 0.65);
+    --ink-text-3:  rgba(243, 240, 234, 0.40);
+    --ink-line:    rgba(243, 240, 234, 0.07);
+    --ink-line-2:  rgba(243, 240, 234, 0.13);
   }
 
   body {

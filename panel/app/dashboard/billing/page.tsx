@@ -34,8 +34,12 @@ export default function BillingPage() {
 
   useEffect(() => {
     fetch('/api/billing')
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
+      .then(r => r.ok ? r.json() : null)
+      .then((d: BillingData | null) => {
+        // Guard: sólo seteamos si la respuesta tiene shape válido
+        setData(d && typeof d.planAmount === 'number' ? d : null)
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 

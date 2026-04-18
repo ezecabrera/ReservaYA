@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { EmbedWidgetSection } from './EmbedWidgetSection'
+import { WhatsAppSection } from './WhatsAppSection'
 
 interface StaffMember {
   id: string
@@ -12,7 +14,8 @@ interface StaffMember {
 
 interface Props {
   me: { id: string; name: string; email: string; role: string }
-  venue: { name: string; address: string; phone: string | null }
+  venue: { id: string; name: string; address: string; phone: string | null }
+  appBaseUrl: string
 }
 
 const ROLE_LABELS: Record<string, { label: string; desc: string; color: string }> = {
@@ -23,7 +26,7 @@ const ROLE_LABELS: Record<string, { label: string; desc: string; color: string }
 
 const ROLES = ['owner', 'manager', 'receptionist'] as const
 
-export function ConfigClient({ me, venue }: Props) {
+export function ConfigClient({ me, venue, appBaseUrl }: Props) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [loadingStaff, setLoadingStaff] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -226,6 +229,16 @@ export function ConfigClient({ me, venue }: Props) {
             </div>
           </div>
         )}
+
+        {/* Widget embebible */}
+        <EmbedWidgetSection
+          venueId={venue.id}
+          venueName={venue.name}
+          appBaseUrl={appBaseUrl}
+        />
+
+        {/* WhatsApp */}
+        <WhatsAppSection venueName={venue.name} />
 
         {/* Roles disponibles (info) */}
         <div>

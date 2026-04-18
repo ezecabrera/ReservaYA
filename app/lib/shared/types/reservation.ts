@@ -5,11 +5,15 @@ export type ReservationStatus =
   | 'cancelled'        // cancelada por el usuario
   | 'no_show'          // no llegó (15 min después de la hora)
 
+/** Canal de origen. Las reservas cargadas desde el panel omiten el flujo de pago. */
+export type ReservationSource = 'app' | 'panel' | 'walkin' | 'phone'
+
 export interface Reservation {
   id: string
   venue_id: string
   table_id: string
-  user_id: string
+  /** Null para walk-ins y llamadas cargadas a mano desde el panel. */
+  user_id: string | null
   /** YYYY-MM-DD */
   date: string
   /** HH:MM */
@@ -19,7 +23,28 @@ export interface Reservation {
   /** JWT firmado con { reservation_id, venue_id, exp } */
   qr_token: string
   group_room_id: string | null
+  source: ReservationSource
+  /** Nombre visible cuando user_id es null. */
+  guest_name: string | null
+  guest_phone: string | null
+  notes: string | null
+  /** Quién canceló (si status = 'cancelled'). `venue` es unilateral. */
+  cancelled_by: 'user' | 'venue' | 'system' | null
   created_at: string
+}
+
+/** Payload aceptado por POST /api/reservas del panel. */
+export interface ManualReservationInput {
+  table_id: string
+  /** YYYY-MM-DD */
+  date: string
+  /** HH:MM */
+  time_slot: string
+  party_size: number
+  guest_name: string
+  guest_phone?: string
+  notes?: string
+  source?: Extract<ReservationSource, 'panel' | 'walkin' | 'phone'>
 }
 
 /** Payload del QR JWT — verificable sin DB, funciona offline */

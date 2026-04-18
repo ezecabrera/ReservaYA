@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Sin conexión — ReservaYa</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: linear-gradient(180deg, #1A1A2E 0%, #16213E 100%);
+    color: #fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    min-height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 32px;
+    text-align: center; gap: 20px;
+  }
+  .icon {
+    width: 64px; height: 64px; border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  p { font-size: 14px; color: rgba(255, 255, 255, 0.6); margin: 0; line-height: 1.5; max-width: 320px; }
+  button {
+    margin-top: 8px;
+    background: #E5545E; color: #fff; border: 0; border-radius: 12px;
+    padding: 14px 24px; font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: transform 120ms ease, opacity 120ms ease;
+  }
+  button:active { transform: scale(0.97); opacity: 0.9; }
+  .hint { font-size: 12px; color: rgba(255, 255, 255, 0.4); margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="icon" aria-hidden="true">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+      <path d="M1 1l22 22M16.72 11.06a10 10 0 012.54 1.89M5 12.55a10 10 0 015.17-2.39M10.71 5.05a15.91 15.91 0 0110.86 3.39M3.43 8.44A15.9 15.9 0 016.08 6.3M12 19.08h.01"
+        stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </div>
+  <h1>Sin conexión</h1>
+  <p>No pudimos conectarnos. Podés seguir viendo las reservas del día desde el dashboard mientras vuelve internet.</p>
+  <button type="button" onclick="window.location.reload()">Reintentar</button>
+  <p class="hint">Las acciones nuevas (check-in, crear, editar) requieren conexión.</p>
+</div>
+</body>
+</html>

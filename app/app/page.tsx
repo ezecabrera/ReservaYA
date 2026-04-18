@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { VenueCard } from '@/components/home/VenueCard'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { PageHero } from '@/components/ui/PageHero'
+import { EmptyState } from '@/components/ui/EmptyState'
 import type { Venue } from '@/lib/shared'
 
-export const revalidate = 60 // revalidar cada 60s
+export const revalidate = 60
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -19,34 +21,32 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-bg pb-24">
-      {/* Header */}
-      <header className="screen-x pt-12 pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-[26px] font-black text-tx tracking-tight">
-              ReservaYa
-            </h1>
-            <p className="text-tx2 text-[13px]">¿A dónde salís hoy?</p>
-          </div>
+      <PageHero
+        kicker="Reservaya"
+        title="¿A dónde salís hoy?"
+        subtitle="Los mejores lugares cerca tuyo, sin descargar nada."
+        accent="coral"
+        actions={(
           <button
             aria-label="Notificaciones"
-            className="w-10 h-10 rounded-full bg-sf flex items-center justify-center
-                       border border-[var(--br)] active:scale-95 transition-transform duration-[180ms]"
+            className="w-10 h-10 rounded-full bg-white border border-[var(--br)]
+                       flex items-center justify-center active:scale-95
+                       transition-transform duration-[180ms] shadow-[var(--sh-sm)]"
           >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+            <svg width="17" height="17" fill="none" viewBox="0 0 24 24">
               <path
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V4a1 1 0 10-2 0v1.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                 stroke="var(--tx2)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
               />
             </svg>
           </button>
-        </div>
-      </header>
+        )}
+      />
 
       {/* Barra de búsqueda */}
-      <div className="screen-x mb-5">
-        <div className="flex items-center gap-3 bg-sf border border-[var(--br)]
-                        rounded-full px-4 py-3">
+      <div className="screen-x pt-5 mb-5">
+        <div className="flex items-center gap-3 bg-white border border-[var(--br)]
+                        rounded-full px-4 py-3 shadow-[var(--sh-sm)]">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-tx3 flex-shrink-0">
             <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
             <path d="M20 20l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -56,7 +56,7 @@ export default async function HomePage() {
       </div>
 
       {/* Chips de categoría */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar screen-x mb-6 pb-1">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar screen-x mb-7 pb-1">
         {['Todos', 'Pastas', 'Carnes', 'Pizza', 'Vegano', 'Sushi'].map((cat, i) => (
           <button
             key={cat}
@@ -67,21 +67,24 @@ export default async function HomePage() {
         ))}
       </div>
 
-      <div className="screen-x space-y-4">
-        {/* Hero card */}
+      <div className="screen-x space-y-5">
         {heroVenue && (
-          <>
-            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
-              Destacado
-            </p>
+          <section>
+            <div className="flex items-baseline justify-between mb-3">
+              <p className="text-[10.5px] font-bold text-tx3 uppercase tracking-[0.12em]">
+                Destacado
+              </p>
+              <span className="text-[10.5px] font-bold text-tx3 uppercase tracking-[0.12em]">
+                Hoy
+              </span>
+            </div>
             <VenueCard venue={heroVenue} variant="hero" />
-          </>
+          </section>
         )}
 
-        {/* Lista compacta */}
         {restVenues.length > 0 && (
-          <>
-            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider pt-2">
+          <section>
+            <p className="text-[10.5px] font-bold text-tx3 uppercase tracking-[0.12em] mb-3 mt-2">
               Más restaurantes
             </p>
             <div className="space-y-3">
@@ -89,18 +92,23 @@ export default async function HomePage() {
                 <VenueCard key={venue.id} venue={venue} variant="compact" />
               ))}
             </div>
-          </>
+          </section>
         )}
 
         {venueList.length === 0 && (
-          <div className="text-center py-16">
-            <p className="font-display text-[22px] font-bold text-tx">
-              Próximamente
-            </p>
-            <p className="text-tx2 text-[14px] mt-2">
-              Los primeros restaurantes piloto se suman pronto.
-            </p>
-          </div>
+          <EmptyState
+            accent="coral"
+            title="Próximamente"
+            description="Los primeros restaurantes piloto se suman pronto."
+            icon={(
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          />
         )}
       </div>
 

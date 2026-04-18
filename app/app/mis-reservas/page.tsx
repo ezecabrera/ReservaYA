@@ -1,8 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { RateVenueSheet } from '@/components/rating/RateVenueSheet'
+import { PageHero } from '@/components/ui/PageHero'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface Reservation {
   id: string
@@ -11,6 +14,7 @@ interface Reservation {
   time_slot: string
   party_size: number
   qr_token: string | null
+  cancelled_by: 'user' | 'venue' | 'system' | null
   venues: { id: string; name: string; address: string } | null
   tables: { label: string } | null
 }
@@ -40,13 +44,20 @@ export default function MisReservasPage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'proximas' | 'pasadas'>('proximas')
+  const [ratingTarget, setRatingTarget] = useState<Reservation | null>(null)
+  const [ratedIds, setRatedIds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    fetch('/api/mis-reservas')
-      .then(r => r.json())
-      .then(d => { setReservations(Array.isArray(d) ? d : []); setLoading(false) })
-      .catch(() => setLoading(false))
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/mis-reservas')
+      const data = await res.json()
+      setReservations(Array.isArray(data) ? data : [])
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { load() }, [load])
 
   const proximas = reservations.filter(r =>
     isUpcoming(r.date, r.time_slot) && r.status !== 'cancelled'
@@ -58,29 +69,27 @@ export default function MisReservasPage() {
 
   return (
     <div className="min-h-screen bg-bg pb-28">
-      {/* Header */}
-      <div className="screen-x pt-14 pb-4">
-        <h1 className="font-display text-[26px] font-bold text-tx tracking-tight">
-          Mis reservas
-        </h1>
-      </div>
-
-      {/* Tabs */}
-      <div className="screen-x mb-5">
-        <div className="flex gap-2 bg-sf rounded-xl p-1">
+      <PageHero
+        kicker="Mi agenda"
+        title="Mis reservas"
+        subtitle={tab === 'proximas'
+          ? `${proximas.length} próxima${proximas.length !== 1 ? 's' : ''}`
+          : `${pasadas.length} en historial`}
+        accent="coral"
+      >
+        {/* Tabs */}
+        <div className="flex gap-1 bg-white border border-[var(--br)] rounded-xl p-1 shadow-[var(--sh-sm)]">
           {([['proximas', 'Próximas'], ['pasadas', 'Historial']] as const).map(([key, label]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`flex-1 py-2.5 rounded-lg text-[13px] font-bold transition-all duration-[180ms]
-                          ${tab === key
-                            ? 'bg-white shadow-sm text-tx'
-                            : 'text-tx3'
-                          }`}
+              className={`flex-1 py-2 rounded-lg text-[12.5px] font-bold transition-all duration-[180ms]
+                          flex items-center justify-center gap-1.5
+                          ${tab === key ? 'bg-tx text-white' : 'text-tx3'}`}
             >
               {label}
               {key === 'proximas' && proximas.length > 0 && (
-                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold
                                   ${tab === 'proximas' ? 'bg-c1 text-white' : 'bg-sf2 text-tx3'}`}>
                   {proximas.length}
                 </span>
@@ -88,37 +97,41 @@ export default function MisReservasPage() {
             </button>
           ))}
         </div>
-      </div>
+      </PageHero>
 
       {/* Lista */}
-      <div className="screen-x space-y-3">
+      <div className="screen-x pt-5 space-y-3">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-28 skeleton rounded-xl" />
           ))
         ) : list.length === 0 ? (
-          <div className="text-center py-16">
-            {tab === 'proximas' ? (
-              <>
-                <div className="w-14 h-14 rounded-2xl bg-sf2 flex items-center justify-center mx-auto mb-4">
-                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="var(--tx3)" strokeWidth="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" stroke="var(--tx3)" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <p className="font-semibold text-[15px] text-tx">Sin reservas próximas</p>
-                <p className="text-tx3 text-[13px] mt-1">¿Salimos a comer?</p>
-                <Link href="/" className="btn-primary mt-5 block">
-                  Explorar restaurantes
-                </Link>
-              </>
-            ) : (
-              <>
-                <p className="font-semibold text-[15px] text-tx">Sin historial todavía</p>
-                <p className="text-tx3 text-[13px] mt-1">Tus reservas pasadas aparecerán acá</p>
-              </>
-            )}
-          </div>
+          tab === 'proximas' ? (
+            <EmptyState
+              accent="coral"
+              title="Sin reservas próximas"
+              description="¿Salimos a comer? Encontrá tu próximo lugar ahora."
+              action={{ label: 'Explorar restaurantes', href: '/' }}
+              icon={(
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              )}
+            />
+          ) : (
+            <EmptyState
+              accent="amber"
+              title="Sin historial todavía"
+              description="Tus reservas pasadas aparecerán acá."
+              icon={(
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            />
+          )
         ) : (
           list.map(r => {
             const st = STATUS_STYLE[r.status] ?? { label: r.status, cls: 'badge', dot: 'bg-tx3' }
@@ -189,15 +202,43 @@ export default function MisReservasPage() {
                     </div>
                   )}
                   {!upcoming && r.status === 'checked_in' && r.venues && (
-                    <div className="mt-3 pt-3 border-t border-[var(--br)]">
+                    <div className="mt-3 pt-3 border-t border-[var(--br)] flex gap-2">
+                      {!ratedIds.has(r.id) && (
+                        <button
+                          type="button"
+                          onClick={() => setRatingTarget(r)}
+                          className="flex-1 text-center py-2 rounded-lg bg-c3l text-[#A66400]
+                                     text-[12px] font-bold border border-c3/35
+                                     active:scale-95 transition-transform flex items-center
+                                     justify-center gap-1.5"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                          </svg>
+                          Calificar
+                        </button>
+                      )}
                       <Link
                         href={`/${r.venues.id}`}
-                        className="block text-center py-2 rounded-lg bg-sf text-tx2
+                        className="flex-1 text-center py-2 rounded-lg bg-sf text-tx2
                                    text-[12px] font-semibold border border-[var(--br)]
                                    active:scale-95 transition-transform"
                       >
                         Volver a reservar →
                       </Link>
+                    </div>
+                  )}
+                  {r.status === 'cancelled' && r.cancelled_by === 'venue' && r.venues && !ratedIds.has(r.id) && (
+                    <div className="mt-3 pt-3 border-t border-[var(--br)]">
+                      <button
+                        type="button"
+                        onClick={() => setRatingTarget(r)}
+                        className="w-full text-center py-2 rounded-lg bg-c1l text-[#C0313E]
+                                   text-[12px] font-bold border border-c1/25
+                                   active:scale-95 transition-transform"
+                      >
+                        El local canceló · dejar reseña
+                      </button>
                     </div>
                   )}
                 </div>
@@ -206,6 +247,19 @@ export default function MisReservasPage() {
           })
         )}
       </div>
+
+      {ratingTarget && ratingTarget.venues && (
+        <RateVenueSheet
+          reservationId={ratingTarget.id}
+          venueName={ratingTarget.venues.name}
+          context={ratingTarget.status === 'cancelled' ? 'unilateral_cancel' : 'visit'}
+          onClose={() => setRatingTarget(null)}
+          onRated={() => {
+            setRatedIds((prev) => new Set(prev).add(ratingTarget.id))
+            setRatingTarget(null)
+          }}
+        />
+      )}
 
       <BottomNav />
     </div>

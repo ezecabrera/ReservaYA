@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { enqueueLifecycleById } from '@/lib/notifications/enqueue'
 
 /**
  * POST /api/reserva/[id]/confirmar-pago
@@ -99,6 +100,12 @@ export async function POST(
         .eq('table_id', reservation.table_id)
         .eq('type', 'payment'),
     ])
+
+    // Outbox de notificaciones (WhatsApp lifecycle). No bloquea la respuesta.
+    enqueueLifecycleById(reservationId).catch((err) => {
+      // eslint-disable-next-line no-console
+      console.warn('[confirmar-pago] enqueue fail', err)
+    })
 
     return NextResponse.json({ ok: true, status: 'confirmed', qr_token: qrToken })
   } catch (error) {

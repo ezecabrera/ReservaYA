@@ -34,6 +34,22 @@ const ITEMS = [
     ),
   },
   {
+    href: '/dashboard/crm',
+    label: 'Clientes',
+    icon: (active: boolean) => (
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="9" cy="7" r="4"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
+        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
+          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/menu',
     label: 'Menú',
     icon: (active: boolean) => (
@@ -105,7 +121,7 @@ export function PanelNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50"
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
       style={{
         background: '#1A1A2E',
         paddingBottom: 'max(18px, env(safe-area-inset-bottom))',

@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ReservationWizard } from '@/components/reservation/ReservationWizard'
 import { BottomNav } from '@/components/ui/BottomNav'
-import type { Venue } from '@/lib/shared'
+import { VenueRatingBlock } from '@/components/venue/VenueRatingBlock'
+import { computeVenueRatingStats } from '@/lib/shared'
+import type { Venue, VenueRatingStats } from '@/lib/shared'
 
 interface Props {
   params: { venueId: string }
@@ -10,16 +12,40 @@ interface Props {
 
 export default async function VenueDetailPage({ params }: Props) {
   const supabase = await createClient()
-  const { data: venue, error } = await supabase
-    .from('venues')
-    .select('*')
-    .eq('id', params.venueId)
-    .eq('is_active', true)
-    .single()
 
-  if (error || !venue) notFound()
+  // Venue + data para el rating block en paralelo
+  const [venueResult, ratingsResult, reservationsResult] = await Promise.all([
+    supabase
+      .from('venues')
+      .select('*')
+      .eq('id', params.venueId)
+      .eq('is_active', true)
+      .single(),
+    supabase
+      .from('ratings')
+      .select('stars, hidden')
+      .eq('venue_id', params.venueId)
+      .eq('direction', 'user_to_venue')
+      .eq('hidden', false),
+    supabase
+      .from('reservations')
+      .select('status, cancelled_by, date')
+      .eq('venue_id', params.venueId),
+  ])
 
-  const v = venue as Venue
+  if (venueResult.error || !venueResult.data) notFound()
+
+  const v = venueResult.data as Venue
+
+  // Si la tabla ratings no existe todavía (migration 008 no aplicada),
+  // ratingsResult.error será no-null. Caemos a stats vacíos sin romper la página.
+  let ratingStats: VenueRatingStats | null = null
+  if (!ratingsResult.error && !reservationsResult.error) {
+    ratingStats = computeVenueRatingStats(
+      ratingsResult.data ?? [],
+      reservationsResult.data ?? [],
+    )
+  }
 
   return (
     <div className="min-h-screen bg-bg pb-28">
@@ -57,6 +83,9 @@ export default async function VenueDetailPage({ params }: Props) {
         {v.description && (
           <p className="text-tx2 text-[14px] leading-relaxed">{v.description}</p>
         )}
+
+        {/* Rating público + disciplina del local */}
+        {ratingStats && <VenueRatingBlock stats={ratingStats} />}
 
         {/* Divider */}
         <div className="h-px bg-[var(--br)]" />
