@@ -4,6 +4,7 @@ import { PanelNav } from '@/components/nav/PanelNav'
 import { DesktopShell } from '@/components/nav/DesktopShell'
 import { NewReservationTrigger } from '@/components/reservas/NewReservationTrigger'
 import { Toaster } from '@/components/ui/Toaster'
+import { ShortcutsPalette } from '@/components/ui/ShortcutsPalette'
 
 export default async function DashboardLayout({
   children,
@@ -31,6 +32,7 @@ export default async function DashboardLayout({
       <PanelNav />
       <NewReservationTrigger variant="fab" />
       <Toaster />
+      <ShortcutsPalette />
     </div>
   )
 }

@@ -88,11 +88,19 @@ export default function GuestDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pb-28 px-5 pt-12"
-        style={{ background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)' }}>
-        <div className="h-8 w-48 bg-white/5 rounded animate-pulse mb-5" />
-        <div className="h-28 bg-white/5 rounded-2xl animate-pulse mb-5" />
-        <div className="h-40 bg-white/5 rounded-2xl animate-pulse" />
+      <div className="min-h-screen bg-ink pb-28 px-5 pt-12">
+        <div
+          className="h-8 w-48 bg-ink-2 border border-ink-line rounded animate-pulse mb-5 reveal-stagger"
+          style={{ '--i': 0 } as React.CSSProperties}
+        />
+        <div
+          className="h-28 bg-ink-2 border border-ink-line rounded-2xl animate-pulse mb-5 reveal-stagger"
+          style={{ '--i': 1 } as React.CSSProperties}
+        />
+        <div
+          className="h-40 bg-ink-2 border border-ink-line rounded-2xl animate-pulse reveal-stagger"
+          style={{ '--i': 2 } as React.CSSProperties}
+        />
       </div>
     )
   }

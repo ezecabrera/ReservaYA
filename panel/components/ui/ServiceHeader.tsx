@@ -1,14 +1,17 @@
+'use client'
+
 /**
  * ServiceHeader — signature editorial del panel.
  *
  * El header que hace que el dueño screenshot-ee el panel y lo mande al grupo.
- * Tipografía: Fraunces display para el título "Servicio del [día]",
- * JetBrains mono para números, small caps para el kicker de turno.
+ * Tipografía: Space Grotesk display para el título, JetBrains mono para
+ * números, small caps para el kicker de turno.
  *
  * Diseño: fondo tinta cálida (warm-black, no navy frío), line divider editorial
- * abajo, acento vino tinto para LIVE indicator.
+ * abajo, acento vino tinto para LIVE indicator, reloj en vivo con tick 30s.
  */
 
+import { useEffect, useState } from 'react'
 import { NumericText } from './NumericText'
 
 interface ServiceHeaderProps {
@@ -71,13 +74,47 @@ export function ServiceHeader({
           </div>
         </div>
 
-        {/* Lado derecho — LIVE + acciones */}
+        {/* Lado derecho — reloj live + LIVE + acciones */}
         <div className="flex items-center gap-3 flex-shrink-0">
+          <LiveClock />
           <LiveIndicator mode={mode} />
           {actions}
         </div>
       </div>
     </header>
+  )
+}
+
+/**
+ * Reloj en vivo — tick cada 30 seg. Formato HH:MM zona local.
+ * Sutil pero comunica que el panel "respira".
+ */
+function LiveClock() {
+  const [now, setNow] = useState<Date | null>(null)
+
+  useEffect(() => {
+    // Inicializar en cliente para evitar mismatch SSR
+    setNow(new Date())
+    const id = setInterval(() => setNow(new Date()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  if (!now) return null
+
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
+
+  return (
+    <div
+      className="hidden sm:flex items-center gap-2 rounded-full
+                 bg-ink-2 border border-ink-line-2 px-3 py-1.5"
+      aria-label={`Hora local ${hh}:${mm}`}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-ink-text-3" />
+      <NumericText className="text-[11.5px] font-semibold text-ink-text-2 leading-none">
+        {hh}:{mm}
+      </NumericText>
+    </div>
   )
 }
 

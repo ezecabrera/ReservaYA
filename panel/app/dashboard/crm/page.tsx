@@ -131,7 +131,11 @@ export default function CrmPage() {
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-24 bg-white/[0.03] border border-white/5 rounded-2xl animate-pulse" />
+              <div
+                key={i}
+                className="h-24 bg-ink-2 border border-ink-line rounded-2xl animate-pulse reveal-stagger"
+                style={{ '--i': i } as React.CSSProperties}
+              />
             ))}
           </div>
         ) : guests.length === 0 ? (

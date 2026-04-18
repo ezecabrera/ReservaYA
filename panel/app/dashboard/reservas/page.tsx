@@ -213,7 +213,11 @@ export default function ReservasPage() {
           loading ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 bg-white/[0.03] border border-white/5 rounded-2xl animate-pulse" />
+                <div
+                  key={i}
+                  className="h-20 bg-ink-2 border border-ink-line rounded-2xl animate-pulse reveal-stagger"
+                  style={{ '--i': i } as React.CSSProperties}
+                />
               ))}
             </div>
           ) : total === 0 ? (

@@ -100,7 +100,11 @@ export default function AnalyticsPage() {
       {loading ? (
         <div className="px-5 pt-5 grid grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-24 bg-white/[0.03] border border-white/5 rounded-2xl animate-pulse" />
+            <div
+              key={i}
+              className="h-24 bg-ink-2 border border-ink-line rounded-2xl animate-pulse reveal-stagger"
+              style={{ '--i': i } as React.CSSProperties}
+            />
           ))}
         </div>
       ) : !data ? (
