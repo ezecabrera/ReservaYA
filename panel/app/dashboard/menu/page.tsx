@@ -28,7 +28,8 @@ export default async function MenuPage() {
       .from('menu_items')
       .select('*')
       .eq('venue_id', staffUser.venue_id)
-      .order('name'),
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true }),
   ])
 
   return (

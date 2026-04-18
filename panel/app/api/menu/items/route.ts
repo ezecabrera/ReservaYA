@@ -18,6 +18,18 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient()
+
+  // Colocar al final de la categoría: sort_order = max(category) + 1.
+  // Si todavía no hay items (max = null) arranca en 0.
+  const { data: maxRow } = await admin
+    .from('menu_items')
+    .select('sort_order')
+    .eq('category_id', body.category_id)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const nextSortOrder = maxRow ? (maxRow.sort_order as number) + 1 : 0
+
   const { data, error } = await admin
     .from('menu_items')
     .insert({
@@ -27,6 +39,7 @@ export async function POST(request: NextRequest) {
       price: body.price,
       description: body.description ?? null,
       availability_status: body.availability_status ?? 'available',
+      sort_order: nextSortOrder,
     })
     .select()
     .single()

@@ -471,3 +471,17 @@ END $$;
 ALTER TABLE reservations
   ADD COLUMN IF NOT EXISTS duration_minutes INTEGER NOT NULL DEFAULT 90
     CHECK (duration_minutes BETWEEN 15 AND 480);
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  ReservaYa — Orden manual de platos dentro de categoría (migration 013)
+--
+--  Permite drag-reorder de items en el MenuManager. Default 0 → todos los
+--  items existentes quedan en 0 y el render usa (sort_order ASC, name ASC)
+--  como tiebreak estable.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+ALTER TABLE menu_items
+  ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_menu_items_category_sort
+  ON menu_items(category_id, sort_order, name);

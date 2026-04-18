@@ -19,6 +19,8 @@ export interface MenuItem {
   /** Solo relevante cuando availability_status = 'limited' */
   limited_count: number | null
   image_url: string | null
+  /** Orden manual dentro de la categoría — drag-reorder en el panel. */
+  sort_order: number
   created_at: string
 }
 

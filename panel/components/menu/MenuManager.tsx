@@ -74,6 +74,63 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
     persistReorder(normalized)
   }
 
+  // ── Drag-reorder items dentro de una categoría ──────────────────────────
+  // Un único par de estados globales: "ids vivos" del drag + target hovered.
+  // El UX evita mezclar drags entre categorías por diseño (sólo onDragOver
+  // sobre items del mismo category_id activa el overItemId).
+  const [dragItemId, setDragItemId] = useState<string | null>(null)
+  const [overItemId, setOverItemId] = useState<string | null>(null)
+
+  async function persistItemsReorder(next: MenuItem[]) {
+    // next = nuevo orden dentro de su categoría. Ya viene con sort_order
+    // asignado incremental.
+    const orders = next.map((it) => ({ id: it.id, sort_order: it.sort_order }))
+    const res = await fetch('/api/menu/items/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orders }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      pushToast({
+        tone: 'error',
+        text: body.error ?? 'No se pudo reordenar',
+        hint: 'Volvimos al orden anterior.',
+      })
+      // Rollback: dejar el estado previo (refetchar una copia limpia)
+      setItems((prev) => [...prev])
+    } else {
+      pushToast({ tone: 'ok', text: 'Orden de platos actualizado' })
+    }
+  }
+
+  function handleItemDrop(fromId: string, toId: string) {
+    setDragItemId(null)
+    setOverItemId(null)
+    if (fromId === toId) return
+    const from = items.find((i) => i.id === fromId)
+    const to   = items.find((i) => i.id === toId)
+    if (!from || !to) return
+    if (from.category_id !== to.category_id) return // no cross-category
+
+    const sameCat = items
+      .filter((i) => i.category_id === from.category_id)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
+    const fromIdx = sameCat.findIndex((i) => i.id === fromId)
+    const toIdx   = sameCat.findIndex((i) => i.id === toId)
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return
+
+    const copy = [...sameCat]
+    const [moved] = copy.splice(fromIdx, 1)
+    copy.splice(toIdx, 0, moved)
+    const normalized = copy.map((it, i) => ({ ...it, sort_order: i }))
+
+    // Mergear los re-ordenados con el resto de ítems
+    const othersIntact = items.filter((i) => i.category_id !== from.category_id)
+    setItems([...othersIntact, ...normalized])
+    persistItemsReorder(normalized)
+  }
+
   // ── Form state ──────────────────────────────────────────────────────────────
   const [formName, setFormName] = useState('')
   const [formPrice, setFormPrice] = useState('')
@@ -176,7 +233,10 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
     setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
   }
 
-  const itemsByCategory = (catId: string) => items.filter(i => i.category_id === catId)
+  const itemsByCategory = (catId: string) =>
+    items
+      .filter((i) => i.category_id === catId)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
 
   return (
     <div className="min-h-screen bg-ink pb-28">
@@ -267,11 +327,60 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
               )}
               {itemsByCategory(cat.id).map(item => {
                 const av = AVAILABILITY_LABELS[item.availability_status]
+                const isDragging = dragItemId === item.id
+                const isOver = overItemId === item.id && dragItemId !== null && dragItemId !== item.id
                 return (
-                  <div key={item.id}
-                    className="bg-ink-2 border border-ink-line rounded-2xl p-4
-                               flex items-start gap-3
-                               hover:border-ink-line-2 transition-colors">
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.stopPropagation() // no propagar al section (category drag)
+                      setDragItemId(item.id)
+                      e.dataTransfer.effectAllowed = 'move'
+                      e.dataTransfer.setData('text/item-id', item.id)
+                      const img = new Image()
+                      img.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+                      e.dataTransfer.setDragImage(img, 0, 0)
+                    }}
+                    onDragOver={(e) => {
+                      if (!dragItemId) return
+                      const from = items.find((i) => i.id === dragItemId)
+                      if (!from || from.category_id !== item.category_id) return
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setOverItemId(item.id)
+                    }}
+                    onDragEnd={() => { setDragItemId(null); setOverItemId(null) }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (!dragItemId) return
+                      handleItemDrop(dragItemId, item.id)
+                    }}
+                    className={`bg-ink-2 border rounded-2xl p-4
+                                flex items-start gap-3
+                                transition-all duration-150
+                                ${isOver
+                                  ? 'border-wine-soft shadow-[0_0_0_1px_rgba(195,104,120,0.45)]'
+                                  : 'border-ink-line hover:border-ink-line-2'}
+                                ${isDragging ? 'opacity-45' : ''}`}
+                  >
+                    {/* Drag handle — grip vertical a la izquierda */}
+                    <span
+                      aria-hidden
+                      className="text-ink-text-3 cursor-grab active:cursor-grabbing
+                                 hover:text-ink-text-2 transition-colors mt-0.5 flex-shrink-0"
+                    >
+                      <svg width="10" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="9" cy="6" r="1.5" />
+                        <circle cx="15" cy="6" r="1.5" />
+                        <circle cx="9" cy="12" r="1.5" />
+                        <circle cx="15" cy="12" r="1.5" />
+                        <circle cx="9" cy="18" r="1.5" />
+                        <circle cx="15" cy="18" r="1.5" />
+                      </svg>
+                    </span>
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-ink-text font-semibold text-[14px]">{item.name}</span>
