@@ -117,3 +117,67 @@
            text-[11px] font-bold bg-c1l text-[#D63646];
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Keyframes editoriales — Fase C animaciones
+   Todas respetan prefers-reduced-motion via @media al final.
+═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseRing {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(161, 49, 67, 0); }
+  50%      { box-shadow: 0 0 0 4px rgba(161, 49, 67, 0.18); }
+}
+
+@keyframes dropSuccess {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(79, 138, 95, 0.22); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79, 138, 95, 0); }
+}
+
+/* Utilities para usar con inline style="--i: 3" → stagger 40ms base */
+.reveal-stagger {
+  animation: staggerIn 0.36s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.view-enter {
+  animation: viewIn 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.drop-pulse {
+  animation: pulseRing 1.6s ease-in-out infinite;
+}
+
+.drop-success {
+  animation: dropSuccess 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* prefers-reduced-motion: cortamos todo y aplicamos el estado final inmediato */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-stagger,
+  .view-enter,
+  .drop-pulse,
+  .drop-success {
+    animation: none !important;
+  }
+}

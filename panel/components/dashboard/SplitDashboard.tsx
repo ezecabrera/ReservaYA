@@ -9,6 +9,7 @@ import { TableTile } from './TableTile'
 import { ReservationQueueItem } from './ReservationQueueItem'
 import { TimelineView } from './TimelineView'
 import { RightActionPanel } from './RightActionPanel'
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber'
 import {
   ReservationActionSheet,
   type ReservationRow,
@@ -410,26 +411,32 @@ export function SplitDashboard({
                     </span>
                   </header>
                   <div className="space-y-2">
-                    {bucket.items.map((r) => (
-                      <ReservationQueueItem
+                    {bucket.items.map((r, i) => (
+                      <div
                         key={r.id}
-                        id={r.id}
-                        name={displayName(r)}
-                        time={r.time_slot.slice(0, 5)}
-                        partySize={r.party_size}
-                        tableLabel={localTables.find((t) => t.id === r.table_id)?.label ?? null}
-                        zoneLabel={
-                          zones.find(
-                            (z) =>
-                              z.id === localTables.find((t) => t.id === r.table_id)?.zone_id,
-                          )?.name ?? null
-                        }
-                        status={r.status}
-                        guestTag={r.guest_tag}
-                        notes={r.notes}
-                        onClick={() => setActiveReservationId(r.id)}
-                        onDragBegin={(preview) => setDragPreview(preview)}
-                      />
+                        className="reveal-stagger"
+                        style={{ '--i': i } as React.CSSProperties}
+                      >
+                        <ReservationQueueItem
+                          id={r.id}
+                          name={displayName(r)}
+                          time={r.time_slot.slice(0, 5)}
+                          partySize={r.party_size}
+                          tableLabel={localTables.find((t) => t.id === r.table_id)?.label ?? null}
+                          zoneLabel={
+                            zones.find(
+                              (z) =>
+                                z.id === localTables.find((t) => t.id === r.table_id)?.zone_id,
+                            )?.name ?? null
+                          }
+                          status={r.status}
+                          guestTag={r.guest_tag}
+                          notes={r.notes}
+                          isSelected={activeReservationId === r.id}
+                          onClick={() => setActiveReservationId(r.id)}
+                          onDragBegin={(preview) => setDragPreview(preview)}
+                        />
+                      </div>
                     ))}
                   </div>
                 </section>
@@ -511,38 +518,50 @@ export function SplitDashboard({
             )}
           </div>
 
-          {/* Contenido según view */}
+          {/* Contenido según view — crossfade suave al togglear */}
           {view === 'floor' ? (
-            <div className="flex-1 overflow-y-auto px-5 lg:px-7 py-5">
+            <div
+              key="view-floor"
+              className="flex-1 overflow-y-auto px-5 lg:px-7 py-5 view-enter"
+            >
               {visibleTables.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-ink-text-3 text-[13px]">Sin mesas en este sector</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {visibleTables.map((t) => {
+                  {visibleTables.map((t, i) => {
                     const status = getTableStatus(t)
                     const res = reservationByTable.get(t.id)
+                    // Highlight mesas libres durante un drag activo — invita al drop
+                    const inviteDrop = dragPreview !== null && status === 'available'
                     return (
-                      <TableTile
+                      <div
                         key={t.id}
-                        label={t.label}
-                        capacity={t.capacity}
-                        status={status}
-                        reservationHolder={res ? displayName(res) : null}
-                        reservationTime={res?.time_slot.slice(0, 5) ?? null}
-                        partySize={res?.party_size}
-                        isDropTarget={dropTargetId === t.id}
-                        onDragOver={() => setDropTargetId(t.id)}
-                        onDrop={(reservationId) => handleDrop(reservationId, t.id)}
-                      />
+                        className="reveal-stagger"
+                        style={{ '--i': i } as React.CSSProperties}
+                      >
+                        <TableTile
+                          label={t.label}
+                          capacity={t.capacity}
+                          status={status}
+                          reservationHolder={res ? displayName(res) : null}
+                          reservationTime={res?.time_slot.slice(0, 5) ?? null}
+                          partySize={res?.party_size}
+                          isDropTarget={dropTargetId === t.id}
+                          isDropInvite={inviteDrop}
+                          onClick={() => res && setActiveReservationId(res.id)}
+                          onDragOver={() => setDropTargetId(t.id)}
+                          onDrop={(reservationId) => handleDrop(reservationId, t.id)}
+                        />
+                      </div>
                     )
                   })}
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex-1 overflow-hidden p-4">
+            <div key="view-timeline" className="flex-1 overflow-hidden p-4 view-enter">
               <TimelineView
                 tables={localTables}
                 zones={zones}
@@ -666,12 +685,13 @@ function StatMini({
 }) {
   const cls = tone === 'olive' ? 'text-olive' : tone === 'wine' ? 'text-wine-soft' : 'text-ink-text'
   return (
-    <div className="rounded-lg bg-ink-2 border border-ink-line px-3 py-2.5">
+    <div className="rounded-lg bg-ink-2 border border-ink-line px-3 py-2.5
+                    hover:border-ink-line-2 transition-colors">
       <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-text-3 mb-1">
         {label}
       </p>
-      <NumericText large className={`text-[22px] ${cls} leading-none`}>
-        {value}
+      <NumericText large className={`text-[22px] ${cls} leading-none tabular-nums`}>
+        <AnimatedNumber value={value} />
       </NumericText>
     </div>
   )

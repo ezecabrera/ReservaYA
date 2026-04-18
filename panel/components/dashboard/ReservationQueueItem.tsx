@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { NumericText } from '@/components/ui/NumericText'
 import { GuestTagChip } from '@/components/crm/GuestTagChip'
 import type { GuestTag } from '@/lib/shared'
@@ -25,6 +26,8 @@ interface Props {
   status: 'pending_payment' | 'confirmed' | 'checked_in' | 'cancelled' | 'no_show'
   guestTag?: GuestTag | null
   notes?: string | null
+  /** Destacar como seleccionado (abierto en RightActionPanel) */
+  isSelected?: boolean
   onClick?: () => void
   /** Notifica al padre que el drag arrancó — se usa para el preview flotante */
   onDragBegin?: (preview: { name: string; time: string; party: string }) => void
@@ -57,9 +60,17 @@ export function ReservationQueueItem({
   status,
   guestTag,
   notes,
+  isSelected,
   onClick,
 }: Props) {
   const canDrag = status === 'confirmed' || status === 'pending_payment'
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Selección → borde wine-soft; drag → item original a 45% para que el
+  // preview flotante domine visualmente; hover normal restante.
+  const stateCls = isSelected
+    ? 'border-wine/55 bg-ink-3 shadow-[0_0_0_1px_rgba(161,49,67,0.35)]'
+    : 'border-ink-line hover:border-ink-line-2 hover:bg-ink-3'
 
   return (
     <button
@@ -72,15 +83,19 @@ export function ReservationQueueItem({
         e.dataTransfer.setData('text/reservation-time', time)
         e.dataTransfer.setData('text/reservation-party', String(partySize))
         e.dataTransfer.effectAllowed = 'move'
+        setIsDragging(true)
         onDragBegin?.({ name, time, party: `${partySize}p` })
         // Ocultamos el ghost nativo — dibujamos un custom preview con cursor tracker
         const img = new Image()
         img.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
         e.dataTransfer.setDragImage(img, 0, 0)
       }}
-      className={`group w-full text-left bg-ink-2 border border-ink-line rounded-xl
-                  px-3.5 py-3 hover:border-ink-line-2 hover:bg-ink-3
+      onDragEnd={() => setIsDragging(false)}
+      className={`group w-full text-left bg-ink-2 border rounded-xl
+                  px-3.5 py-3
                   transition-all duration-200
+                  ${stateCls}
+                  ${isDragging ? 'opacity-45' : ''}
                   ${canDrag ? 'cursor-grab active:cursor-grabbing' : ''}`}
     >
       {/* Línea principal: nombre + hora */}
