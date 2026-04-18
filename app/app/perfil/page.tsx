@@ -208,7 +208,7 @@ export default function PerfilPage() {
             <div className="w-10 h-10 rounded-xl bg-wine/10 border border-wine/25 flex items-center justify-center flex-shrink-0">
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                  fill="var(--c1)" />
+                  fill="var(--wine)" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">

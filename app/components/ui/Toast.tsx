@@ -16,7 +16,7 @@ export function Toast({ message, type = 'info', onDismiss, duration = 4500 }: To
   }, [duration, onDismiss])
 
   const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'
-  const iconColor = type === 'success' ? 'var(--c2)' : type === 'error' ? 'var(--c1)' : 'var(--c4)'
+  const iconColor = type === 'success' ? 'var(--olive)' : type === 'error' ? 'var(--wine)' : 'var(--olive)'
 
   return (
     <div

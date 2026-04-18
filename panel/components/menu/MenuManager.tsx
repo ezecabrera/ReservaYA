@@ -131,6 +131,24 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
     persistItemsReorder(normalized)
   }
 
+  // Delete inline 2-step: primer click arma, segundo click confirma.
+  // Auto-reset a 3.5s si no se confirma.
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+
+  function armDelete(itemId: string) {
+    setPendingDeleteId(itemId)
+    setTimeout(() => {
+      setPendingDeleteId((curr) => (curr === itemId ? null : curr))
+    }, 3500)
+  }
+
+  async function handleInlineDelete(itemId: string) {
+    setPendingDeleteId(null)
+    await fetch(`/api/menu/items/${itemId}`, { method: 'DELETE' })
+    setItems((prev) => prev.filter((i) => i.id !== itemId))
+    pushToast({ tone: 'ok', text: 'Plato eliminado' })
+  }
+
   // ── Form state ──────────────────────────────────────────────────────────────
   const [formName, setFormName] = useState('')
   const [formPrice, setFormPrice] = useState('')
@@ -411,12 +429,41 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
                         className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold
                                     active:scale-95 transition-all
                                     ${item.availability_status === 'available'
-                                      ? 'bg-wine/20 text-wine-soft hover:bg-wine/30'
+                                      ? 'bg-gold/22 text-gold hover:bg-gold/32'
                                       : 'bg-olive/22 text-olive hover:bg-olive/30'
                                     }`}
                       >
                         {item.availability_status === 'available' ? 'Pausar' : 'Activar'}
                       </button>
+                      {/* Delete inline 2-step */}
+                      {pendingDeleteId === item.id ? (
+                        <button
+                          onClick={() => handleInlineDelete(item.id)}
+                          className="px-3 py-1.5 rounded-lg bg-wine text-white
+                                     text-[11px] font-bold
+                                     hover:brightness-110 active:scale-95
+                                     transition-all animate-[fadeUp_0.2s_cubic-bezier(0.32,0.72,0,1)_both]"
+                          autoFocus
+                        >
+                          ¿Seguro?
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => armDelete(item.id)}
+                          aria-label="Eliminar plato"
+                          className="px-3 py-1.5 rounded-lg bg-ink-3 text-ink-text-3
+                                     text-[11px] font-semibold
+                                     hover:bg-wine/15 hover:text-wine-soft
+                                     active:scale-95 transition-all
+                                     flex items-center justify-center"
+                        >
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
+                            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M6 6l1 14a2 2 0 002 2h6a2 2 0 002-2l1-14"
+                                  stroke="currentColor" strokeWidth="2"
+                                  strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
