@@ -154,6 +154,7 @@ async function replaceMenu(v) {
       price,
       description: desc,
       availability_status: idx === cat.items.length - 1 && cat.items.length > 3 ? 'limited' : 'available',
+      sort_order: idx,
     }))
     const { error: iErr } = await admin.from('menu_items').insert(rows)
     if (iErr) throw new Error(`items ${cat.cat} (${v.name}): ${iErr.message}`)

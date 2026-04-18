@@ -163,6 +163,14 @@ for (let i = 0; i < 60; i++) {
 
   const notes = chance(0.3) ? pick(NOTES) : null
 
+  // Duración heterogénea — copas cortas, cenas largas, cumpleaños XL.
+  // Evita que el Timeline se vea uniforme y ejercita el drag-resize futuro.
+  const durationMinutes = chance(0.7)
+    ? 90                               // cena estándar (mayoría)
+    : chance(0.5)
+      ? pick([60, 75])                 // copa o almuerzo rápido
+      : pick([120, 150])               // evento o grupo grande
+
   rows.push({
     venue_id: VENUE_ID,
     table_id: table.id,
@@ -177,6 +185,7 @@ for (let i = 0; i < 60; i++) {
     guest_phone: person.phone,
     notes,
     cancelled_by: cancelledBy,
+    duration_minutes: durationMinutes,
   })
 }
 
