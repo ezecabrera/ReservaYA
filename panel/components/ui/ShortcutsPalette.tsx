@@ -32,7 +32,9 @@ const GROUPS: Group[] = [
   {
     title: 'Dashboard',
     items: [
-      { keys: ['/'],   label: 'Foco al buscador',       hint: 'Filtra cola por nombre o teléfono' },
+      { keys: ['/'], label: 'Foco al buscador',    hint: 'Filtra cola por nombre o teléfono' },
+      { keys: ['F'], label: 'Vista Piso',          hint: 'Grid espacial de mesas con drop zones' },
+      { keys: ['T'], label: 'Vista Timeline',      hint: 'Matriz mesa × hora, drag reprograma' },
     ],
   },
 ]

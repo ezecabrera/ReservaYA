@@ -1,10 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Confetti } from '@/components/ui/Confetti'
 import { IconWineGlass } from '@/components/ui/Icons'
+
+// Clave localStorage para persistir el progreso del wizard.
+// Nunca guardamos password ni email (credenciales) — sólo datos de negocio.
+const STORAGE_KEY = 'reservaya.onboarding.draft.v1'
+
+interface PersistedDraft {
+  step: number
+  staffName: string
+  venueName: string
+  venueAddress: string
+  venuePhone: string
+  venueDesc: string
+  days: number[]
+  lunch: { opens_at: string; closes_at: string } | null
+  dinner: { opens_at: string; closes_at: string } | null
+  zones: { name: string; prefix: string; tables: { label: string; capacity: number }[] }[]
+  depositAmount: number
+  cutOffMinutes: number
+}
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +122,58 @@ export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  // Restaurar draft persistido al montar (si existe y es válido).
+  // Se ignoran credenciales (email, password) — el user siempre tiene que
+  // reingresarlas por seguridad.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const draft = JSON.parse(raw) as Partial<PersistedDraft>
+      if (!draft || typeof draft !== 'object') return
+      setS((prev) => ({
+        ...prev,
+        staffName:    draft.staffName    ?? prev.staffName,
+        venueName:    draft.venueName    ?? prev.venueName,
+        venueAddress: draft.venueAddress ?? prev.venueAddress,
+        venuePhone:   draft.venuePhone   ?? prev.venuePhone,
+        venueDesc:    draft.venueDesc    ?? prev.venueDesc,
+        days:         Array.isArray(draft.days) ? draft.days : prev.days,
+        lunch:        draft.lunch   !== undefined ? draft.lunch  : prev.lunch,
+        dinner:       draft.dinner  !== undefined ? draft.dinner : prev.dinner,
+        zones:        Array.isArray(draft.zones) && draft.zones.length > 0 ? draft.zones : prev.zones,
+        depositAmount: typeof draft.depositAmount === 'number' ? draft.depositAmount : prev.depositAmount,
+        cutOffMinutes: typeof draft.cutOffMinutes === 'number' ? draft.cutOffMinutes : prev.cutOffMinutes,
+      }))
+      // No restauramos el step — el user siempre arranca en 1 (credenciales).
+    } catch {
+      // localStorage corrupto o no disponible (SSR) — ignoramos
+    }
+  }, [])
+
+  // Persistir draft cada vez que cambia el estado (excluyendo credenciales).
+  useEffect(() => {
+    try {
+      const draft: PersistedDraft = {
+        step,
+        staffName: s.staffName,
+        venueName: s.venueName,
+        venueAddress: s.venueAddress,
+        venuePhone: s.venuePhone,
+        venueDesc: s.venueDesc,
+        days: s.days,
+        lunch: s.lunch,
+        dinner: s.dinner,
+        zones: s.zones,
+        depositAmount: s.depositAmount,
+        cutOffMinutes: s.cutOffMinutes,
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
+    } catch {
+      // Quota exceeded / safari privado → no bloqueamos el flujo
+    }
+  }, [step, s])
+
   function update(patch: Partial<WizardState>) {
     setS(prev => ({ ...prev, ...patch }))
   }
@@ -169,6 +240,8 @@ export default function OnboardingPage() {
       })
       const data = await res.json() as { ok?: boolean; error?: string }
       if (!data.ok) { setError(data.error ?? 'Error al guardar'); setLoading(false); return }
+      // Draft ya persistido en DB — limpiamos localStorage
+      try { localStorage.removeItem(STORAGE_KEY) } catch {}
       // Celebración breve antes de saltar al dashboard — confetti + card
       setLoading(false)
       setCelebrating(true)

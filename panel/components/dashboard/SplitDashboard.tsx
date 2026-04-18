@@ -156,8 +156,11 @@ export function SplitDashboard({
 
   // Keyboard shortcuts del dashboard:
   //   "/"   focus al search del sidebar
+  //   "f"   switch a vista Piso (floor)
+  //   "t"   switch a vista Timeline
   //   Esc   cierra panel/edit/rate si están abiertos (descending priority)
   // La tecla "N" para nueva reserva la maneja NewReservationTrigger.
+  // "?" para la shortcuts palette se maneja en ShortcutsPalette.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
@@ -166,12 +169,26 @@ export function SplitDashboard({
         || target.tagName === 'TEXTAREA'
         || target.isContentEditable
       )
+      const hasModifier = e.metaKey || e.ctrlKey || e.altKey
 
-      if (e.key === '/' && !inInput && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === '/' && !inInput && !hasModifier) {
         e.preventDefault()
         searchInputRef.current?.focus()
         searchInputRef.current?.select()
         return
+      }
+
+      if (!inInput && !hasModifier) {
+        if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault()
+          setView('floor')
+          return
+        }
+        if (e.key === 't' || e.key === 'T') {
+          e.preventDefault()
+          setView('timeline')
+          return
+        }
       }
 
       if (e.key === 'Escape') {
@@ -530,12 +547,21 @@ export function SplitDashboard({
                           gap-4 flex-wrap">
 
             {/* View toggle Floor / Timeline */}
-            <div className="inline-flex items-center p-0.5 rounded-lg bg-ink-2 border border-ink-line">
+            <div
+              className="inline-flex items-center p-0.5 rounded-lg bg-ink-2 border border-ink-line"
+              role="tablist"
+              aria-label="Vista del dashboard"
+            >
               <button
                 type="button"
                 onClick={() => setView('floor')}
+                role="tab"
+                aria-selected={view === 'floor'}
+                title="Vista Piso (F)"
                 className={`h-8 px-3 rounded-md text-[11.5px] font-bold uppercase
                             tracking-[0.08em] transition-colors
+                            focus-visible:outline-none focus-visible:ring-2
+                            focus-visible:ring-wine/50
                             ${view === 'floor'
                               ? 'bg-ink-3 text-ink-text'
                               : 'text-ink-text-3 hover:text-ink-text-2'}`}
@@ -545,8 +571,13 @@ export function SplitDashboard({
               <button
                 type="button"
                 onClick={() => setView('timeline')}
+                role="tab"
+                aria-selected={view === 'timeline'}
+                title="Vista Timeline (T)"
                 className={`h-8 px-3 rounded-md text-[11.5px] font-bold uppercase
                             tracking-[0.08em] transition-colors
+                            focus-visible:outline-none focus-visible:ring-2
+                            focus-visible:ring-wine/50
                             ${view === 'timeline'
                               ? 'bg-ink-3 text-ink-text'
                               : 'text-ink-text-3 hover:text-ink-text-2'}`}
