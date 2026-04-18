@@ -285,7 +285,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
             <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Horario</p>
             {availableSlots.length === 0 ? (
               <div className="bg-gold/12 border border-gold/30 rounded-xl p-4 text-center">
-                <p className="text-[#CC7700] text-[13px] font-semibold">
+                <p className="text-[#8F6618] text-[13px] font-semibold">
                   Las reservas para este turno ya cerraron. Elegí otro día.
                 </p>
               </div>
@@ -392,10 +392,10 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                              active:scale-95 transition-transform duration-[180ms]"
                   style={{ aspectRatio: '1' }}
                 >
-                  <span className="font-display text-[18px] font-bold text-[#14A874]">
+                  <span className="font-display text-[18px] font-bold text-[#2E6B52]">
                     {table.label}
                   </span>
-                  <span className="text-[11px] font-semibold text-[#14A874]">
+                  <span className="text-[11px] font-semibold text-[#2E6B52]">
                     {table.capacity} 👤
                   </span>
                 </button>
@@ -605,11 +605,11 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
         <div className="flex items-center gap-3 rounded-xl px-4 py-3
                         bg-gold/10 border border-gold/25">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9" stroke="#CC7700" strokeWidth="2" />
-            <path d="M12 7v5l3 3" stroke="#CC7700" strokeWidth="2"
+            <circle cx="12" cy="12" r="9" stroke="var(--gold)" strokeWidth="2" />
+            <path d="M12 7v5l3 3" stroke="var(--gold)" strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <p className="text-[13px] text-[#CC7700]">
+          <p className="text-[13px] text-[#8F6618]">
             Mesa reservada por{' '}
             <span className="font-display text-[16px] font-bold">
               {Math.floor(lockTimer / 60)}:{String(lockTimer % 60).padStart(2, '0')}

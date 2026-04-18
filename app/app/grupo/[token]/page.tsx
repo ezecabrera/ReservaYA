@@ -32,7 +32,17 @@ function formatDate(dateStr: string) {
   })
 }
 
-const AVATAR_COLORS = ['#FF4757', '#2ED8A8', '#FFB800', '#4E8EFF', '#9B59FF', '#FF8C42']
+// Paleta editorial para avatares diferenciables — 6 tonos que coexisten
+// sin competir con wine. Todos tienen suficiente saturación para que
+// la inicial blanca contraste bien.
+const AVATAR_COLORS = [
+  '#A13143', // wine
+  '#4F8A5F', // olive
+  '#C99130', // gold
+  '#D66A3F', // terracotta
+  '#7A5C8F', // plum (único color "frío" del set)
+  '#8C4A5C', // burgundy soft
+]
 
 export default function GrupoPage({ params }: { params: { token: string } }) {
   const [data, setData] = useState<GroupData | null>(null)

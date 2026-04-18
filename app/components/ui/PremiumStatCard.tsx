@@ -1,14 +1,21 @@
 import { AnimatedNumber } from './AnimatedNumber'
 
-type Tone = 'neutral' | 'coral' | 'sage' | 'amber' | 'blue' | 'mauve'
+type Tone = 'neutral' | 'coral' | 'sage' | 'amber' | 'blue' | 'mauve' | 'wine' | 'olive' | 'gold'
 
+// Accent bar + numeric value + icon badge en paleta ink editorial.
+// Los "colors viejos" (coral/sage/amber/blue/mauve) siguen aceptándose como
+// tone name pero mapean a wine/olive/gold del sistema ink para mantener
+// coherencia con el resto del panel y la app.
 const TONES: Record<Tone, { bar: string; value: string; iconBg: string; iconColor: string }> = {
-  neutral: { bar: 'from-black/10 via-black/3 to-transparent', value: 'text-tx',       iconBg: 'bg-sf',       iconColor: 'text-tx2' },
-  coral:   { bar: 'from-[#FF4757]/70 via-[#FF4757]/15 to-transparent', value: 'text-[#D0334A]', iconBg: 'bg-[#FFE5E8]', iconColor: 'text-[#D0334A]' },
-  sage:    { bar: 'from-[#2ED8A8]/70 via-[#2ED8A8]/15 to-transparent', value: 'text-[#0A9966]', iconBg: 'bg-[#E4FAF3]', iconColor: 'text-[#0A9966]' },
-  amber:   { bar: 'from-[#FFB800]/70 via-[#FFB800]/15 to-transparent', value: 'text-[#A67300]', iconBg: 'bg-[#FFF3D1]', iconColor: 'text-[#A67300]' },
-  blue:    { bar: 'from-[#4E8EFF]/70 via-[#4E8EFF]/15 to-transparent', value: 'text-[#2B5FCC]', iconBg: 'bg-[#E6EFFF]', iconColor: 'text-[#2B5FCC]' },
-  mauve:   { bar: 'from-[#9B59FF]/70 via-[#9B59FF]/15 to-transparent', value: 'text-[#6B3BBA]', iconBg: 'bg-[#F0E6FF]', iconColor: 'text-[#6B3BBA]' },
+  neutral: { bar: 'from-black/10 via-black/3 to-transparent',                      value: 'text-tx',         iconBg: 'bg-sf',               iconColor: 'text-tx2' },
+  coral:   { bar: 'from-wine/70 via-wine/15 to-transparent',                       value: 'text-wine',       iconBg: 'bg-wine/10 border border-wine/20',       iconColor: 'text-wine' },
+  wine:    { bar: 'from-wine/70 via-wine/15 to-transparent',                       value: 'text-wine',       iconBg: 'bg-wine/10 border border-wine/20',       iconColor: 'text-wine' },
+  sage:    { bar: 'from-olive/70 via-olive/15 to-transparent',                     value: 'text-[#2E6B52]',  iconBg: 'bg-olive/12 border border-olive/25',     iconColor: 'text-[#2E6B52]' },
+  olive:   { bar: 'from-olive/70 via-olive/15 to-transparent',                     value: 'text-[#2E6B52]',  iconBg: 'bg-olive/12 border border-olive/25',     iconColor: 'text-[#2E6B52]' },
+  amber:   { bar: 'from-gold/70 via-gold/15 to-transparent',                       value: 'text-[#8F6618]',  iconBg: 'bg-gold/14 border border-gold/30',       iconColor: 'text-[#8F6618]' },
+  gold:    { bar: 'from-gold/70 via-gold/15 to-transparent',                       value: 'text-[#8F6618]',  iconBg: 'bg-gold/14 border border-gold/30',       iconColor: 'text-[#8F6618]' },
+  blue:    { bar: 'from-olive/60 via-olive/15 to-transparent',                     value: 'text-[#2E6B52]',  iconBg: 'bg-olive/10 border border-olive/22',     iconColor: 'text-[#2E6B52]' },
+  mauve:   { bar: 'from-wine/60 via-wine/12 to-transparent',                       value: 'text-wine',       iconBg: 'bg-wine/8 border border-wine/20',        iconColor: 'text-wine' },
 }
 
 interface Props {

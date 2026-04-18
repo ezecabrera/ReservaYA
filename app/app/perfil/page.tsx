@@ -17,7 +17,16 @@ interface ProfileData {
   }
 }
 
-const AVATAR_COLORS = ['#FF4757', '#2ED8A8', '#4E8EFF', '#9B59FF', '#FFB800', '#FF8C42']
+// Paleta editorial para avatar personal — 6 tonos que matchean la
+// identidad visual de la app sin competir con los tonos de estado.
+const AVATAR_COLORS = [
+  '#A13143', // wine
+  '#4F8A5F', // olive
+  '#C99130', // gold
+  '#D66A3F', // terracotta
+  '#7A5C8F', // plum
+  '#8C4A5C', // burgundy soft
+]
 
 function avatarColor(name: string) {
   let hash = 0

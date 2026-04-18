@@ -13,16 +13,29 @@ export function VenueCard({ venue, variant = 'compact' }: VenueCardProps) {
 
   if (variant === 'hero') {
     return (
-      <Link href={`/${venue.id}`} className="block card overflow-hidden">
-        {/* Hero image */}
-        <div className="relative h-48 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460] overflow-hidden">
+      <Link
+        href={`/${venue.id}`}
+        className="block card overflow-hidden group
+                   hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.18)]
+                   transition-shadow duration-200"
+      >
+        {/* Hero image — ink con radial wine cuando no hay imagen */}
+        <div
+          className="relative h-48 bg-ink overflow-hidden"
+          style={{
+            backgroundImage: venue.image_url
+              ? undefined
+              : 'radial-gradient(80% 100% at 100% 0%, rgba(161,49,67,0.28) 0%, transparent 60%)',
+          }}
+        >
           {venue.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={venue.image_url} alt={venue.name}
-              className="w-full h-full object-cover opacity-80" />
+              className="w-full h-full object-cover opacity-85
+                         group-hover:scale-[1.03] transition-transform duration-[600ms]" />
           ) : (
             <div className="absolute inset-0 flex items-end p-4">
-              <span className="text-white/20 font-display text-[60px] font-black leading-none select-none">
+              <span className="text-ink-text/20 font-display text-[60px] font-black leading-none select-none">
                 {venue.name[0]}
               </span>
             </div>
@@ -54,17 +67,25 @@ export function VenueCard({ venue, variant = 'compact' }: VenueCardProps) {
 
   return (
     <Link href={`/${venue.id}`}
-      className="flex items-center gap-3 card p-3 active:scale-[0.98]
-                 transition-transform duration-[180ms]">
-      {/* Avatar */}
-      <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-[#1A1A2E] to-[#0F3460]
-                      flex items-center justify-center flex-shrink-0 overflow-hidden">
+      className="flex items-center gap-3 card p-3
+                 hover:border-wine/20 active:scale-[0.98]
+                 transition-all duration-[180ms]">
+      {/* Avatar — ink con radial wine cuando no hay imagen */}
+      <div
+        className="w-14 h-14 rounded-lg bg-ink
+                   flex items-center justify-center flex-shrink-0 overflow-hidden"
+        style={{
+          backgroundImage: venue.image_url
+            ? undefined
+            : 'radial-gradient(120% 100% at 100% 0%, rgba(161,49,67,0.35) 0%, transparent 65%)',
+        }}
+      >
         {venue.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={venue.image_url} alt={venue.name}
             className="w-full h-full object-cover" />
         ) : (
-          <span className="text-white/30 font-display text-[24px] font-black">
+          <span className="text-ink-text/40 font-display text-[24px] font-black">
             {venue.name[0]}
           </span>
         )}

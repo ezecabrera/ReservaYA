@@ -3,11 +3,11 @@ import Link from 'next/link'
 type Accent = 'coral' | 'sage' | 'amber' | 'blue' | 'mauve'
 
 const CLS: Record<Accent, string> = {
-  coral: 'bg-[#FFE5E8] text-[#D0334A] border-[#FF4757]/20',
-  sage:  'bg-[#E4FAF3] text-[#0A9966] border-[#2ED8A8]/25',
-  amber: 'bg-[#FFF3D1] text-[#A67300] border-[#FFB800]/25',
-  blue:  'bg-[#E6EFFF] text-[#2B5FCC] border-[#4E8EFF]/25',
-  mauve: 'bg-[#F0E6FF] text-[#6B3BBA] border-[#9B59FF]/25',
+  coral: 'bg-wine/10 text-wine border-wine/25',
+  sage:  'bg-olive/12 text-[#2E6B52] border-olive/25',
+  amber: 'bg-gold/14 text-[#8F6618] border-gold/30',
+  blue:  'bg-olive/10 text-[#2E6B52] border-olive/20',
+  mauve: 'bg-wine/8 text-wine border-wine/18',
 }
 
 interface Props {

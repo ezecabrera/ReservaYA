@@ -135,8 +135,9 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
           <div
             className={`transition-all duration-500 ${animStep >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
           >
-            <div className="w-20 h-20 rounded-full flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #2ED8A8, #00E5C4)' }}>
+            <div className="w-20 h-20 rounded-full flex items-center justify-center
+                            shadow-[0_12px_32px_-8px_rgba(79,138,95,0.55)]"
+              style={{ background: 'linear-gradient(135deg, #4F8A5F, #3E6D4B)' }}>
               <svg width="36" height="36" viewBox="0 0 50 50" fill="none">
                 <path
                   d="M12 25l9 9 17-17"
@@ -242,7 +243,7 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
             </button>
           ) : (
             <div className="card-confirmation p-4 space-y-3">
-              <p className="text-[12px] font-bold text-[#15A67A] uppercase tracking-wider">
+              <p className="text-[12px] font-bold text-[#2E6B52] uppercase tracking-wider">
                 Link del grupo
               </p>
               <div className="bg-white/80 rounded-lg px-3 py-2">
