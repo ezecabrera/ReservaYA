@@ -126,8 +126,8 @@ export function ReservationActionSheet({
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 rounded-xl bg-c1l border border-c1/30 px-4 py-3
-                          text-[13px] text-[#C0313E]">
+          <div className="mx-6 mt-4 rounded-xl bg-wine/10 border border-wine/28 px-4 py-3
+                          text-[13px] text-wine">
             {error}
           </div>
         )}
@@ -139,8 +139,9 @@ export function ReservationActionSheet({
               type="button"
               onClick={() => patch({ status: 'checked_in' }, 'checkin')}
               disabled={loading !== null}
-              className="w-full h-13 rounded-xl bg-c2l border border-c2/30 text-[#0A9A72]
-                         font-bold text-[14px] disabled:opacity-60"
+              className="w-full h-13 rounded-xl bg-olive/12 border border-olive/30 text-[#2E6B52]
+                         font-bold text-[14px] disabled:opacity-60
+                         hover:bg-olive/20 transition-colors"
               style={{ height: '50px' }}
             >
               {loading === 'checkin' ? 'Procesando…' : 'Hacer check-in manual'}
@@ -152,9 +153,10 @@ export function ReservationActionSheet({
               type="button"
               onClick={onRateGuest}
               disabled={loading !== null}
-              className="w-full h-13 rounded-xl bg-c3l border border-c3/35 text-[#A66400]
+              className="w-full h-13 rounded-xl bg-gold/15 border border-gold/35 text-[#8F6618]
                          font-bold text-[14px] disabled:opacity-60 flex items-center
-                         justify-center gap-2"
+                         justify-center gap-2
+                         hover:bg-gold/25 transition-colors"
               style={{ height: '50px' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -212,8 +214,9 @@ export function ReservationActionSheet({
                 }
               }}
               disabled={loading !== null}
-              className="w-full h-13 rounded-xl bg-c1l border border-c1/25 text-[#C0313E]
-                         font-bold text-[14px] disabled:opacity-60"
+              className="w-full h-13 rounded-xl bg-wine/10 border border-wine/25 text-wine
+                         font-bold text-[14px] disabled:opacity-60
+                         hover:bg-wine/16 transition-colors"
               style={{ height: '50px' }}
             >
               {loading === 'cancel' ? 'Procesando…' : 'Cancelar reserva'}

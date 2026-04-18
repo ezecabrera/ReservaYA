@@ -155,7 +155,7 @@ export default function ReservasPage() {
             Espera
             {waitlistCount !== null && waitlistCount > 0 && (
               <span className="text-[9.5px] font-bold rounded-full min-w-[16px] h-[16px]
-                               flex items-center justify-center px-1 bg-c1 text-white">
+                               flex items-center justify-center px-1 bg-wine text-white">
                 {waitlistCount}
               </span>
             )}

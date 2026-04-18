@@ -45,31 +45,35 @@ export default function CheckInPage() {
   }
 
   return (
-    <div className="min-h-screen pb-24"
-      style={{ background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)' }}>
+    <div className="min-h-screen bg-ink pb-24">
 
       <div className="px-5 pt-12 pb-6">
-        <h1 className="font-display text-[24px] font-bold text-white tracking-tight">
+        <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-text-3 mb-1">
+          Ingreso
+        </p>
+        <h1 className="font-display text-[26px] font-bold text-ink-text tracking-tight leading-tight">
           Check-in
         </h1>
-        <p className="text-white/55 text-[13px] mt-0.5">
+        <p className="text-ink-text-2 text-[13px] mt-1">
           Ingresá el código o escaneá el QR
         </p>
       </div>
 
       {/* Success state */}
       {state === 'success' && result && (
-        <div className="mx-5 mb-5 bg-c2/15 border border-c2/30 rounded-2xl p-6 text-center">
-          <div className="w-14 h-14 rounded-full bg-c2 flex items-center justify-center mx-auto mb-3">
+        <div className="mx-5 mb-5 bg-olive/18 border border-olive/40 rounded-2xl p-6 text-center
+                        view-enter">
+          <div className="w-14 h-14 rounded-full bg-olive flex items-center justify-center mx-auto mb-3
+                          shadow-[0_8px_22px_-6px_rgba(79,138,95,0.55)]">
             <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
               <path d="M5 13l4 4L19 7" stroke="white"
                 strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <p className="font-display text-[22px] font-bold text-white">
+          <p className="font-display text-[22px] font-bold text-ink-text">
             {result.guest_name ?? 'Cliente'}
           </p>
-          <p className="text-white/55 text-[14px] mt-1">
+          <p className="text-ink-text-2 text-[14px] mt-1">
             {result.already ? result.message : `Check-in realizado · ${result.time_slot} hs`}
           </p>
         </div>
@@ -77,11 +81,14 @@ export default function CheckInPage() {
 
       {/* Error state */}
       {state === 'error' && (
-        <div className="mx-5 mb-5 bg-c1/15 border border-c1/30 rounded-2xl p-4 flex items-center gap-3">
-          <span className="text-c1 text-[20px]">✕</span>
-          <p className="text-white/80 text-[14px]">{errorMsg}</p>
+        <div className="mx-5 mb-5 bg-wine/15 border border-wine/35 rounded-2xl p-4 flex items-center gap-3
+                        view-enter">
+          <span className="text-wine-soft text-[20px]">✕</span>
+          <p className="text-ink-text text-[14px]">{errorMsg}</p>
           <button onClick={() => setState('idle')}
-            className="ml-auto text-white/40 text-[20px] leading-none">&times;</button>
+            className="ml-auto text-ink-text-3 text-[20px] leading-none hover:text-ink-text transition-colors">
+            &times;
+          </button>
         </div>
       )}
 
@@ -89,7 +96,7 @@ export default function CheckInPage() {
       <div className="mx-5">
         <form onSubmit={handleCheckIn} className="space-y-4">
           <div>
-            <label className="block text-[12px] font-bold text-white/40 uppercase tracking-wider mb-2">
+            <label className="block text-[11px] font-bold text-ink-text-3 uppercase tracking-[0.12em] mb-2">
               Código de reserva o token QR
             </label>
             <input
@@ -99,19 +106,20 @@ export default function CheckInPage() {
               placeholder="Pegá el token o código aquí"
               autoComplete="off"
               autoFocus
-              className="w-full rounded-xl bg-white/10 border border-white/15
-                         px-4 py-4 text-[14px] text-white placeholder-white/30
-                         outline-none focus:border-c2/50 focus:ring-2 focus:ring-c2/20
-                         transition-all duration-[180ms]"
+              className="w-full rounded-xl bg-ink-2 border border-ink-line-2
+                         px-4 py-4 text-[14px] text-ink-text placeholder-ink-text-3
+                         outline-none focus:border-olive/50 focus:ring-2 focus:ring-olive/20
+                         transition-all duration-[180ms] font-mono tabular-nums"
             />
           </div>
 
           <button
             type="submit"
             disabled={!code.trim() || state === 'loading'}
-            className="w-full py-4 rounded-xl bg-c2 text-white font-bold text-[15px]
-                       shadow-c2 disabled:opacity-50 transition-all duration-[180ms]
-                       active:scale-[0.97]"
+            className="w-full py-4 rounded-xl bg-olive text-white font-bold text-[15px]
+                       shadow-[0_8px_22px_-6px_rgba(79,138,95,0.55)] disabled:opacity-50
+                       hover:brightness-110 active:scale-[0.97]
+                       transition-all duration-[180ms]"
           >
             {state === 'loading' ? 'Verificando…' : 'Confirmar check-in'}
           </button>
@@ -119,18 +127,22 @@ export default function CheckInPage() {
 
         {/* Instrucciones */}
         <div className="mt-8 space-y-3">
-          <p className="text-[11px] font-bold text-white/30 uppercase tracking-wider">Cómo funciona</p>
+          <p className="text-[11px] font-bold text-ink-text-3 uppercase tracking-[0.12em]">
+            Cómo funciona
+          </p>
           {[
             ['1', 'El cliente muestra el QR del email o su código de mesa'],
             ['2', 'Escaneá el QR con la cámara del dispositivo y pegá el token'],
             ['3', 'O pedile que diga su nombre y código ("Germán, T2")'],
           ].map(([num, text]) => (
             <div key={num} className="flex items-start gap-3">
-              <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center
-                               text-[10px] font-bold text-white/40 flex-shrink-0 mt-0.5">
+              <span className="w-5 h-5 rounded-full bg-ink-2 border border-ink-line-2
+                               flex items-center justify-center
+                               text-[10px] font-bold text-ink-text-2 flex-shrink-0 mt-0.5
+                               font-mono">
                 {num}
               </span>
-              <p className="text-white/45 text-[13px]">{text}</p>
+              <p className="text-ink-text-2 text-[13px]">{text}</p>
             </div>
           ))}
         </div>

@@ -91,7 +91,7 @@ export function AddWaitlistSheet({ onClose, onCreated }: AddWaitlistSheetProps) 
               autoFocus
               placeholder="Ej: Pareja González"
               className="w-full rounded-xl bg-sf border border-[var(--br)] px-4 py-3
-                         text-[14px] text-tx outline-none focus:border-c2/60"
+                         text-[14px] text-tx outline-none focus:border-olive/55"
             />
           </label>
 
@@ -105,7 +105,7 @@ export function AddWaitlistSheet({ onClose, onCreated }: AddWaitlistSheetProps) 
                 onChange={(e) => setGuestPhone(e.target.value)}
                 placeholder="+54 9 11…"
                 className="w-full rounded-xl bg-sf border border-[var(--br)] px-4 py-3
-                           text-[14px] text-tx outline-none focus:border-c2/60"
+                           text-[14px] text-tx outline-none focus:border-olive/55"
               />
             </label>
             <label className="block">
@@ -136,13 +136,13 @@ export function AddWaitlistSheet({ onClose, onCreated }: AddWaitlistSheetProps) 
               placeholder="Prefiere afuera, celíaco, cumpleaños…"
               rows={2}
               className="w-full rounded-xl bg-sf border border-[var(--br)] px-4 py-3
-                         text-[14px] text-tx outline-none focus:border-c2/60 resize-none"
+                         text-[14px] text-tx outline-none focus:border-olive/55 resize-none"
             />
           </label>
 
           {error && (
-            <div className="rounded-xl bg-c1l border border-c1/30 px-4 py-3
-                            text-[13px] text-[#C0313E]">
+            <div className="rounded-xl bg-wine/10 border border-wine/28 px-4 py-3
+                            text-[13px] text-wine">
               {error}
             </div>
           )}

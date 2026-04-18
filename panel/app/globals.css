@@ -66,55 +66,21 @@
 }
 
 @layer components {
-  /* ── Tarjeta de mesa — estados ─────────────────────────────────────── */
-  .table-card-available {
-    background: #EAFDF6;
-    color: #14A874;
-    border-color: rgba(46, 216, 168, 0.3);
-  }
-
-  .table-card-reserved {
-    background: #EEF5FF;
-    color: #2B5FCC;
-    border-color: rgba(78, 142, 255, 0.3);
-  }
-
-  .table-card-occupied {
-    background: #FFF1F2;
-    color: #D63646;
-    border-color: rgba(255, 71, 87, 0.3);
-  }
-
-  /* ── Botones de acción rápida del panel ─────────────────────────────── */
-  .action-btn-occupy {
-    background: #FFF1F2;
-    color: #C0313E;
-  }
-
-  .action-btn-checkin {
-    background: #EAFDF6;
-    color: #0A9A72;
-  }
-
-  .action-btn-soldout {
-    background: #FFF8E6;
-    color: #CC7700;
-  }
-
-  .action-btn-free {
-    background: #EEF5FF;
-    color: #2B5FCC;
-  }
-
   /* ── Badge de modo del sistema ─────────────────────────────────────── */
   .mode-badge-pre {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1
-           text-[11px] font-bold bg-c2l text-[#0A9A72];
+           text-[11px] font-bold;
+    background: rgba(79, 138, 95, 0.18);
+    color: var(--olive);
+    border: 1px solid rgba(79, 138, 95, 0.35);
   }
 
   .mode-badge-active {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1
-           text-[11px] font-bold bg-c1l text-[#D63646];
+           text-[11px] font-bold;
+    background: rgba(161, 49, 67, 0.20);
+    color: var(--wine-soft);
+    border: 1px solid rgba(161, 49, 67, 0.40);
   }
 }
 

@@ -110,7 +110,7 @@ export function DisputeRatingSheet({
               placeholder="Ej: El cliente nunca vino, no tiene información real sobre la experiencia. La reserva figura como no-show."
               rows={4}
               className="w-full rounded-xl bg-sf border border-[var(--br)] px-4 py-3
-                         text-[14px] text-tx outline-none focus:border-c2/60 resize-none
+                         text-[14px] text-tx outline-none focus:border-olive/55 resize-none
                          disabled:opacity-50"
             />
             <p className="text-[10.5px] text-tx3 mt-1">
@@ -129,14 +129,14 @@ export function DisputeRatingSheet({
               disabled={isLate}
               placeholder="https://…"
               className="w-full rounded-xl bg-sf border border-[var(--br)] px-4 py-3
-                         text-[13px] text-tx outline-none focus:border-c2/60
+                         text-[13px] text-tx outline-none focus:border-olive/55
                          disabled:opacity-50"
             />
           </label>
 
           {error && (
-            <div className="rounded-xl bg-c1l border border-c1/30 px-4 py-3
-                            text-[13px] text-[#C0313E]">
+            <div className="rounded-xl bg-wine/10 border border-wine/28 px-4 py-3
+                            text-[13px] text-wine">
               {error}
             </div>
           )}

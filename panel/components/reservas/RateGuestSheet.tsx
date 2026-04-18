@@ -118,14 +118,14 @@ export function RateGuestSheet({
               placeholder="Gran cliente, habitual viernes. Tarda en llegar…"
               rows={3}
               className="w-full rounded-xl bg-sf border border-[var(--br)] px-4 py-3
-                         text-[14px] text-tx outline-none focus:border-c2/60 resize-none"
+                         text-[14px] text-tx outline-none focus:border-olive/55 resize-none"
             />
           </label>
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 rounded-xl bg-c1l border border-c1/30 px-4 py-3
-                          text-[13px] text-[#C0313E]">
+          <div className="mx-6 mt-4 rounded-xl bg-wine/10 border border-wine/28 px-4 py-3
+                          text-[13px] text-wine">
             {error}
           </div>
         )}

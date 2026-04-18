@@ -90,8 +90,8 @@ export function WaitlistTab({ reloadToken }: WaitlistTabProps) {
   return (
     <div className="px-5 space-y-3">
       {error && (
-        <div className="rounded-xl bg-c1/20 border border-c1/40 px-4 py-3
-                        text-[13px] text-c1l">
+        <div className="rounded-xl bg-wine/20 border border-wine/40 px-4 py-3
+                        text-[13px] text-wine-soft">
           {error}
         </div>
       )}
@@ -105,38 +105,38 @@ export function WaitlistTab({ reloadToken }: WaitlistTabProps) {
         return (
           <div
             key={e.id}
-            className={`rounded-2xl px-4 py-3.5 border ${
+            className={`rounded-2xl px-4 py-3.5 border transition-colors ${
               isNotified
-                ? 'bg-c3l/15 border-c3/35'
-                : 'bg-white/5 border-white/10'
+                ? 'bg-gold/15 border-gold/35'
+                : 'bg-ink-2 border-ink-line hover:border-ink-line-2'
             }`}
           >
             <div className="flex items-start gap-3">
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                isNotified ? 'bg-c3/30' : 'bg-white/10'
+                isNotified ? 'bg-gold/28 border border-gold/40' : 'bg-ink-3 border border-ink-line-2'
               }`}>
-                <span className="font-display font-bold text-[16px] text-white">
+                <span className="font-display font-bold text-[16px] text-ink-text font-mono tabular-nums">
                   {e.party_size}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-white font-semibold text-[14.5px] truncate">
+                  <p className="text-ink-text font-semibold text-[14.5px] truncate">
                     {e.guest_name}
                   </p>
                   {isNotified && (
                     <span className="text-[9.5px] font-bold uppercase tracking-wide
-                                     px-1.5 py-0.5 rounded bg-c3/40 text-white">
+                                     px-1.5 py-0.5 rounded bg-gold/35 text-gold border border-gold/45">
                       Avisado
                     </span>
                   )}
                 </div>
-                <p className="text-white/50 text-[12px]">
+                <p className="text-ink-text-3 text-[12px]">
                   {e.guest_phone ? `${e.guest_phone} · ` : ''}
                   {isNotified ? 'avisado hace' : 'espera hace'} {since}
                 </p>
                 {e.notes && (
-                  <p className="text-white/45 text-[11.5px] mt-1 italic line-clamp-2">
+                  <p className="text-ink-text-2 text-[11.5px] mt-1 italic line-clamp-2">
                     {e.notes}
                   </p>
                 )}
@@ -149,8 +149,9 @@ export function WaitlistTab({ reloadToken }: WaitlistTabProps) {
                   type="button"
                   onClick={() => patch(e.id, 'notified')}
                   disabled={busyId === e.id}
-                  className="flex-1 h-10 rounded-xl bg-c3/30 border border-c3/40
-                             text-white text-[13px] font-bold disabled:opacity-60"
+                  className="flex-1 h-10 rounded-xl bg-gold/28 border border-gold/45
+                             text-gold text-[13px] font-bold disabled:opacity-60
+                             hover:bg-gold/38 transition-colors"
                 >
                   Avisar
                 </button>
@@ -159,8 +160,9 @@ export function WaitlistTab({ reloadToken }: WaitlistTabProps) {
                 type="button"
                 onClick={() => patch(e.id, 'seated')}
                 disabled={busyId === e.id}
-                className="flex-1 h-10 rounded-xl bg-c2/30 border border-c2/40
-                           text-white text-[13px] font-bold disabled:opacity-60"
+                className="flex-1 h-10 rounded-xl bg-olive/28 border border-olive/45
+                           text-olive text-[13px] font-bold disabled:opacity-60
+                           hover:bg-olive/38 transition-colors"
               >
                 Sentar
               </button>
@@ -168,8 +170,9 @@ export function WaitlistTab({ reloadToken }: WaitlistTabProps) {
                 type="button"
                 onClick={() => patch(e.id, 'left')}
                 disabled={busyId === e.id}
-                className="flex-1 h-10 rounded-xl bg-white/5 border border-white/15
-                           text-white/75 text-[13px] font-semibold disabled:opacity-60"
+                className="flex-1 h-10 rounded-xl bg-ink-3 border border-ink-line-2
+                           text-ink-text-2 text-[13px] font-semibold disabled:opacity-60
+                           hover:text-ink-text hover:bg-ink-3/80 transition-colors"
               >
                 Se fue
               </button>

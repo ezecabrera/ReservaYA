@@ -15,27 +15,28 @@ const LABELS: Record<GuestTag, string> = {
 }
 
 const DARK_STYLES: Record<GuestTag, string> = {
-  primera_vez:      'bg-c4/20 text-c4l border-c4/30',
-  habitue:          'bg-c2/20 text-c2l border-c2/30',
-  vip:              'bg-c3/25 text-c3l border-c3/35',
-  no_show_previo:   'bg-c1/25 text-c1l border-c1/40',
-  regular_reciente: 'bg-white/10 text-white/80 border-white/15',
+  primera_vez:      'bg-olive/18 text-olive border-olive/35',
+  habitue:          'bg-olive/25 text-olive border-olive/45',
+  vip:              'bg-gold/22 text-gold border-gold/40',
+  no_show_previo:   'bg-wine/25 text-wine-soft border-wine/45',
+  regular_reciente: 'bg-ink-3 text-ink-text-2 border-ink-line-2',
 }
 
 const LIGHT_STYLES: Record<GuestTag, string> = {
-  primera_vez:      'bg-c4l text-[#2B5FCC]',
-  habitue:          'bg-c2l text-[#0A9A72]',
-  vip:              'bg-c3l text-[#A66400]',
-  no_show_previo:   'bg-c1l text-[#C0313E]',
-  regular_reciente: 'bg-sf2 text-tx2',
+  primera_vez:      'bg-olive/12 text-[#2E6B52] border border-olive/25',
+  habitue:          'bg-olive/18 text-[#2E6B52] border border-olive/30',
+  vip:              'bg-gold/18 text-[#8F6618] border border-gold/35',
+  no_show_previo:   'bg-wine/12 text-wine border border-wine/28',
+  regular_reciente: 'bg-sf2 text-tx2 border border-[var(--br)]',
 }
 
 export function GuestTagChip({ tag, theme = 'dark' }: GuestTagChipProps) {
   const cls = theme === 'dark' ? DARK_STYLES[tag] : LIGHT_STYLES[tag]
+  // DARK ya incluye border; LIGHT también. No agregamos uno extra.
   return (
     <span
       className={`text-[9.5px] font-bold uppercase tracking-wide
-                  px-1.5 py-0.5 rounded border ${cls}`}
+                  px-1.5 py-0.5 rounded ${theme === 'dark' ? 'border' : ''} ${cls}`}
     >
       {LABELS[tag]}
     </span>

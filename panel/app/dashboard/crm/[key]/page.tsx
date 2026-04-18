@@ -44,11 +44,11 @@ interface Response {
 }
 
 const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
-  confirmed:       { label: 'Confirmada',  cls: 'bg-c4l text-[#2B5FCC]' },
-  checked_in:      { label: 'Visitó',      cls: 'bg-c2l text-[#15A67A]' },
-  pending_payment: { label: 'Pendiente',   cls: 'bg-c3l text-[#CC7700]' },
-  no_show:         { label: 'No-show',     cls: 'bg-c1l text-[#D63646]' },
-  cancelled:       { label: 'Cancelada',   cls: 'bg-white/10 text-white/55' },
+  confirmed:       { label: 'Confirmada',  cls: 'bg-olive/18 text-olive border border-olive/30' },
+  checked_in:      { label: 'Visitó',      cls: 'bg-olive/25 text-olive border border-olive/45' },
+  pending_payment: { label: 'Pendiente',   cls: 'bg-gold/18 text-gold border border-gold/35' },
+  no_show:         { label: 'No-show',     cls: 'bg-wine/22 text-wine-soft border border-wine/40' },
+  cancelled:       { label: 'Cancelada',   cls: 'bg-ink-3 text-ink-text-3 border border-ink-line-2' },
 }
 
 function formatDate(iso: string | null): string {
@@ -107,10 +107,10 @@ export default function GuestDetailPage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen pb-28 px-5 pt-12 flex flex-col items-center justify-center gap-4"
-        style={{ background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)' }}>
-        <p className="text-white/60 text-[14px]">{error ?? 'Comensal no encontrado'}</p>
-        <Link href="/dashboard/crm" className="text-c2 text-[13px] font-semibold">
+      <div className="min-h-screen bg-ink pb-28 px-5 pt-12 flex flex-col items-center justify-center gap-4">
+        <p className="text-ink-text-2 text-[14px]">{error ?? 'Comensal no encontrado'}</p>
+        <Link href="/dashboard/crm" className="text-olive text-[13px] font-semibold
+                                                hover:brightness-110 transition-all">
           ← Volver a comensales
         </Link>
       </div>
@@ -121,14 +121,14 @@ export default function GuestDetailPage() {
   const isUser = profile.key.startsWith('user:')
 
   return (
-    <div className="min-h-screen pb-28"
-      style={{ background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)' }}>
+    <div className="min-h-screen bg-ink pb-28">
 
       {/* Header con back */}
       <div className="px-5 pt-12 pb-4">
         <Link
           href="/dashboard/crm"
-          className="inline-flex items-center gap-1.5 text-white/60 text-[12.5px] mb-3"
+          className="inline-flex items-center gap-1.5 text-ink-text-3 text-[12.5px] mb-3
+                     hover:text-ink-text-2 transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2"
@@ -136,11 +136,11 @@ export default function GuestDetailPage() {
           </svg>
           Comensales
         </Link>
-        <h1 className="font-display text-[24px] font-bold text-white tracking-tight">
+        <h1 className="font-display text-[24px] font-bold text-ink-text tracking-tight">
           {profile.name}
         </h1>
         {profile.phone && (
-          <p className="text-white/55 text-[13px] mt-0.5">{profile.phone}</p>
+          <p className="text-ink-text-2 text-[13px] mt-0.5 font-mono">{profile.phone}</p>
         )}
         <div className="flex items-center gap-1.5 flex-wrap mt-2">
           {profile.tags.map((tag) => (
@@ -148,7 +148,7 @@ export default function GuestDetailPage() {
           ))}
           {!isUser && (
             <span className="text-[9.5px] font-bold uppercase tracking-wide
-                             px-1.5 py-0.5 rounded bg-white/10 text-white/55">
+                             px-1.5 py-0.5 rounded bg-ink-3 text-ink-text-3 border border-ink-line-2">
               Sin cuenta
             </span>
           )}
@@ -158,12 +158,12 @@ export default function GuestDetailPage() {
       <div className="px-5 space-y-5">
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Visitas" value={profile.stats.visits_completed} accent="text-c2" />
+          <StatCard label="Visitas" value={profile.stats.visits_completed} accent="text-olive" />
           <StatCard label="Total reservas" value={profile.stats.total_reservations} />
           <StatCard
             label="No-shows"
             value={profile.stats.no_shows}
-            accent={profile.stats.no_shows > 0 ? 'text-c1' : undefined}
+            accent={profile.stats.no_shows > 0 ? 'text-wine-soft' : undefined}
           />
           <StatCard label="Prom. pax" value={profile.stats.avg_party_size || '—'} />
           <StatCard label="Primera visita" value={formatDate(profile.first_seen_date)} small />
@@ -227,7 +227,7 @@ export default function GuestDetailPage() {
                         </span>
                         {isUnilateral && (
                           <span className="text-[9.5px] font-bold uppercase tracking-wide
-                                           px-1.5 py-0.5 rounded bg-c1/30 text-c1l">
+                                           px-1.5 py-0.5 rounded bg-wine/25 text-wine-soft border border-wine/40">
                             Cancelé yo
                           </span>
                         )}
