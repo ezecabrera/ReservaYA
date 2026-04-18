@@ -5,6 +5,7 @@ import type { MenuCategory, MenuItem, MenuItemAvailability } from '@/lib/shared'
 import { NumericText } from '@/components/ui/NumericText'
 import { PageHero } from '@/components/ui/PageHero'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { IconPlateCutlery } from '@/components/ui/Icons'
 
 interface Props {
   venueId: string
@@ -224,9 +225,11 @@ export function MenuManager({ venueId, initialCategories, initialItems }: Props)
 
         {categories.length === 0 && (
           <EmptyState
-            title="Sin categorías"
-            description="Armá tu primera categoría para empezar a cargar platos."
-            action={{ label: 'Crear categoría', onClick: openAddCategory }}
+            accent="sage"
+            icon={<IconPlateCutlery size={28} />}
+            title="Todavía no hay platos"
+            description="Empezá por una categoría. Después cargás los platos con precio y disponibilidad."
+            action={{ label: 'Crear primera categoría', onClick: openAddCategory }}
           />
         )}
       </div>

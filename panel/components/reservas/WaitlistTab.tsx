@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { WaitlistEntry, WaitlistStatus } from '@/lib/shared'
 import { mutateFetch } from '@/lib/panelFetch'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { IconHourglass } from '@/components/ui/Icons'
 
 interface WaitlistTabProps {
   /** Cuando cambia este valor, la tab recarga (se usa al volver de crear). */
@@ -76,12 +78,12 @@ export function WaitlistTab({ reloadToken }: WaitlistTabProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-20 px-5">
-        <p className="text-white/30 text-[15px]">Nadie en espera</p>
-        <p className="text-white/25 text-[12px] mt-1">
-          Tocá el + para anotar un grupo que llegó sin reserva
-        </p>
-      </div>
+      <EmptyState
+        accent="amber"
+        icon={<IconHourglass size={28} />}
+        title="Nadie en espera"
+        description="Tocá el botón para anotar un grupo que llegó sin reserva."
+      />
     )
   }
 

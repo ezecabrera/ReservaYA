@@ -10,6 +10,8 @@ import { ReservationQueueItem } from './ReservationQueueItem'
 import { TimelineView } from './TimelineView'
 import { RightActionPanel } from './RightActionPanel'
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber'
+import { IconWineGlass, IconChair } from '@/components/ui/Icons'
+import { pushToast } from '@/lib/toast'
 import {
   ReservationActionSheet,
   type ReservationRow,
@@ -182,8 +184,6 @@ export function SplitDashboard({
     return () => window.removeEventListener('keydown', handler)
   }, [activeReservationId, editingReservationId, ratingReservationId])
 
-  const [toast, setToast] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
-
   // Derivar nombre para display — prioridad: user_name > guest_name > "Sin nombre"
   const displayName = (r: SplitReservation) =>
     r.user_name ?? r.guest_name ?? 'Sin nombre'
@@ -301,24 +301,39 @@ export function SplitDashboard({
               : r,
           ),
         )
-        setToast({ tone: 'error', text: body.error ?? 'No se pudo reasignar' })
-        setTimeout(() => setToast(null), 2800)
+        pushToast({
+          tone: 'error',
+          text: body.error ?? 'No se pudo mover la reserva',
+          hint: 'La reserva volvió a su lugar original.',
+          duration: 3200,
+        })
         return
       }
 
-      const msg = slotChanged && tableChanged
-        ? 'Reserva reprogramada'
-        : slotChanged
-          ? `Movida a ${newTimeSlot}`
-          : 'Mesa reasignada'
-      setToast({ tone: 'ok', text: msg })
-      setTimeout(() => setToast(null), 2000)
+      const newTableLabel = localTables.find((t) => t.id === newTableId)?.label ?? null
+      if (slotChanged && tableChanged) {
+        pushToast({
+          tone: 'ok',
+          text: `Reprogramada a ${newTableLabel ?? 'nueva mesa'} · ${newTimeSlot}`,
+          hint: 'El comensal recibirá el cambio por WhatsApp.',
+        })
+      } else if (slotChanged) {
+        pushToast({
+          tone: 'ok',
+          text: `${reservation.guest_name ?? reservation.user_name ?? 'Reserva'} ahora a las ${newTimeSlot}`,
+        })
+      } else {
+        pushToast({
+          tone: 'ok',
+          text: newTableLabel ? `Movida a ${newTableLabel}` : 'Mesa reasignada',
+        })
+      }
 
       // Flash visual en el tile destino — solo afecta la vista floor
       setDroppedTileId(newTableId)
       setTimeout(() => setDroppedTileId((curr) => (curr === newTableId ? null : curr)), 560)
     },
-    [reservations],
+    [reservations, localTables],
   )
 
   const getTableStatus = (t: SplitTable): 'available' | 'reserved' | 'occupied' => {
@@ -438,12 +453,16 @@ export function SplitDashboard({
           {/* Cola scrollable */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
             {queueBuckets.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="font-display text-[15px] text-ink-text-2">
+              <div className="flex flex-col items-center text-center py-12 px-4">
+                <div className="w-12 h-12 rounded-2xl bg-wine/12 border border-wine/25
+                                text-wine-soft flex items-center justify-center mb-3">
+                  <IconWineGlass size={24} />
+                </div>
+                <p className="font-display text-[15px] text-ink-text leading-snug">
                   {search ? 'Sin resultados' : 'Servicio sin reservas'}
                 </p>
-                <p className="text-[12px] text-ink-text-3 mt-1">
-                  {search ? 'Probá otro nombre' : 'Arrancás con el salón limpio'}
+                <p className="text-[12px] text-ink-text-3 mt-1 leading-snug max-w-[220px]">
+                  {search ? 'Probá otro nombre o teléfono' : 'Arrancás con el salón limpio — tocá N para cargar una walk-in'}
                 </p>
               </div>
             ) : (
@@ -572,8 +591,12 @@ export function SplitDashboard({
               className="flex-1 overflow-y-auto px-5 lg:px-7 py-5 view-enter"
             >
               {visibleTables.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-ink-text-3 text-[13px]">Sin mesas en este sector</p>
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-ink-text-3">
+                  <div className="w-12 h-12 rounded-2xl bg-ink-2 border border-ink-line-2
+                                  flex items-center justify-center">
+                    <IconChair size={24} />
+                  </div>
+                  <p className="text-[13px]">Sin mesas en este sector</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -681,19 +704,8 @@ export function SplitDashboard({
         />
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5
-                      border text-[12.5px] font-semibold z-50
-                      animate-[fadeUp_0.25s_ease-out]
-                      ${toast.tone === 'ok'
-                        ? 'bg-olive/20 text-ink-text border-olive/40'
-                        : 'bg-wine/25 text-ink-text border-wine/45'}`}
-        >
-          {toast.text}
-        </div>
-      )}
+      {/* Toasts ahora viven en <Toaster /> montado en dashboard/layout.tsx
+          y se disparan con pushToast() del pub/sub global. */}
 
       {/* Drag preview card — flota con el cursor mientras se arrastra una reserva.
           Aparece rotada -4deg como en el reference, con shadow pronunciada. */}

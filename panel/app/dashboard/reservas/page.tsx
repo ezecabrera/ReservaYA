@@ -12,6 +12,7 @@ import { GuestTagChip } from '@/components/crm/GuestTagChip'
 import { RateGuestSheet } from '@/components/reservas/RateGuestSheet'
 import { PageHero } from '@/components/ui/PageHero'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { IconWineGlass, IconOpenBook } from '@/components/ui/Icons'
 
 type Reservation = ReservationRow & { table_id: string }
 type Tab = 'reservas' | 'espera'
@@ -218,26 +219,16 @@ export default function ReservasPage() {
           ) : total === 0 ? (
             <EmptyState
               accent="coral"
-              title="Sin reservas para este día"
-              description="Tocá el + para cargar una walk-in o una llamada."
-              icon={(
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
-                  <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              )}
+              title="Servicio sin reservas"
+              description="Arrancás con el salón limpio. Tocá el + para cargar una walk-in o una llamada."
+              icon={<IconWineGlass size={28} />}
             />
           ) : filtered.length === 0 ? (
             <EmptyState
               accent="coral"
               title="Sin resultados"
-              description={`No hay reservas que coincidan con "${search}".`}
-              icon={(
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                  <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              )}
+              description={`Nada coincide con "${search}". Probá otro nombre o teléfono.`}
+              icon={<IconOpenBook size={28} />}
             />
           ) : (
             <div className="space-y-6">

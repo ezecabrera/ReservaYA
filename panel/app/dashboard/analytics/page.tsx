@@ -5,6 +5,7 @@ import type { VenueRatingStats } from '@/lib/shared'
 import { PageHero } from '@/components/ui/PageHero'
 import { PremiumStatCard } from '@/components/ui/PremiumStatCard'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { IconHourglass } from '@/components/ui/Icons'
 import { DisputeRatingSheet } from '@/components/rating/DisputeRatingSheet'
 
 interface ReviewRow {
@@ -106,14 +107,9 @@ export default function AnalyticsPage() {
         <div className="pt-5">
           <EmptyState
             accent="amber"
-            title="Sin datos todavía"
-            description="Los números aparecen cuando empecés a recibir reservas."
-            icon={(
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                <path d="M18 20V10M12 20V4M6 20v-6"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
+            title="Los números todavía están esperando"
+            description="Cuando empieces a recibir reservas, acá vas a ver ocupación, no-shows y tendencias de la semana."
+            icon={<IconHourglass size={28} />}
           />
         </div>
       ) : (
@@ -135,7 +131,7 @@ export default function AnalyticsPage() {
                 <div
                   aria-hidden
                   className="absolute top-0 left-0 right-0 h-[2px]"
-                  style={{ background: 'linear-gradient(90deg, #E5A332 0%, #E5545E 100%)' }}
+                  style={{ background: 'linear-gradient(90deg, #C99130 0%, #A13143 100%)' }}
                 />
 
                 <div className="flex items-baseline gap-3">
@@ -334,15 +330,15 @@ export default function AnalyticsPage() {
                           style={{
                             height: `${heightPct}%`,
                             background: isToday
-                              ? 'linear-gradient(180deg, #E5545E 0%, #C13030 100%)'
+                              ? 'linear-gradient(180deg, #C36878 0%, #A13143 100%)'
                               : d.confirmed > 0
-                                ? 'linear-gradient(180deg, rgba(91,175,148,0.75) 0%, rgba(91,175,148,0.35) 100%)'
-                                : 'rgba(255,255,255,0.06)',
+                                ? 'linear-gradient(180deg, rgba(79,138,95,0.78) 0%, rgba(79,138,95,0.32) 100%)'
+                                : 'rgba(243,240,234,0.06)',
                           }}
                         />
                       </div>
                       <span className={`text-[9.5px] font-bold uppercase tracking-wide ${
-                        isToday ? 'text-[#FF8A91]' : 'text-white/35'
+                        isToday ? 'text-wine-soft' : 'text-ink-text-3'
                       }`}>
                         {dayLabel(d.date)}
                       </span>
@@ -350,14 +346,14 @@ export default function AnalyticsPage() {
                   )
                 })}
               </div>
-              <div className="flex items-center gap-5 mt-4 pt-4 border-t border-white/8">
+              <div className="flex items-center gap-5 mt-4 pt-4 border-t border-ink-line">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(91,175,148,0.75)' }} />
-                  <span className="text-[11.5px] text-white/50">Confirmadas</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-olive" />
+                  <span className="text-[11.5px] text-ink-text-3">Confirmadas</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#E5545E]" />
-                  <span className="text-[11.5px] text-white/50">Hoy</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-wine" />
+                  <span className="text-[11.5px] text-ink-text-3">Hoy</span>
                 </div>
               </div>
             </div>
@@ -429,10 +425,10 @@ export default function AnalyticsPage() {
                   style={{
                     width: `${Math.min(data.week.noShowRate, 100)}%`,
                     background: data.week.noShowRate >= 20
-                      ? 'linear-gradient(90deg, #E5545E, #C13030)'
+                      ? 'linear-gradient(90deg, #C36878, #A13143)'
                       : data.week.noShowRate >= 10
-                        ? 'linear-gradient(90deg, #E5A332, #C27C1A)'
-                        : 'linear-gradient(90deg, #5BAF94, #2E6B52)',
+                        ? 'linear-gradient(90deg, #C99130, #A07420)'
+                        : 'linear-gradient(90deg, #4F8A5F, #2E6B52)',
                   }}
                 />
               </div>

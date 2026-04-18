@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PanelNav } from '@/components/nav/PanelNav'
 import { DesktopShell } from '@/components/nav/DesktopShell'
 import { NewReservationTrigger } from '@/components/reservas/NewReservationTrigger'
+import { Toaster } from '@/components/ui/Toaster'
 
 export default async function DashboardLayout({
   children,
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
       </DesktopShell>
       <PanelNav />
       <NewReservationTrigger variant="fab" />
+      <Toaster />
     </div>
   )
 }

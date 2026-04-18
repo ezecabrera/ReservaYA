@@ -7,6 +7,7 @@ import { GuestTagChip } from '@/components/crm/GuestTagChip'
 import { PageHero } from '@/components/ui/PageHero'
 import { PremiumStatCard } from '@/components/ui/PremiumStatCard'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { IconPlateCutlery, IconOpenBook } from '@/components/ui/Icons'
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
@@ -136,19 +137,11 @@ export default function CrmPage() {
         ) : guests.length === 0 ? (
           <EmptyState
             accent="sage"
-            title={search ? 'Sin resultados' : 'Todavía no hay comensales'}
+            title={search ? 'Sin resultados' : 'Tu cuaderno está en blanco'}
             description={search
               ? 'Probá otro nombre o número.'
               : 'Los perfiles se generan solos a medida que cargás reservas. El CSV también.'}
-            icon={(
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" />
-                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            )}
+            icon={search ? <IconOpenBook size={28} /> : <IconPlateCutlery size={28} />}
           />
         ) : (
           <div className="space-y-2">
