@@ -98,8 +98,10 @@ export function RightActionPanel({
 
   return (
     <aside
+      key={r.id}
       className="hidden lg:flex w-[340px] xl:w-[360px] flex-shrink-0
-                 border-l border-ink-line bg-ink flex-col overflow-hidden"
+                 border-l border-ink-line bg-ink flex-col overflow-hidden
+                 panel-enter"
       aria-label="Detalle de reserva"
     >
       {/* Header */}

@@ -28,6 +28,8 @@ interface Props {
   isDropTarget?: boolean
   /** Hay un drag activo en el dashboard y esta mesa está libre — pulse invitante */
   isDropInvite?: boolean
+  /** Acaba de recibir un drop exitoso — flash olive 550ms */
+  isJustDropped?: boolean
   onClick?: () => void
   onDrop?: (reservationId: string) => void
   onDragOver?: (e: React.DragEvent) => void
@@ -54,6 +56,7 @@ export function TableTile({
   partySize,
   isDropTarget,
   isDropInvite,
+  isJustDropped,
   onClick,
   onDrop,
   onDragOver,
@@ -65,6 +68,8 @@ export function TableTile({
   // Pulse invitante sólo en mesas libres durante un drag activo, sin pisar
   // el estado "drop target" (que ya pulsa con ring hard).
   const inviteCls = isDropInvite && !isDropTarget ? 'drop-pulse' : ''
+  // Flash al completar un drop — una sola pasada olive, no loop.
+  const successCls = isJustDropped ? 'drop-success' : ''
 
   const commonHandlers = {
     onDragOver: (e: React.DragEvent) => { e.preventDefault(); onDragOver?.(e) },
@@ -87,7 +92,7 @@ export function TableTile({
                   flex flex-col justify-between p-3 text-left
                   hover:bg-ink-3 hover:border-ink-line-2
                   transition-all duration-200 active:scale-[0.98]
-                  overflow-hidden ${dropRing} ${inviteCls}`}
+                  overflow-hidden ${dropRing} ${inviteCls} ${successCls}`}
     >
       {/* Border stripe izquierdo — 4px */}
       <span

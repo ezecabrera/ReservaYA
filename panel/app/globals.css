@@ -154,6 +154,11 @@
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79, 138, 95, 0); }
 }
 
+@keyframes panelIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 /* Utilities para usar con inline style="--i: 3" → stagger 40ms base */
 .reveal-stagger {
   animation: staggerIn 0.36s cubic-bezier(0.32, 0.72, 0, 1) both;
@@ -172,12 +177,17 @@
   animation: dropSuccess 0.55s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+.panel-enter {
+  animation: panelIn 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
 /* prefers-reduced-motion: cortamos todo y aplicamos el estado final inmediato */
 @media (prefers-reduced-motion: reduce) {
   .reveal-stagger,
   .view-enter,
   .drop-pulse,
-  .drop-success {
+  .drop-success,
+  .panel-enter {
     animation: none !important;
   }
 }

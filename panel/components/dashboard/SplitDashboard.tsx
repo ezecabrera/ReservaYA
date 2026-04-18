@@ -102,6 +102,9 @@ export function SplitDashboard({
   const [view, setView] = useState<'floor' | 'timeline'>('floor')
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null)
+  /** Mesa que acaba de recibir un drop exitoso — flash 550ms */
+  const [droppedTileId, setDroppedTileId] = useState<string | null>(null)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   // Selección de reserva — alimenta el RightActionPanel (desktop) o el
   // ReservationActionSheet (mobile/tablet). Un único state sirve a ambos.
@@ -147,6 +150,37 @@ export function SplitDashboard({
     window.addEventListener('reservation:created', handler)
     return () => window.removeEventListener('reservation:created', handler)
   }, [router])
+
+  // Keyboard shortcuts del dashboard:
+  //   "/"   focus al search del sidebar
+  //   Esc   cierra panel/edit/rate si están abiertos (descending priority)
+  // La tecla "N" para nueva reserva la maneja NewReservationTrigger.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      const inInput = target && (
+        target.tagName === 'INPUT'
+        || target.tagName === 'TEXTAREA'
+        || target.isContentEditable
+      )
+
+      if (e.key === '/' && !inInput && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+        searchInputRef.current?.select()
+        return
+      }
+
+      if (e.key === 'Escape') {
+        // Prioridad: sheets > panel. No cerramos ambos a la vez.
+        if (ratingReservationId) { setRatingReservationId(null); return }
+        if (editingReservationId) { setEditingReservationId(null); return }
+        if (activeReservationId)  { setActiveReservationId(null);  return }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [activeReservationId, editingReservationId, ratingReservationId])
 
   const [toast, setToast] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
@@ -279,6 +313,10 @@ export function SplitDashboard({
           : 'Mesa reasignada'
       setToast({ tone: 'ok', text: msg })
       setTimeout(() => setToast(null), 2000)
+
+      // Flash visual en el tile destino — solo afecta la vista floor
+      setDroppedTileId(newTableId)
+      setTimeout(() => setDroppedTileId((curr) => (curr === newTableId ? null : curr)), 560)
     },
     [reservations],
   )
@@ -377,14 +415,23 @@ export function SplitDashboard({
                 <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               <input
+                ref={searchInputRef}
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar reserva…"
-                className="w-full rounded-lg bg-ink-2 border border-ink-line-2 pl-9 pr-3 py-2
+                className="w-full rounded-lg bg-ink-2 border border-ink-line-2 pl-9 pr-10 py-2
                            text-[12.5px] text-ink-text placeholder:text-ink-text-3 outline-none
                            focus:border-wine-soft/50 transition-colors"
               />
+              <kbd
+                aria-hidden
+                className="absolute right-2.5 top-1/2 -translate-y-1/2
+                           text-[10px] font-mono text-ink-text-3 bg-ink border border-ink-line-2
+                           rounded px-1.5 py-0.5 pointer-events-none"
+              >
+                /
+              </kbd>
             </div>
           </div>
 
@@ -550,6 +597,7 @@ export function SplitDashboard({
                           partySize={res?.party_size}
                           isDropTarget={dropTargetId === t.id}
                           isDropInvite={inviteDrop}
+                          isJustDropped={droppedTileId === t.id}
                           onClick={() => res && setActiveReservationId(res.id)}
                           onDragOver={() => setDropTargetId(t.id)}
                           onDrop={(reservationId) => handleDrop(reservationId, t.id)}
