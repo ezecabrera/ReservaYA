@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NumericText } from '@/components/ui/NumericText'
 import { TimelineBlock } from './TimelineBlock'
 import type { SplitReservation, SplitTable, SplitZone } from './SplitDashboard'
@@ -78,9 +78,19 @@ export function TimelineView({
   onReassign,
   onDragBegin,
   onReservationClick,
-  now = new Date(),
+  now: initialNow,
 }: Props) {
   const [hoveredCell, setHoveredCell] = useState<{ tableId: string; col: number } | null>(null)
+
+  // Reloj interno que tick cada 60s para desplazar la línea "ahora" en vivo.
+  // Si el parent pasa un now explícito (ej. testing), respetamos ese valor.
+  const [internalNow, setInternalNow] = useState<Date>(() => initialNow ?? new Date())
+  useEffect(() => {
+    if (initialNow) return // prop controla, no hacemos polling
+    const id = setInterval(() => setInternalNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [initialNow])
+  const now = initialNow ?? internalNow
 
   // Generar columnas (cada 30 min)
   const columns = useMemo(() => {
