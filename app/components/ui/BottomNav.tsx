@@ -11,10 +11,10 @@ const NAV_ITEMS = [
       <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
         <path
           d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"
-          stroke={active ? 'var(--c1)' : 'var(--tx3)'}
+          stroke={active ? 'var(--wine)' : 'var(--tx3)'}
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         />
-        <path d="M9 21V12h6v9" stroke={active ? 'var(--c1)' : 'var(--tx3)'}
+        <path d="M9 21V12h6v9" stroke={active ? 'var(--wine)' : 'var(--tx3)'}
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
@@ -25,8 +25,8 @@ const NAV_ITEMS = [
     icon: (active: boolean) => (
       <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="7"
-          stroke={active ? 'var(--c1)' : 'var(--tx3)'} strokeWidth="2" />
-        <path d="M20 20l-3-3" stroke={active ? 'var(--c1)' : 'var(--tx3)'}
+          stroke={active ? 'var(--wine)' : 'var(--tx3)'} strokeWidth="2" />
+        <path d="M20 20l-3-3" stroke={active ? 'var(--wine)' : 'var(--tx3)'}
           strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
@@ -37,11 +37,11 @@ const NAV_ITEMS = [
     icon: (active: boolean) => (
       <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
         <rect x="3" y="4" width="18" height="18" rx="2"
-          stroke={active ? 'var(--c1)' : 'var(--tx3)'} strokeWidth="2" />
+          stroke={active ? 'var(--wine)' : 'var(--tx3)'} strokeWidth="2" />
         <path d="M16 2v4M8 2v4M3 10h18"
-          stroke={active ? 'var(--c1)' : 'var(--tx3)'}
+          stroke={active ? 'var(--wine)' : 'var(--tx3)'}
           strokeWidth="2" strokeLinecap="round" />
-        {active && <circle cx="12" cy="15" r="1.5" fill="var(--c1)" />}
+        {active && <circle cx="12" cy="15" r="1.5" fill="var(--wine)" />}
       </svg>
     ),
   },
@@ -51,9 +51,9 @@ const NAV_ITEMS = [
     icon: (active: boolean) => (
       <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
         <circle cx="12" cy="8" r="4"
-          stroke={active ? 'var(--c1)' : 'var(--tx3)'} strokeWidth="2" />
+          stroke={active ? 'var(--wine)' : 'var(--tx3)'} strokeWidth="2" />
         <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"
-          stroke={active ? 'var(--c1)' : 'var(--tx3)'}
+          stroke={active ? 'var(--wine)' : 'var(--tx3)'}
           strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
@@ -82,12 +82,12 @@ export function BottomNav() {
               {item.icon(active)}
               <span
                 className="text-[10px] font-semibold"
-                style={{ color: active ? 'var(--c1)' : 'var(--tx3)' }}
+                style={{ color: active ? 'var(--wine)' : 'var(--tx3)' }}
               >
                 {item.label}
               </span>
               {active && (
-                <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-c1" />
+                <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-wine" />
               )}
             </Link>
           )

@@ -56,6 +56,9 @@ export default function AnalyticsPage() {
   const [rating, setRating] = useState<VenueRatingStats | null>(null)
   const [reviews, setReviews] = useState<ReviewRow[]>([])
   const [disputeTarget, setDisputeTarget] = useState<ReviewRow | null>(null)
+  /** Flag que se activa ~60ms después de que llegan los datos — dispara el
+      grow-from-zero de las barras del chart (la transition CSS hace el resto). */
+  const [chartReady, setChartReady] = useState(false)
 
   const reloadReviews = async () => {
     try {
@@ -74,6 +77,14 @@ export default function AnalyticsPage() {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  // Tras render con datos, gatillar el grow-from-zero de las barras.
+  // 60ms deja que el DOM commitee con height=0 antes de la transición.
+  useEffect(() => {
+    if (!data) { setChartReady(false); return }
+    const id = setTimeout(() => setChartReady(true), 60)
+    return () => clearTimeout(id)
+  }, [data])
 
   useEffect(() => {
     fetch('/api/venue/my-rating')
@@ -321,18 +332,23 @@ export default function AnalyticsPage() {
             </p>
             <div className="bg-white/[0.04] border border-white/8 rounded-2xl p-5">
               <div className="flex items-end gap-1.5 h-28">
-                {data.week.days.map((d) => {
-                  const heightPct = maxConfirmed > 0
+                {data.week.days.map((d, i) => {
+                  const targetPct = maxConfirmed > 0
                     ? Math.max((d.confirmed / maxConfirmed) * 100, d.confirmed > 0 ? 8 : 0)
                     : 0
+                  // chartReady gatillea el grow-from-zero; cada barra con delay
+                  // incremental para la cascada.
+                  const heightPct = chartReady ? targetPct : 0
                   const isToday = d.date === data.today.date
                   return (
                     <div key={d.date} className="flex-1 flex flex-col items-center gap-2">
                       <div className="w-full flex flex-col items-end justify-end" style={{ height: '92px' }}>
                         <div
-                          className="w-full rounded-md transition-all duration-500"
+                          className="w-full rounded-md transition-[height] duration-[800ms]"
                           style={{
                             height: `${heightPct}%`,
+                            transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)',
+                            transitionDelay: `${i * 45}ms`,
                             background: isToday
                               ? 'linear-gradient(180deg, #C36878 0%, #A13143 100%)'
                               : d.confirmed > 0

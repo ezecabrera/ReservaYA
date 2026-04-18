@@ -100,15 +100,17 @@
 @layer components {
   /* ── Botones ── */
   .btn-primary {
-    @apply w-full bg-c1 text-white font-bold text-[15px] py-[15px] px-6
-           rounded-md shadow-c1 transition-transform duration-[180ms]
-           active:scale-[0.97];
+    @apply w-full bg-wine text-white font-bold text-[15px] py-[15px] px-6
+           rounded-md transition-all duration-[180ms]
+           hover:brightness-110 active:scale-[0.97];
+    box-shadow: 0 8px 22px -6px rgba(161, 49, 67, 0.55);
   }
 
   .btn-secondary {
-    @apply w-full bg-c2 text-white font-bold text-[15px] py-[15px] px-6
-           rounded-md shadow-c2 transition-transform duration-[180ms]
-           active:scale-[0.97];
+    @apply w-full bg-olive text-white font-bold text-[15px] py-[15px] px-6
+           rounded-md transition-all duration-[180ms]
+           hover:brightness-110 active:scale-[0.97];
+    box-shadow: 0 8px 22px -6px rgba(79, 138, 95, 0.50);
   }
 
   .btn-outline {
@@ -135,8 +137,8 @@
   }
 
   .card-confirmation {
-    @apply rounded-xl border-2 border-c2;
-    background: linear-gradient(135deg, #EAFDF6, #F0F8FF);
+    @apply rounded-xl border-2 border-olive;
+    background: linear-gradient(135deg, rgba(79,138,95,0.12), rgba(201,145,48,0.08));
   }
 
   .card-code {
@@ -151,7 +153,8 @@
   }
 
   .chip-active {
-    @apply bg-c1 text-white border-c1 shadow-[0_4px_12px_rgba(255,71,87,0.25)];
+    @apply bg-wine text-white border-wine;
+    box-shadow: 0 4px 14px rgba(161, 49, 67, 0.32);
   }
 
   /* ── Badges ── */
@@ -160,23 +163,38 @@
   }
 
   .badge-green {
-    @apply badge bg-c2l text-[#15A67A];
+    @apply badge;
+    background: rgba(79, 138, 95, 0.15);
+    color: #2E6B52;
+    border: 1px solid rgba(79, 138, 95, 0.30);
   }
 
   .badge-red {
-    @apply badge bg-c1l text-[#D63646];
+    @apply badge;
+    background: rgba(161, 49, 67, 0.12);
+    color: #A13143;
+    border: 1px solid rgba(161, 49, 67, 0.28);
   }
 
   .badge-amber {
-    @apply badge bg-c3l text-[#CC7700];
+    @apply badge;
+    background: rgba(201, 145, 48, 0.14);
+    color: #8F6618;
+    border: 1px solid rgba(201, 145, 48, 0.32);
   }
 
   .badge-blue {
-    @apply badge bg-c4l text-[#2B5FCC];
+    @apply badge;
+    background: rgba(79, 138, 95, 0.12);
+    color: #2E6B52;
+    border: 1px solid rgba(79, 138, 95, 0.28);
   }
 
   .badge-purple {
-    @apply badge bg-c5l text-[#6B30CC];
+    @apply badge;
+    background: rgba(161, 49, 67, 0.10);
+    color: #7A2633;
+    border: 1px solid rgba(161, 49, 67, 0.22);
   }
 
   /* ── Skeleton shimmer ── */

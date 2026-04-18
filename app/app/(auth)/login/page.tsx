@@ -8,7 +8,7 @@ type Mode = 'login' | 'register'
 
 const inputCls = `w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf
   px-4 py-3.5 text-[15px] text-tx outline-none
-  focus:border-c4 focus:ring-2 focus:ring-[var(--c4)]/20
+  focus:border-wine focus:ring-2 focus:ring-[var(--wine)]/20
   transition-all duration-[180ms]`
 
 function LoginContent() {
@@ -95,10 +95,11 @@ function LoginContent() {
   if (emailSent) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-bg px-6 text-center gap-5">
-        <div className="w-16 h-16 rounded-full bg-c2/15 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-olive/15 border border-olive/30
+                        flex items-center justify-center">
           <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
             <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              stroke="var(--c2)" strokeWidth="2" strokeLinecap="round" />
+              stroke="var(--olive)" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </div>
         <h2 className="font-display text-[22px] font-bold text-tx">Revisá tu email</h2>
@@ -108,7 +109,7 @@ function LoginContent() {
         </p>
         <button
           onClick={() => { setEmailSent(false); switchMode('login') }}
-          className="mt-2 text-c4 font-semibold text-[14px]"
+          className="mt-2 text-wine font-semibold text-[14px] hover:brightness-110 transition-all"
         >
           Ya confirmé → Iniciar sesión
         </button>
@@ -211,7 +212,7 @@ function LoginContent() {
           </div>
 
           {error && (
-            <p className="text-[13px] text-[#D63646] bg-c1l rounded-lg px-3 py-2">
+            <p className="text-[13px] text-wine bg-wine/10 border border-wine/25 rounded-lg px-3 py-2">
               {error}
             </p>
           )}

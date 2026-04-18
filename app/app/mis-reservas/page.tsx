@@ -20,10 +20,10 @@ interface Reservation {
 }
 
 const STATUS_STYLE: Record<string, { label: string; cls: string; dot: string }> = {
-  confirmed:       { label: 'Confirmada',  cls: 'badge-blue',   dot: 'bg-c4' },
-  checked_in:      { label: 'Asistida',    cls: 'badge-green',  dot: 'bg-c2' },
-  pending_payment: { label: 'Pendiente',   cls: 'badge-amber',  dot: 'bg-c3' },
-  no_show:         { label: 'No asistí',   cls: 'badge-red',    dot: 'bg-c1' },
+  confirmed:       { label: 'Confirmada',  cls: 'badge-blue',   dot: 'bg-olive' },
+  checked_in:      { label: 'Asistida',    cls: 'badge-green',  dot: 'bg-olive' },
+  pending_payment: { label: 'Pendiente',   cls: 'badge-amber',  dot: 'bg-gold' },
+  no_show:         { label: 'No asistí',   cls: 'badge-red',    dot: 'bg-wine' },
   cancelled:       { label: 'Cancelada',   cls: 'badge',        dot: 'bg-tx3' },
 }
 
@@ -90,7 +90,7 @@ export default function MisReservasPage() {
               {label}
               {key === 'proximas' && proximas.length > 0 && (
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold
-                                  ${tab === 'proximas' ? 'bg-c1 text-white' : 'bg-sf2 text-tx3'}`}>
+                                  ${tab === 'proximas' ? 'bg-wine text-white' : 'bg-sf2 text-tx3'}`}>
                   {proximas.length}
                 </span>
               )}
@@ -139,7 +139,7 @@ export default function MisReservasPage() {
             return (
               <div key={r.id} className="card overflow-hidden">
                 {/* Franja superior */}
-                <div className={`h-1 ${upcoming ? 'bg-c1' : 'bg-sf2'}`} />
+                <div className={`h-1 ${upcoming ? 'bg-wine' : 'bg-sf2'}`} />
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
@@ -193,9 +193,9 @@ export default function MisReservasPage() {
                       </Link>
                       <Link
                         href={`/${r.venues.id}`}
-                        className="flex-1 text-center py-2 rounded-lg bg-c1l text-c1
-                                   text-[12px] font-bold border border-c1/20
-                                   active:scale-95 transition-transform"
+                        className="flex-1 text-center py-2 rounded-lg bg-wine/10 text-wine
+                                   text-[12px] font-bold border border-wine/25
+                                   hover:bg-wine/15 active:scale-95 transition-all"
                       >
                         Reservar de nuevo
                       </Link>
@@ -207,10 +207,10 @@ export default function MisReservasPage() {
                         <button
                           type="button"
                           onClick={() => setRatingTarget(r)}
-                          className="flex-1 text-center py-2 rounded-lg bg-c3l text-[#A66400]
-                                     text-[12px] font-bold border border-c3/35
-                                     active:scale-95 transition-transform flex items-center
-                                     justify-center gap-1.5"
+                          className="flex-1 text-center py-2 rounded-lg bg-gold/15 text-gold
+                                     text-[12px] font-bold border border-gold/35
+                                     hover:bg-gold/25 active:scale-95 transition-all
+                                     flex items-center justify-center gap-1.5"
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -233,9 +233,9 @@ export default function MisReservasPage() {
                       <button
                         type="button"
                         onClick={() => setRatingTarget(r)}
-                        className="w-full text-center py-2 rounded-lg bg-c1l text-[#C0313E]
-                                   text-[12px] font-bold border border-c1/25
-                                   active:scale-95 transition-transform"
+                        className="w-full text-center py-2 rounded-lg bg-wine/10 text-wine
+                                   text-[12px] font-bold border border-wine/25
+                                   hover:bg-wine/15 active:scale-95 transition-all"
                       >
                         El local canceló · dejar reseña
                       </button>

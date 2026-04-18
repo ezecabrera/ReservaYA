@@ -122,15 +122,22 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
   const isFull = spotsLeft === 0
 
   return (
-    <div className="min-h-screen pb-10"
-      style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}>
+    <div className="min-h-screen pb-10 bg-ink relative overflow-hidden">
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(70% 50% at 100% 0%, rgba(161,49,67,0.18) 0%, transparent 60%)',
+        }}
+      />
 
       {/* Header del evento */}
       <div className="px-5 pt-14 pb-6">
         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                        bg-c1/15 border border-c1/25 mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-c1 inline-block animate-pulse" />
-          <span className="text-c1 text-[11px] font-bold uppercase tracking-wider">
+                        bg-wine/18 border border-wine/30 mb-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-wine-soft inline-block animate-pulse" />
+          <span className="text-wine-soft text-[11px] font-bold uppercase tracking-wider">
             Grupo activo
           </span>
         </div>
@@ -144,7 +151,7 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
       {/* Info del organizador */}
       <div className="mx-5 bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 mb-5
                       flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-c1 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-wine flex items-center justify-center flex-shrink-0">
           <span className="text-white font-bold text-[13px]">
             {res.users?.name?.[0]?.toUpperCase() ?? '?'}
           </span>
@@ -174,7 +181,7 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
                 className={`flex items-center gap-3 rounded-2xl px-4 py-3
                             border transition-all duration-300
                             ${g.id === myGuestId
-                              ? 'bg-c2/15 border-c2/30'
+                              ? 'bg-olive/18 border-olive/35'
                               : 'bg-white/5 border-white/10'
                             }`}>
                 <div
@@ -183,12 +190,12 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
                 >
                   {g.name[0].toUpperCase()}
                 </div>
-                <span className={`font-semibold text-[14px] ${g.id === myGuestId ? 'text-c2' : 'text-white'}`}>
+                <span className={`font-semibold text-[14px] ${g.id === myGuestId ? 'text-olive' : 'text-white'}`}>
                   {g.name}
                   {g.id === myGuestId && ' (vos)'}
                 </span>
                 <svg className="ml-auto" width="16" height="16" fill="none" viewBox="0 0 24 24">
-                  <path d="M5 13l4 4L19 7" stroke={g.id === myGuestId ? 'var(--c2)' : 'rgba(255,255,255,0.3)'}
+                  <path d="M5 13l4 4L19 7" stroke={g.id === myGuestId ? 'var(--olive)' : 'rgba(255,255,255,0.3)'}
                     strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -206,7 +213,7 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
                 key={i}
                 className="flex-1 h-1.5 rounded-full"
                 style={{
-                  background: i < guests.length ? 'var(--c2)' : 'rgba(255,255,255,0.1)',
+                  background: i < guests.length ? 'var(--olive)' : 'rgba(255,255,255,0.1)',
                   transition: 'background 0.3s',
                 }}
               />
@@ -221,8 +228,8 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
       {/* Formulario de join */}
       <div className="px-5">
         {joined ? (
-          <div className="bg-c2/15 border border-c2/30 rounded-2xl p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-c2 flex items-center justify-center mx-auto mb-3">
+          <div className="bg-olive/18 border border-olive/35 rounded-2xl p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-olive flex items-center justify-center mx-auto mb-3">
               <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
                 <path d="M5 13l4 4L19 7" stroke="white"
                   strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -239,7 +246,7 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
             </p>
           </div>
         ) : isFull ? (
-          <div className="bg-c1/15 border border-c1/30 rounded-2xl p-5 text-center">
+          <div className="bg-wine/15 border border-wine/30 rounded-2xl p-5 text-center">
             <p className="font-display text-[20px] font-bold text-white mb-1">
               Grupo completo
             </p>
@@ -257,16 +264,17 @@ export default function GrupoPage({ params }: { params: { token: string } }) {
               onChange={e => setName(e.target.value)}
               placeholder="Tu nombre"
               autoComplete="given-name"
-              className="w-full rounded-xl bg-white/10 border border-white/15 px-4 py-4
-                         text-[15px] text-white placeholder-white/30 outline-none
-                         focus:border-c2/50 focus:ring-2 focus:ring-c2/20 transition-all"
+              className="w-full rounded-xl bg-ink-2 border border-ink-line-2 px-4 py-4
+                         text-[15px] text-ink-text placeholder-ink-text-3 outline-none
+                         focus:border-olive/50 focus:ring-2 focus:ring-olive/20 transition-all"
             />
             <button
               type="submit"
               disabled={!name.trim() || joining}
-              className="w-full py-4 rounded-xl bg-c1 text-white font-bold text-[15px]
-                         shadow-[0_4px_20px_rgba(255,71,87,0.3)] disabled:opacity-50
-                         active:scale-[0.97] transition-all duration-[180ms]"
+              className="w-full py-4 rounded-xl bg-wine text-white font-bold text-[15px]
+                         shadow-[0_8px_24px_-6px_rgba(161,49,67,0.55)] disabled:opacity-50
+                         hover:brightness-110 active:scale-[0.97]
+                         transition-all duration-[180ms]"
             >
               {joining ? 'Confirmando…' : 'Me apunto →'}
             </button>
