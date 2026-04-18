@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Confetti } from '@/components/ui/Confetti'
+import { IconWineGlass } from '@/components/ui/Icons'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +99,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [celebrating, setCelebrating] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -166,7 +169,10 @@ export default function OnboardingPage() {
       })
       const data = await res.json() as { ok?: boolean; error?: string }
       if (!data.ok) { setError(data.error ?? 'Error al guardar'); setLoading(false); return }
-      router.replace('/dashboard')
+      // Celebración breve antes de saltar al dashboard — confetti + card
+      setLoading(false)
+      setCelebrating(true)
+      setTimeout(() => router.replace('/dashboard'), 2200)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error de conexión')
       setLoading(false)
@@ -241,6 +247,43 @@ export default function OnboardingPage() {
       ← Volver
     </button>
   )
+
+  // ── Pantalla de celebración post-onboarding ──────────────────────────
+  if (celebrating) {
+    return (
+      <div className="min-h-screen bg-ink flex items-center justify-center px-5 relative overflow-hidden">
+        <Confetti />
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              'radial-gradient(70% 60% at 50% 40%, rgba(161,49,67,0.22) 0%, transparent 65%)',
+          }}
+        />
+        <div className="relative max-w-sm text-center animate-[slideUp_0.4s_cubic-bezier(0.32,0.72,0,1)_both]">
+          <div className="w-16 h-16 rounded-2xl bg-wine/20 border border-wine/35
+                          flex items-center justify-center mx-auto mb-5 text-wine-soft
+                          shadow-[0_14px_30px_-8px_rgba(161,49,67,0.45)]">
+            <IconWineGlass size={32} />
+          </div>
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-text-3 mb-2">
+            Listo
+          </p>
+          <h1 className="font-display text-[28px] font-bold text-ink-text leading-tight tracking-tight">
+            {s.venueName} está en ReservaYA
+          </h1>
+          <p className="text-ink-text-2 text-[14px] mt-2 leading-snug">
+            Tu restaurante ya puede recibir reservas. Te llevamos al panel.
+          </p>
+          <div className="mt-6 inline-flex items-center gap-2 text-ink-text-3 text-[12px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-olive animate-pulse" />
+            Abriendo dashboard…
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-ink pb-10 px-5 relative overflow-hidden">

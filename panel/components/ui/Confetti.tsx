@@ -2,7 +2,16 @@
 
 import { useEffect, useRef } from 'react'
 
-// Paleta ink editorial — celebratory pero contenida, sin ruido saturado.
+/**
+ * Confetti editorial — paleta ink (wine / olive / gold / terracotta).
+ *
+ * Contenido: 40 partículas, gravedad suave, fade-out a los ~1.5s.
+ * Respeta prefers-reduced-motion (no renderiza el canvas).
+ *
+ * Uso: montar cuando termine una acción celebratoria. Auto-desmonta o lo
+ * remueve el parent cuando el animation frame devuelve alive=false.
+ */
+
 const COLORS = [
   '#A13143', // wine
   '#C36878', // wine-soft
@@ -23,6 +32,9 @@ export function Confetti() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduce) return
+
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -31,16 +43,16 @@ export function Confetti() {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-    const particles: Particle[] = Array.from({ length: 55 }, () => ({
-      x: Math.random() * canvas.width,
-      y: -20 - Math.random() * 200,
-      vx: (Math.random() - 0.5) * 3,
-      vy: 1.5 + Math.random() * 3.5,
-      size: 4 + Math.random() * 10,
+    const particles: Particle[] = Array.from({ length: 40 }, () => ({
+      x: canvas.width / 2 + (Math.random() - 0.5) * 180,
+      y: canvas.height / 2 - 40 - Math.random() * 60,
+      vx: (Math.random() - 0.5) * 6,
+      vy: -2 - Math.random() * 4,
+      size: 5 + Math.random() * 9,
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      opacity: 0.85 + Math.random() * 0.15,
+      opacity: 0.9,
       rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.15,
+      rotationSpeed: (Math.random() - 0.5) * 0.2,
     }))
 
     let frame: number
@@ -54,9 +66,9 @@ export function Confetti() {
       for (const p of particles) {
         p.x += p.vx
         p.y += p.vy
-        p.vy += 0.04 // gravity
+        p.vy += 0.12 // gravity
         p.rotation += p.rotationSpeed
-        if (elapsed > 90) p.opacity -= 0.012
+        if (elapsed > 60) p.opacity -= 0.018
 
         if (p.y < canvas!.height && p.opacity > 0) alive = true
 
@@ -79,7 +91,7 @@ export function Confetti() {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 z-10"
+      className="pointer-events-none fixed inset-0 z-[90]"
       aria-hidden="true"
     />
   )
