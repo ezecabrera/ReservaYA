@@ -52,6 +52,8 @@ interface Props {
   ) => void
   /** Notifica al padre que el drag arrancó — para el preview flotante */
   onDragBegin?: (preview: { name: string; time: string; party: string }) => void
+  /** Click en un bloque existente — abre el detalle de la reserva */
+  onReservationClick?: (reservationId: string) => void
   /** Hora actual — dibuja una línea vertical marker */
   now?: Date
 }
@@ -75,6 +77,7 @@ export function TimelineView({
   onEmptyCellClick,
   onReassign,
   onDragBegin,
+  onReservationClick,
   now = new Date(),
 }: Props) {
   const [hoveredCell, setHoveredCell] = useState<{ tableId: string; col: number } | null>(null)
@@ -267,6 +270,7 @@ export function TimelineView({
                       width={width}
                       height={ROW_HEIGHT}
                       onDragBegin={onDragBegin}
+                      onClick={onReservationClick ? () => onReservationClick(r.id) : undefined}
                     />
                   )
                 })}

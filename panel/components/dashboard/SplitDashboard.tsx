@@ -8,6 +8,13 @@ import { NumericText } from '@/components/ui/NumericText'
 import { TableTile } from './TableTile'
 import { ReservationQueueItem } from './ReservationQueueItem'
 import { TimelineView } from './TimelineView'
+import { RightActionPanel } from './RightActionPanel'
+import {
+  ReservationActionSheet,
+  type ReservationRow,
+} from '@/components/reservas/ReservationActionSheet'
+import { EditReservationSheet } from '@/components/reservas/EditReservationSheet'
+import { RateGuestSheet } from '@/components/reservas/RateGuestSheet'
 import { mutateFetch } from '@/lib/panelFetch'
 
 /** Datos del preview card que flota con el cursor durante el drag. */
@@ -94,6 +101,12 @@ export function SplitDashboard({
   const [view, setView] = useState<'floor' | 'timeline'>('floor')
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null)
+
+  // Selección de reserva — alimenta el RightActionPanel (desktop) o el
+  // ReservationActionSheet (mobile/tablet). Un único state sirve a ambos.
+  const [activeReservationId, setActiveReservationId] = useState<string | null>(null)
+  const [editingReservationId, setEditingReservationId] = useState<string | null>(null)
+  const [ratingReservationId, setRatingReservationId] = useState<string | null>(null)
   const dragPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const previewElRef = useRef<HTMLDivElement | null>(null)
 
@@ -277,6 +290,55 @@ export function SplitDashboard({
     return 'available'
   }
 
+  const activeReservation = useMemo(
+    () => reservations.find((r) => r.id === activeReservationId) ?? null,
+    [reservations, activeReservationId],
+  )
+  const editingReservation = useMemo(
+    () => reservations.find((r) => r.id === editingReservationId) ?? null,
+    [reservations, editingReservationId],
+  )
+  const ratingReservation = useMemo(
+    () => reservations.find((r) => r.id === ratingReservationId) ?? null,
+    [reservations, ratingReservationId],
+  )
+
+  const activeTable = activeReservation
+    ? localTables.find((t) => t.id === activeReservation.table_id) ?? null
+    : null
+  const activeZoneObj = activeTable?.zone_id
+    ? zones.find((z) => z.id === activeTable.zone_id) ?? null
+    : null
+
+  /** Adapta una SplitReservation al contract de ReservationRow/EditReservationSheet. */
+  const toReservationRow = useCallback(
+    (r: SplitReservation): ReservationRow & { date: string; table_id: string } => {
+      const table = localTables.find((t) => t.id === r.table_id)
+      return {
+        id: r.id,
+        status: r.status,
+        date,
+        time_slot: r.time_slot,
+        party_size: r.party_size,
+        guest_name: r.guest_name,
+        guest_phone: r.guest_phone,
+        notes: r.notes,
+        guest_tag: r.guest_tag,
+        table_id: r.table_id,
+        tables: table ? { label: table.label } : null,
+        users: r.user_name ? { name: r.user_name } : null,
+      }
+    },
+    [localTables, date],
+  )
+
+  const refreshAfterAction = useCallback(() => {
+    setActiveReservationId(null)
+    setEditingReservationId(null)
+    setRatingReservationId(null)
+    router.refresh()
+  }, [router])
+
   return (
     <div className="min-h-screen bg-ink flex flex-col">
       <ServiceHeader
@@ -365,6 +427,7 @@ export function SplitDashboard({
                         status={r.status}
                         guestTag={r.guest_tag}
                         notes={r.notes}
+                        onClick={() => setActiveReservationId(r.id)}
                         onDragBegin={(preview) => setDragPreview(preview)}
                       />
                     ))}
@@ -487,6 +550,7 @@ export function SplitDashboard({
                 displayName={displayName}
                 onReassign={(rid, tid, slot) => handleDrop(rid, tid, slot)}
                 onDragBegin={(preview) => setDragPreview(preview)}
+                onReservationClick={(rid) => setActiveReservationId(rid)}
                 onEmptyCellClick={(tid, slot) => {
                   // El NewReservationTrigger (global en el layout) escucha este
                   // evento y abre el sheet con mesa + hora prefilled.
@@ -498,7 +562,57 @@ export function SplitDashboard({
             </div>
           )}
         </main>
+
+        {/* ────────────────────── RIGHT ACTION PANEL ──────────────────────
+            Desktop (lg+): 3ra columna que muestra detalle + CTAs de la reserva
+            seleccionada. En mobile/tablet, la interacción se resuelve con el
+            ReservationActionSheet bottom sheet (render más abajo). */}
+        {activeReservation && (
+          <RightActionPanel
+            reservation={activeReservation}
+            table={activeTable}
+            zone={activeZoneObj}
+            displayName={displayName}
+            onClose={() => setActiveReservationId(null)}
+            onEdit={() => setEditingReservationId(activeReservation.id)}
+            onRateGuest={() => setRatingReservationId(activeReservation.id)}
+            onUpdated={refreshAfterAction}
+          />
+        )}
       </div>
+
+      {/* ────────────────────── MOBILE / TABLET SHEETS ──────────────────────
+          Visibles solo bajo lg — desktop ya tiene el RightActionPanel. */}
+      <div className="lg:hidden">
+        {activeReservation
+          && !editingReservation
+          && !ratingReservation && (
+            <ReservationActionSheet
+              reservation={toReservationRow(activeReservation)}
+              onClose={() => setActiveReservationId(null)}
+              onUpdated={refreshAfterAction}
+              onEdit={() => setEditingReservationId(activeReservation.id)}
+              onRateGuest={() => setRatingReservationId(activeReservation.id)}
+            />
+          )}
+      </div>
+
+      {/* Edit + Rate sheets — cross-breakpoint, siempre bottom sheet */}
+      {editingReservation && (
+        <EditReservationSheet
+          reservation={toReservationRow(editingReservation)}
+          onClose={() => setEditingReservationId(null)}
+          onUpdated={refreshAfterAction}
+        />
+      )}
+      {ratingReservation && (
+        <RateGuestSheet
+          reservationId={ratingReservation.id}
+          guestName={displayName(ratingReservation)}
+          onClose={() => setRatingReservationId(null)}
+          onRated={refreshAfterAction}
+        />
+      )}
 
       {/* Toast */}
       {toast && (
