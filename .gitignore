@@ -35,3 +35,7 @@ next-env.d.ts
 # Supabase local dev
 supabase/.temp/
 supabase/.branches/
+
+# Claude Code local settings — contiene tokens personales / no debe versionarse
+.claude/settings.local.json
+.claude/settings.local.json.backup

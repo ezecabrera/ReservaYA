@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { rateLimit, clientKey } from '@/lib/rate-limit'
 
 /**
  * POST /api/table-lock
@@ -22,6 +23,15 @@ function adminClient() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 locks por minuto por IP. Previene loops de bot que
+  // bloqueen inventario sin confirmar nunca.
+  const rl = rateLimit({ key: clientKey(request, 'table-lock'), limit: 10, windowSec: 60 })
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Esperá un momento y probá de nuevo.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } },
+    )
+  }
   const admin = adminClient()
 
   const body = await request.json() as { table_id: string }

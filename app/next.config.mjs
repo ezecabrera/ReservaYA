@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Habilita instrumentation.ts (requerido en Next 14 para Sentry SDK).
+    instrumentationHook: true,
+  },
   images: {
     remotePatterns: [
       {
