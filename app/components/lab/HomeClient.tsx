@@ -238,6 +238,11 @@ export function HomeClient({ venues, userFirstName }: Props) {
         </div>
       </div>
 
+      {/* Cuisine tabs — filtro rápido, justo debajo del buscador */}
+      <div className="mb-3">
+        <CuisineTabs value={cuisine} onChange={setCuisine} counts={counts} />
+      </div>
+
       {/* Social proof strip (rotativo) */}
       <div className="screen-x mb-4">
         <div className="bg-c2l rounded-full px-4 py-2 flex items-center gap-2.5">
@@ -292,14 +297,9 @@ export function HomeClient({ venues, userFirstName }: Props) {
         </div>
       )}
 
-      {/* Controles: search pill + text search */}
+      {/* Controles: search pill (fecha/hora/personas) para prefillear el wizard */}
       <div className="screen-x mb-3">
         <SearchPill defaultTime="21:00" onChange={setSearchState} />
-      </div>
-
-      {/* Cuisine tabs */}
-      <div className="mb-3">
-        <CuisineTabs value={cuisine} onChange={setCuisine} counts={counts} />
       </div>
 
       {/* Filtros rápidos activos (chips de lo seleccionado) */}
