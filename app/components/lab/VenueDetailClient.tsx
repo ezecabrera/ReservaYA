@@ -13,7 +13,7 @@ const TAB_META: { key: DetailTab; label: string }[] = [
   { key: 'reservar', label: 'Reservar' },
   { key: 'menu',     label: 'Menú' },
   { key: 'resenas',  label: 'Reseñas' },
-  { key: 'nosotros', label: 'Sobre nosotros' },
+  { key: 'nosotros', label: 'Sobre' },
 ]
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
@@ -260,107 +260,132 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
         </div>
       )}
 
-      {/* Gallery hero */}
+      {/* Gallery hero — match Claude Design: 240px, botones bg-black/40 backdrop-blur,
+          gallery dots en pill abajo-der, categorías pills translúcidas top-left,
+          title + rating + price + hood en meta row sobre el overlay */}
       <div className="relative" data-hero="true">
-        <div className="relative h-72 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460] overflow-hidden">
+        <div className="relative h-60 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460] overflow-hidden">
           {pics.length > 0 && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={pics[galleryIdx]}
               alt={venue.name}
               onClick={() => setFullscreenGallery(true)}
-              className="w-full h-full object-cover transition-opacity duration-300 cursor-zoom-in"
+              className="w-full h-full object-cover cursor-zoom-in"
             />
           )}
-          {/* Gradiente más fuerte abajo para legibilidad del overlay de texto */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/35" />
+          <div className="absolute inset-0 hero-overlay" />
 
-          {/* Top actions */}
-          <div className="absolute top-10 left-4 right-4 flex items-center justify-between">
-            <Link
-              href="/"
-              className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm
-                         flex items-center justify-center shadow-sm active:scale-95 transition-transform"
-              aria-label="Volver"
+          {/* Back (left) */}
+          <button
+            onClick={() => { if (typeof window !== 'undefined') window.history.back() }}
+            aria-label="Volver"
+            className="absolute z-20 w-[38px] h-[38px] rounded-full
+                       bg-black/40 backdrop-blur-[8px]
+                       flex items-center justify-center border-0
+                       active:scale-95 transition-transform"
+            style={{ top: 58, left: 16 }}
+          >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <path d="M15 18l-6-6 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          {/* Share + Heart (right) */}
+          <div className="absolute z-20 flex gap-2" style={{ top: 58, right: 16 }}>
+            <button
+              onClick={handleShare}
+              aria-label="Compartir restaurante"
+              className="w-[38px] h-[38px] rounded-full bg-black/40 backdrop-blur-[8px]
+                         flex items-center justify-center border-0
+                         active:scale-95 transition-transform"
             >
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                <path d="M15 18l-6-6 6-6" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="18" cy="5" r="3" stroke="white" strokeWidth="2" />
+                <circle cx="6" cy="12" r="3" stroke="white" strokeWidth="2" />
+                <circle cx="18" cy="19" r="3" stroke="white" strokeWidth="2" />
+                <path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4" stroke="white" strokeWidth="2" strokeLinecap="round" />
               </svg>
-            </Link>
-            <div className="flex gap-2">
-              <button
-                onClick={handleShare}
-                aria-label="Compartir restaurante"
-                className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm
-                           flex items-center justify-center shadow-sm active:scale-95 transition-transform"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <circle cx="18" cy="5" r="3" stroke="var(--tx)" strokeWidth="2" />
-                  <circle cx="6" cy="12" r="3" stroke="var(--tx)" strokeWidth="2" />
-                  <circle cx="18" cy="19" r="3" stroke="var(--tx)" strokeWidth="2" />
-                  <path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
-              <button
-                onClick={() => toggleFavorite(venue.id)}
-                aria-label={saved ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-                aria-pressed={saved}
-                className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm
-                           flex items-center justify-center shadow-sm active:scale-95 transition-transform"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? 'var(--c1)' : 'none'}>
-                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
-                        stroke={saved ? 'var(--c1)' : 'var(--tx)'} strokeWidth="2" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
+            </button>
+            <button
+              onClick={() => toggleFavorite(venue.id)}
+              aria-label={saved ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+              aria-pressed={saved}
+              className="w-[38px] h-[38px] rounded-full bg-black/40 backdrop-blur-[8px]
+                         flex items-center justify-center border-0
+                         active:scale-95 transition-transform"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? 'var(--c1)' : 'none'}>
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+                      stroke={saved ? 'var(--c1)' : 'white'} strokeWidth="2" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
 
-          {/* Cuisine badge (top-left overlay) */}
-          <div className="absolute top-10 left-[72px] flex items-center gap-1.5 pointer-events-none">
-            <span className="badge bg-white/95 text-tx backdrop-blur-sm shadow-sm">
-              {cuisineLabel(venue)}
-            </span>
-          </div>
-
-          {/* Gallery dots (top-right, encima de los botones) */}
+          {/* Gallery dots agrupados en pill abajo-derecha */}
           {pics.length > 1 && (
-            <div className="absolute top-[76px] right-4 flex gap-1.5">
+            <div
+              className="absolute z-20 flex items-center gap-[5px] bg-black/45 backdrop-blur-[8px]
+                         rounded-full"
+              style={{ right: 14, bottom: 14, padding: '7px 10px' }}
+            >
               {pics.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setGalleryIdx(i)}
-                  className={`rounded-full transition-all ${
-                    i === galleryIdx ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'
-                  }`}
                   aria-label={`Foto ${i + 1}`}
+                  className="rounded-full transition-all duration-[250ms] border-0"
+                  style={{
+                    width: i === galleryIdx ? 18 : 5,
+                    height: 5,
+                    background: i === galleryIdx ? 'white' : 'rgba(255,255,255,0.55)',
+                  }}
                 />
               ))}
             </div>
           )}
 
-          {/* Info overlay (abajo-izquierda): nombre + meta */}
-          <div className="absolute bottom-4 left-4 right-4 text-white">
-            <h1 className="font-display text-[30px] font-bold leading-tight tracking-tight
-                           drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]">
+          {/* Title block overlay: categorías pills + nombre + meta inline */}
+          <div className="absolute z-10 text-white" style={{ left: 18, right: 18, bottom: 16 }}>
+            <div className="flex gap-1.5 mb-1.5">
+              <span className="px-2 py-[3px] rounded-full text-[10px] font-bold backdrop-blur-[6px]"
+                    style={{ background: 'rgba(255,255,255,0.2)' }}>
+                {cuisineLabel(venue)}
+              </span>
+              {((venue.config_json as { dietary?: string[] } | null)?.dietary ?? []).slice(0, 2).map((d) => {
+                const labels: Record<string, string> = {
+                  vegetarian: 'Vegetariano', vegan: 'Vegano', celiaco: 'Sin TACC', kosher: 'Kosher', halal: 'Halal',
+                }
+                return labels[d] ? (
+                  <span key={d} className="px-2 py-[3px] rounded-full text-[10px] font-bold backdrop-blur-[6px]"
+                        style={{ background: 'rgba(255,255,255,0.2)' }}>
+                    {labels[d]}
+                  </span>
+                ) : null
+              })}
+            </div>
+            <h1 className="font-display text-[28px] leading-[1.05] tracking-[-0.5px]">
               {venue.name}
             </h1>
-            <div className="flex items-center gap-2 mt-1 text-[13.5px] font-semibold
-                            drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
-              {reviewCount > 0 && (
-                <>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-c3">★</span>
-                    <span>{averageRating.toFixed(1)}</span>
-                    <span className="text-white/70">({reviewCount})</span>
-                  </span>
-                  <span className="text-white/60">·</span>
-                </>
+            <div className="flex items-center gap-3 flex-wrap mt-1 text-[13px]" style={{ opacity: 0.9 }}>
+              {reviewCount > 0 ? (
+                <span className="inline-flex items-center gap-1">
+                  <span className="text-c3">★</span>
+                  <b>{averageRating.toFixed(1)}</b>
+                  <span style={{ opacity: 0.7 }}>({reviewCount})</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <span className="text-c3">★</span>
+                  <b>—</b>
+                  <span style={{ opacity: 0.7 }}>sin reseñas</span>
+                </span>
               )}
+              <span style={{ opacity: 0.5 }}>·</span>
               <span><PriceDisplay tier={priceTier} /></span>
               {hood && (
                 <>
-                  <span className="text-white/60">·</span>
+                  <span style={{ opacity: 0.5 }}>·</span>
                   <span>{hood}</span>
                 </>
               )}
@@ -614,14 +639,7 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
 
         {/* ── Tab Reseñas ─────────────────────────────────────────── */}
         {activeTab === 'resenas' && (
-          <section className="space-y-4">
-            <div className="flex items-baseline justify-between">
-              <h2 className="font-display text-[20px] font-bold text-tx">Reseñas</h2>
-              {reviewCount > 0 && (
-                <span className="text-[12px] text-tx3 font-semibold">{reviewCount} opiniones</span>
-              )}
-            </div>
-
+          <section className="space-y-5">
             {DEMO_REVIEWS.length === 0 ? (
               <div className="bg-sf rounded-xl p-6 text-center border border-[var(--br)]">
                 <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center mx-auto mb-3 border border-[var(--br)]">
@@ -630,7 +648,7 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
                           stroke="var(--c3)" strokeWidth="1.8" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="font-display text-[16px] font-bold text-tx">
+                <p className="font-display text-[16px] text-tx">
                   Todavía no hay reseñas
                 </p>
                 <p className="text-[13px] text-tx2 mt-1 max-w-[280px] mx-auto leading-relaxed">
@@ -638,22 +656,34 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
                 </p>
               </div>
             ) : (
-              <ul className="space-y-3">
-                {DEMO_REVIEWS.map((r, i) => (
-                  <li key={i} className="bg-white rounded-xl p-4 border border-[var(--br)]">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <p className="font-bold text-[14px] text-tx">{r.name}</p>
-                      <p className="text-[12px] text-tx3">{r.date}</p>
-                    </div>
-                    <div className="flex items-center gap-0.5 mb-2">
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <span key={j} className={j < r.score ? 'text-c3' : 'text-tx3/30'}>★</span>
-                      ))}
-                    </div>
-                    <p className="text-[13px] text-tx2 leading-relaxed">{r.text}</p>
-                  </li>
-                ))}
-              </ul>
+              <>
+                {/* Aggregate card: big rating + stars + bar chart 5→1 */}
+                <ReviewAggregateCard rating={averageRating} count={reviewCount} reviews={DEMO_REVIEWS} />
+
+                {/* Lista de reseñas individuales */}
+                <ul className="space-y-3">
+                  {DEMO_REVIEWS.map((r, i) => (
+                    <li key={i} className="bg-white rounded-xl p-3.5 border border-[var(--br)]">
+                      <div className="flex items-center gap-2.5 mb-2.5">
+                        <div className="w-9 h-9 rounded-full bg-c1 text-white
+                                        flex items-center justify-center font-bold text-[13px]">
+                          {r.name[0]?.toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-[13px] text-tx">{r.name}</p>
+                          <p className="text-[11px] text-tx3">{r.date}</p>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: 5 }).map((_, j) => (
+                            <span key={j} className={j < r.score ? 'text-c3' : 'text-tx3/30'}>★</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[13px] text-tx2 leading-[1.5]">{r.text}</p>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </section>
         )}
@@ -808,11 +838,55 @@ function SectorChip({ emoji, label }: { emoji: string; label: string }) {
 
 function Feature({ emoji, text }: { emoji: string; text: string }) {
   return (
-    <div className="flex items-center gap-2 text-[13px] text-tx2">
-      <span className="w-5 h-5 rounded-full bg-c2l text-[#15A67A] flex items-center justify-center font-bold text-[11px]">
-        {emoji}
-      </span>
+    <div className="bg-white rounded-xl border border-[var(--br)] px-3 py-2.5
+                    flex items-center gap-2 text-[13px] font-semibold text-tx">
+      <span className="text-[16px]">{emoji}</span>
       {text}
+    </div>
+  )
+}
+
+function ReviewAggregateCard({
+  rating, count, reviews,
+}: {
+  rating: number
+  count: number
+  reviews: Array<{ score: number }>
+}) {
+  // Distribución por estrella (5 → 1)
+  const dist = [5, 4, 3, 2, 1].map((s) => {
+    const n = reviews.filter((r) => Math.round(r.score) === s).length
+    const pct = count === 0 ? 0 : Math.round((n / count) * 100)
+    return { s, pct }
+  })
+  return (
+    <div className="bg-white rounded-xl border border-[var(--br)] p-[18px]
+                    flex items-center gap-4">
+      <div className="flex-shrink-0">
+        <p className="font-display text-[44px] text-tx leading-none">
+          {rating.toFixed(1)}
+        </p>
+        <div className="flex items-center gap-0.5 mt-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span key={i} className="text-[13px]"
+                  style={{ color: i < Math.round(rating) ? 'var(--c3)' : 'var(--sf2)' }}>
+              ★
+            </span>
+          ))}
+        </div>
+        <p className="text-tx3 text-[11px] mt-1">{count} reseñas</p>
+      </div>
+      <div className="flex-1 min-w-0">
+        {dist.map(({ s, pct }) => (
+          <div key={s} className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] text-tx3 w-[10px]">{s}</span>
+            <div className="flex-1 h-[5px] rounded-full bg-sf2 overflow-hidden">
+              <div className="h-full" style={{ width: `${pct}%`, background: 'var(--c3)' }} />
+            </div>
+            <span className="text-[10px] text-tx3 w-6 text-right">{pct}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

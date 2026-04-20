@@ -126,6 +126,13 @@
   transform: translateY(0);
 }
 
+/* ── Hero overlay ── gradient de negro abajo a transparente arriba para
+   asegurar legibilidad del overlay (título venue, categorías, meta) sobre
+   cualquier imagen del hero. */
+.hero-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0) 100%);
+}
+
 /* ── Splash screen ── sprite animado de la mano del cliente */
 @keyframes splashPlay {
   from { background-position: 0 0; }
