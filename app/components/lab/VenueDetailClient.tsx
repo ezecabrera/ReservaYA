@@ -6,12 +6,13 @@ import type { Venue, ServiceHours } from '@/lib/shared'
 import { useFavorites } from '@/lib/favorites'
 import { VenueMap } from './VenueMap'
 
-type DetailTab = 'reservar' | 'menu' | 'resenas' | 'nosotros'
+type DetailTab = 'reservar' | 'menu' | 'resenas' | 'horarios' | 'nosotros'
 
 const TAB_META: { key: DetailTab; label: string }[] = [
   { key: 'reservar', label: 'Reservar' },
   { key: 'menu',     label: 'Menú' },
   { key: 'resenas',  label: 'Reseñas' },
+  { key: 'horarios', label: 'Horarios' },
   { key: 'nosotros', label: 'Sobre' },
 ]
 
@@ -299,19 +300,17 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
           {/* hero-overlay es decorativo: no debe bloquear clicks al img */}
           <div className="absolute inset-0 hero-overlay pointer-events-none" />
 
-          {/* "Nuevo en Un Toque" pill flotante — marca venues recién sumados
-              a la plataforma. Position: debajo del back button, no interfiere
-              con title block. */}
+          {/* Pill "Nuevo" — indicador discreto de venues recién sumados.
+              Mint translúcido + texto verde oscuro, sin sombra ni pulse. */}
           <span
-            className="absolute z-20 inline-flex items-center gap-1.5
-                       bg-c2 text-white px-2.5 py-1 rounded-full
-                       text-[10px] font-extrabold uppercase tracking-[0.06em]
-                       shadow-[0_2px_8px_rgba(46,216,168,0.35)]
-                       pointer-events-none"
-            style={{ top: 108, left: 16 }}
+            className="absolute z-20 inline-flex items-center gap-1
+                       bg-c2l/90 text-[#0F7A5A] px-2 py-[2.5px] rounded-full
+                       text-[9.5px] font-bold uppercase tracking-[0.04em]
+                       backdrop-blur-sm pointer-events-none"
+            style={{ top: 110, left: 16 }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            Nuevo en Un Toque
+            <span className="w-1 h-1 rounded-full bg-c2" />
+            Nuevo
           </span>
 
           {/* Back (left) */}
@@ -710,6 +709,54 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
           </section>
         )}
 
+        {/* ── Tab Horarios ─────────────────────────────────────────── */}
+        {activeTab === 'horarios' && (
+          <div className="space-y-4">
+            {(() => {
+              const hours = (venue.config_json?.service_hours ?? []) as ServiceHours[]
+              const today = new Date().getDay()
+              const shifts = hours.filter((h) => h.day_of_week === today && h.is_open)
+              const isOpenNow = (() => {
+                if (shifts.length === 0) return false
+                const now = new Date()
+                const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+                return shifts.some((s) => s.opens_at <= hhmm && hhmm <= s.closes_at)
+              })()
+              const todayLabel = shifts.length === 0
+                ? 'Cerrado hoy'
+                : shifts.map((h) => `${h.opens_at} – ${h.closes_at}`).join(' · ')
+              return (
+                <div className={`rounded-xl p-4 border
+                                 ${isOpenNow ? 'bg-c2l border-c2/25' : 'bg-sf border-[var(--br)]'}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider
+                                  text-[#0F7A5A]">
+                      Estado
+                    </p>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold
+                                      ${isOpenNow ? 'bg-c2 text-white' : 'bg-sf2 text-tx3'}`}>
+                      {isOpenNow ? 'Abierto' : 'Cerrado'}
+                    </span>
+                  </div>
+                  <p className="text-[14px] font-semibold text-tx mt-1">
+                    Hoy · {todayLabel}
+                  </p>
+                </div>
+              )
+            })()}
+
+            <div>
+              <h2 className="font-display text-[20px] font-bold text-tx mb-3">Horarios de la semana</h2>
+              <WeeklyHours venue={venue} />
+            </div>
+
+            <p className="text-[12px] text-tx3 leading-relaxed">
+              Los horarios pueden variar en feriados y fines de semana largos.
+              Consultá al local si tenés dudas.
+            </p>
+          </div>
+        )}
+
         {/* ── Tab Sobre nosotros ──────────────────────────────────── */}
         {activeTab === 'nosotros' && (
           <div className="space-y-6">
@@ -742,11 +789,6 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
                 </div>
               </section>
             )}
-
-            <section>
-              <h2 className="font-display text-[20px] font-bold text-tx mb-3">Horarios</h2>
-              <WeeklyHours venue={venue} />
-            </section>
 
             <section>
               <h2 className="font-display text-[20px] font-bold text-tx mb-3">Ubicación</h2>
