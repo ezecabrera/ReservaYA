@@ -13,6 +13,7 @@ import { NotificationsSheet, useUnreadCount } from './NotificationsSheet'
 
 interface Props {
   venues: Venue[]
+  userFirstName: string | null
 }
 
 // Slots demo por venue (determinístico por id). Se reemplazará con /api/availability.
@@ -39,15 +40,6 @@ function venueCoords(v: Venue): { lat: number; lng: number } | null {
   return c && typeof c.lat === 'number' && typeof c.lng === 'number' ? c : null
 }
 
-function eyebrowByHour(): string {
-  const h = new Date().getHours()
-  if (h < 11) return 'Buen día'
-  if (h < 15) return 'Mediodía'
-  if (h < 19) return 'Tarde'
-  if (h < 23) return 'Esta noche'
-  return 'Late night'
-}
-
 /** Contador de actividad "X personas reservaron hoy" — mock determinístico
  * por día (misma cantidad durante las 24hs del día, varía cada jornada). */
 function reservedTodayCount(): number {
@@ -67,18 +59,16 @@ const ACTIVITY_FEED = [
   { name: 'Lucas',   venue: 'Asador Don Ramiro', when: 66 },
 ]
 
-export function HomeClient({ venues }: Props) {
+export function HomeClient({ venues, userFirstName }: Props) {
   const [cuisine, setCuisine] = useState('all')
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [query, setQuery] = useState('')
 
-  const eyebrow = eyebrowByHour()
   const geo = useGeolocation()
   const [notifsOpen, setNotifsOpen] = useState(false)
   const unreadCount = useUnreadCount()
   const [searchState, setSearchState] = useState<{ date: string; time: string; party: number } | null>(null)
-  const [activeTab, setActiveTab] = useState<'ahora' | 'despues'>('despues')
   const [activityIdx, setActivityIdx] = useState(0)
 
   // Rotar feed de actividad cada 5s
@@ -130,11 +120,6 @@ export function HomeClient({ venues }: Props) {
         return filters.dietary.every((x) => d.includes(x))
       })
     }
-    // Tab "Ahora mismo" → sólo venues con slots disponibles en la próxima hora
-    if (activeTab === 'ahora') {
-      list = list.filter((v) => mockSlots(v.id).length >= 2)
-      list.sort((a, b) => mockSlots(b.id).length - mockSlots(a.id).length)
-    }
     // Ordenamiento
     if (filters.sort === 'nearby' && geo.location) {
       list.sort((a, b) => {
@@ -150,7 +135,7 @@ export function HomeClient({ venues }: Props) {
       list.sort((a, b) => mockSlots(b.id).length - mockSlots(a.id).length)
     }
     return list
-  }, [venues, cuisine, filters, query, geo.location, activeTab])
+  }, [venues, cuisine, filters, query, geo.location])
 
   // Helper: distancia de un venue al usuario (o undefined)
   const distTo = (v: Venue): number | undefined => {
@@ -170,99 +155,92 @@ export function HomeClient({ venues }: Props) {
 
   return (
     <>
-      {/* Header compacto */}
-      <header className="screen-x pt-8 pb-2">
-        <div className="flex items-center justify-between">
+      {/* Header — título + saludo + campana */}
+      <header className="screen-x pt-8 pb-4">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-tx3 text-[11px] font-bold uppercase tracking-wider">
-              {eyebrow} · Buenos Aires
-            </p>
-            <h1 className="font-display text-[26px] font-bold text-tx tracking-tight leading-tight">
-              ¿Qué sale?
+            <h1 className="font-display text-[30px] font-bold text-tx tracking-tight leading-none">
+              Un toque
             </h1>
+            <p className="text-tx2 text-[14px] mt-1.5">
+              {userFirstName ? `Hola ${userFirstName}, ` : 'Hola, '}
+              ¿a dónde salís hoy?
+            </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="badge bg-c3l text-[#B78200] text-[10px]">LAB</span>
-            <button
-              onClick={() => setNotifsOpen(true)}
-              aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
-              className="relative w-10 h-10 rounded-full bg-sf flex items-center justify-center
-                         border border-[var(--br)] active:scale-95 transition-transform duration-[180ms]"
-            >
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                <path
-                  d="M15 17h5l-1.4-1.4A2 2 0 0118 14.16V11a6 6 0 00-5-5.92V4a1 1 0 10-2 0v1.08A6 6 0 006 11v3.16c0 .54-.21 1.05-.6 1.44L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  stroke="var(--tx2)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                />
-              </svg>
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1
-                                 rounded-full bg-c1 text-white text-[9px] font-bold
-                                 flex items-center justify-center border-2 border-bg">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={() => setNotifsOpen(true)}
+            aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
+            className="relative w-10 h-10 rounded-full bg-sf flex items-center justify-center
+                       border border-[var(--br)] active:scale-95 transition-transform duration-[180ms]
+                       flex-shrink-0"
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+              <path
+                d="M15 17h5l-1.4-1.4A2 2 0 0118 14.16V11a6 6 0 00-5-5.92V4a1 1 0 10-2 0v1.08A6 6 0 006 11v3.16c0 .54-.21 1.05-.6 1.44L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                stroke="var(--tx2)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1
+                               rounded-full bg-c1 text-white text-[9px] font-bold
+                               flex items-center justify-center border-2 border-bg">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
         </div>
+      </header>
 
-        {/* Filtros + Cerca mío */}
-        <div className="mt-3 flex items-center gap-2 flex-wrap">
+      {/* Buscador + filtro inline */}
+      <div className="screen-x mb-4">
+        <div className="flex items-center gap-2 bg-sf border border-[var(--br)] rounded-full
+                        pl-4 pr-1.5 py-1.5">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-tx3 flex-shrink-0">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+            <path d="M20 20l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            placeholder="¿a dónde?"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="flex-1 bg-transparent outline-none text-[15px] text-tx placeholder:text-tx3 py-1"
+            aria-label="Buscar restaurante"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="text-tx3 p-1.5"
+              aria-label="Limpiar búsqueda"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
+                <path d="M8 8l8 8M8 16l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={() => setFiltersOpen(true)}
-            className="inline-flex items-center gap-2 bg-white border border-[var(--br)]
-                       rounded-full px-4 py-2 text-[13px] font-semibold text-tx
-                       shadow-sm active:scale-95 transition-transform duration-[180ms]"
+            aria-label={`Abrir filtros${activeFiltersCount > 0 ? ` (${activeFiltersCount} activos)` : ''}`}
+            className="relative w-9 h-9 rounded-full flex items-center justify-center
+                       active:scale-90 transition-transform duration-[180ms] flex-shrink-0"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M3 6h18M6 12h12M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18M6 12h12M10 18h4" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            Filtros
             {activeFiltersCount > 0 && (
-              <span className="ml-1 bg-c1 text-white text-[10px] font-bold
-                               rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1
+                               rounded-full bg-c1 text-white text-[9px] font-bold
+                               flex items-center justify-center border-2 border-bg">
                 {activeFiltersCount}
               </span>
             )}
           </button>
-
-          {/* Cerca mío */}
-          <button
-            onClick={() => {
-              if (geo.location) {
-                geo.clear()
-                if (filters.sort === 'nearby') setFilters({ ...filters, sort: 'relevance' })
-              } else {
-                geo.request()
-                setFilters({ ...filters, sort: 'nearby' })
-              }
-            }}
-            disabled={geo.status === 'requesting'}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px]
-                        font-semibold shadow-sm active:scale-95 transition-all duration-[180ms]
-                        disabled:opacity-60
-                        ${geo.location
-                          ? 'bg-c4 text-white border border-c4'
-                          : 'bg-white text-tx border border-[var(--br)]'}`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M12 21s-7-6.6-7-12a7 7 0 1114 0c0 5.4-7 12-7 12z"
-                    stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-              <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
-            </svg>
-            {geo.status === 'requesting' ? 'Obteniendo…' : geo.location ? 'Cerca mío' : 'Cerca mío'}
-          </button>
         </div>
-
-        {geo.status === 'denied' && (
-          <p className="mt-2 text-[12px] text-[#D63646]">
-            Permiso denegado. Activalo desde el ícono de ubicación del navegador.
-          </p>
-        )}
-      </header>
+      </div>
 
       {/* Social proof strip (rotativo) */}
-      <div className="screen-x mb-3">
+      <div className="screen-x mb-4">
         <div className="bg-c2l rounded-full px-4 py-2 flex items-center gap-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse flex-shrink-0" />
           <p className="text-[12px] text-[#0F7A5A] flex-1 truncate transition-opacity duration-300">
@@ -270,26 +248,6 @@ export function HomeClient({ venues }: Props) {
             {' '}<span className="font-semibold">{currentActivity.name}</span> en{' '}
             <span className="font-semibold">{currentActivity.venue}</span>
           </p>
-        </div>
-      </div>
-
-      {/* Tab Ahora / Después */}
-      <div className="screen-x mb-4">
-        <div className="inline-flex bg-sf rounded-full p-1 border border-[var(--br)] w-full">
-          <button
-            onClick={() => setActiveTab('ahora')}
-            className={`flex-1 py-2 rounded-full text-[13px] font-bold transition-all
-              ${activeTab === 'ahora' ? 'bg-c1 text-white shadow-c1' : 'text-tx3'}`}
-          >
-            ⚡ Ahora mismo
-          </button>
-          <button
-            onClick={() => setActiveTab('despues')}
-            className={`flex-1 py-2 rounded-full text-[13px] font-bold transition-all
-              ${activeTab === 'despues' ? 'bg-white text-tx shadow-sm' : 'text-tx3'}`}
-          >
-            📅 Más adelante
-          </button>
         </div>
       </div>
 
@@ -338,32 +296,6 @@ export function HomeClient({ venues }: Props) {
       {/* Controles: search pill + text search */}
       <div className="screen-x mb-3">
         <SearchPill defaultTime="21:00" onChange={setSearchState} />
-      </div>
-
-      <div className="screen-x mb-4">
-        <div className="flex items-center gap-3 bg-sf border border-[var(--br)]
-                        rounded-full px-4 py-2.5">
-          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" className="text-tx3 flex-shrink-0">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-            <path d="M20 20l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Buscar por nombre, cocina o dirección…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-[14px] text-tx placeholder:text-tx3"
-            aria-label="Buscar restaurante"
-          />
-          {query && (
-            <button onClick={() => setQuery('')} className="text-tx3 p-1" aria-label="Limpiar búsqueda">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
-                <path d="M8 8l8 8M8 16l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Cuisine tabs */}
