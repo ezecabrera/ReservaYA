@@ -5,7 +5,7 @@ import { SplashScreen } from '@/components/ui/SplashScreen'
 
 const fraunces = Fraunces({
   subsets: ['latin'],
-  weight: ['600', '700', '800', '900'],
+  weight: ['700', '900'],
   variable: '--font-display',
   display: 'swap',
 })

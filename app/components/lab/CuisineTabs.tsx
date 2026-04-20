@@ -41,8 +41,8 @@ export function CuisineTabs({ value, onChange, counts }: Props) {
           >
             {t.label}
             {count !== undefined && (
-              <span className={`ml-1.5 text-[10px] font-bold ${active ? 'text-white/80' : 'text-tx3'}`}>
-                {count}
+              <span className={`ml-1 text-[11px] font-medium ${active ? 'text-white/70' : 'text-tx3'}`}>
+                ·{count}
               </span>
             )}
           </button>

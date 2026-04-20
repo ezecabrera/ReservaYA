@@ -161,42 +161,42 @@ export function HomeClient({ venues, userFirstName }: Props) {
       <header className="screen-x pt-8 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="font-display text-[30px] font-bold text-tx tracking-tight leading-none">
+            <h1 className="font-display text-[26px] text-tx tracking-[-0.4px] leading-[1.1]">
               {userFirstName ? `Hola ${userFirstName}` : 'Un toque'}
             </h1>
-            <p className="text-tx2 text-[14px] mt-1.5">
-              Reservá en Un toque
+            <p className="text-tx2 text-[13px] mt-0.5">
+              Reservá en <span className="text-c1 font-bold">Un toque</span>
             </p>
           </div>
           <button
             onClick={() => setNotifsOpen(true)}
             aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
-            className="relative w-10 h-10 rounded-full bg-sf flex items-center justify-center
+            className="relative w-[42px] h-[42px] rounded-full bg-sf flex items-center justify-center
                        border border-[var(--br)] active:scale-95 transition-transform duration-[180ms]
                        flex-shrink-0"
           >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
               <path
                 d="M15 17h5l-1.4-1.4A2 2 0 0118 14.16V11a6 6 0 00-5-5.92V4a1 1 0 10-2 0v1.08A6 6 0 006 11v3.16c0 .54-.21 1.05-.6 1.44L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                 stroke="var(--tx2)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
               />
             </svg>
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1
-                               rounded-full bg-c1 text-white text-[9px] font-bold
-                               flex items-center justify-center border-2 border-bg">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
+              <span
+                className="absolute rounded-full bg-c1 border-2 border-bg"
+                style={{ top: 9, right: 11, width: 8, height: 8 }}
+                aria-hidden
+              />
             )}
           </button>
         </div>
       </header>
 
-      {/* Buscador + filtro inline */}
-      <div className="screen-x mb-4">
-        <div className="flex items-center gap-2 bg-sf border border-[var(--br)] rounded-full
-                        pl-4 pr-1.5 py-1.5">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-tx3 flex-shrink-0">
+      {/* Buscador + filtro como dos botones separados (match design) */}
+      <div className="screen-x mb-4 flex items-center gap-2">
+        <div className="flex-1 min-w-0 flex items-center gap-2.5 bg-sf border border-[var(--br)]
+                        rounded-full px-4 py-[11px]">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" className="text-tx3 flex-shrink-0">
             <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
             <path d="M20 20l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
@@ -205,13 +205,13 @@ export function HomeClient({ venues, userFirstName }: Props) {
             placeholder="¿a dónde salís hoy?"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-[15px] text-tx placeholder:text-tx3 py-1"
+            className="flex-1 min-w-0 bg-transparent outline-none text-[13px] text-tx placeholder:text-tx3"
             aria-label="Buscar restaurante"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="text-tx3 p-1.5"
+              className="text-tx3 p-1 flex-shrink-0"
               aria-label="Limpiar búsqueda"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -220,24 +220,25 @@ export function HomeClient({ venues, userFirstName }: Props) {
               </svg>
             </button>
           )}
-          <button
-            onClick={() => setFiltersOpen(true)}
-            aria-label={`Abrir filtros${activeFiltersCount > 0 ? ` (${activeFiltersCount} activos)` : ''}`}
-            className="relative w-9 h-9 rounded-full flex items-center justify-center
-                       active:scale-90 transition-transform duration-[180ms] flex-shrink-0"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M3 6h18M6 12h12M10 18h4" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            {activeFiltersCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1
-                               rounded-full bg-c1 text-white text-[9px] font-bold
-                               flex items-center justify-center border-2 border-bg">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
         </div>
+        <button
+          onClick={() => setFiltersOpen(true)}
+          aria-label={`Abrir filtros${activeFiltersCount > 0 ? ` (${activeFiltersCount} activos)` : ''}`}
+          className="relative w-[42px] h-[42px] rounded-full bg-sf flex items-center justify-center
+                     border border-[var(--br)] active:scale-95 transition-transform duration-[180ms]
+                     flex-shrink-0"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M3 6h18M6 12h12M10 18h4" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          {activeFiltersCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1
+                             rounded-full bg-c1 text-white text-[9px] font-bold
+                             flex items-center justify-center border-2 border-bg">
+              {activeFiltersCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Cuisine tabs — filtro rápido, justo debajo del buscador */}
@@ -321,34 +322,29 @@ export function HomeClient({ venues, userFirstName }: Props) {
         </div>
       )}
 
-      <div className="screen-x space-y-5">
-        {/* Info header */}
-        <div className="flex items-center justify-between">
-          <p className="text-[13px] text-tx2">
-            <span className="font-bold text-tx">{filtered.length}</span> locales
-            {cuisine !== 'all' && (
-              <> · <span className="capitalize">{cuisine}</span></>
-            )}
-          </p>
-          <p className="text-[11px] text-tx3 font-semibold">
-            {filters.sort === 'relevance' && 'Recomendados'}
-            {filters.sort === 'available' && 'Disponibles ahora'}
-            {filters.sort === 'reputation' && 'Mejor reputación'}
-            {filters.sort === 'nearby' && 'Cerca mío'}
-          </p>
-        </div>
-
-        {/* Grid resto */}
+      <div className="screen-x space-y-6">
+        {/* Grid resto — header con subtítulo + "Ver todos" */}
         {rest.length > 0 && (
           <section>
-            <div className="flex items-end justify-between mb-3">
-              <h2 className="font-display text-[19px] font-bold text-tx">
-                Más restaurantes
-              </h2>
-              <p className="text-[11px] text-tx3">{rest.length}</p>
+            <div className="flex items-baseline justify-between mb-3">
+              <div>
+                <h2 className="font-display text-[19px] tracking-[-0.3px] text-tx">
+                  Más restaurantes
+                </h2>
+                <p className="text-tx3 text-[12px] mt-0.5">
+                  {filtered.length} locales ·
+                  {filters.sort === 'relevance' && ' Recomendados'}
+                  {filters.sort === 'available' && ' Disponibles ahora'}
+                  {filters.sort === 'reputation' && ' Mejor reputación'}
+                  {filters.sort === 'nearby' && ' Cerca mío'}
+                </p>
+              </div>
+              <button className="text-c1 font-bold text-[13px] p-0 bg-transparent active:scale-95 transition-transform">
+                Ver todos
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {rest.slice(0, 6).map((v) => (
+            <div className="grid grid-cols-2 gap-2.5">
+              {rest.slice(0, 4).map((v) => (
                 <VenueCardLab key={v.id} venue={v} variant="standard" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
               ))}
             </div>
@@ -356,18 +352,16 @@ export function HomeClient({ venues, userFirstName }: Props) {
         )}
 
         {/* Banda editorial */}
-        <div className="pt-2">
-          <EditorialBand />
-        </div>
+        <EditorialBand />
 
         {/* Lista compacta resto */}
-        {rest.length > 6 && (
+        {rest.length > 4 && (
           <section>
-            <h2 className="font-display text-[19px] font-bold text-tx mb-3">
+            <h2 className="font-display text-[19px] tracking-[-0.3px] text-tx mb-2.5">
               Todos los locales
             </h2>
-            <div className="space-y-2">
-              {rest.slice(6).map((v) => (
+            <div className="grid gap-2.5">
+              {rest.slice(4).map((v) => (
                 <VenueCardLab key={v.id} venue={v} variant="compact" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
               ))}
             </div>
