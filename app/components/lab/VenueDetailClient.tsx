@@ -64,12 +64,22 @@ export type MenuPreview = Array<{
   items: Array<{ name: string; price: number; description: string | null }>
 }>
 
+interface RealReview {
+  id: string
+  score: number
+  comment: string | null
+  created_at: string
+  author: string
+}
+
 interface Props {
   venue: Venue
   menu?: MenuPreview
   prefill?: { date?: string; time?: string; partySize?: number }
   /** Tab donde aterriza el cliente (ej. 'resenas' al venir de LiveReviewsStrip) */
   initialTab?: DetailTab
+  /** Reviews reales desde la tabla `reviews` (migration 007). [] si no hay */
+  reviews?: RealReview[]
 }
 
 function cuisineLabel(v: Venue): string {
@@ -110,9 +120,23 @@ function gallery(venue: Venue): string[] {
   return getVenueGallery(venue, 1200, 800)
 }
 
-// Reviews: por ahora sin data real (venue_reputation_view aún no conectado en lab).
-// Mostramos empty state verificable en vez de datos ficticios que erosionan confianza.
-const DEMO_REVIEWS: Array<{ name: string; date: string; score: number; text: string }> = []
+// Helper: "Hace 3 días" / "Hace 2h" / "Ahora" a partir de un ISO datetime
+function formatAgo(iso: string): string {
+  const now = Date.now()
+  const then = new Date(iso).getTime()
+  const diffMs = Math.max(0, now - then)
+  const mins = Math.floor(diffMs / 60_000)
+  if (mins < 1) return 'Ahora'
+  if (mins < 60) return `Hace ${mins} min`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `Hace ${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `Hace ${days} d`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 4) return `Hace ${weeks} sem`
+  const months = Math.floor(days / 30)
+  return `Hace ${months} mes${months > 1 ? 'es' : ''}`
+}
 
 // ¿Estamos dentro de alguno de los shifts de apertura de HOY?
 function isOpenAt(shifts: ServiceHours[]): boolean {
@@ -122,7 +146,7 @@ function isOpenAt(shifts: ServiceHours[]): boolean {
   return shifts.some((s) => s.opens_at <= hhmm && hhmm <= s.closes_at)
 }
 
-export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'reservar' }: Props) {
+export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'reservar', reviews = [] }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
   // Para pausar el auto-scroll cuando el usuario interactúa manualmente con
   // los dots o cuando el fullscreen gallery está abierto.
@@ -204,9 +228,10 @@ export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'res
   const deposit = (venue.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 0
   const zonesEnabled = (venue.config_json as { zones_enabled?: boolean } | null)?.zones_enabled
   const cancellationHours = (venue.config_json as { cancellation_grace_hours?: number } | null)?.cancellation_grace_hours ?? 2
-  const reviewCount = DEMO_REVIEWS.length
+  // Reviews: usar las reales desde props si las hay, else fallback al demo
+  const reviewCount = reviews.length
   const averageRating =
-    reviewCount === 0 ? 0 : DEMO_REVIEWS.reduce((s, r) => s + r.score, 0) / reviewCount
+    reviewCount === 0 ? 0 : reviews.reduce((s, r) => s + r.score, 0) / reviewCount
 
   const priceTier: 1 | 2 | 3 | 4 = (() => {
     const t = (venue.config_json as { price_tier?: number } | null)?.price_tier
@@ -665,7 +690,7 @@ export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'res
         {/* ── Tab Reseñas ─────────────────────────────────────────── */}
         {activeTab === 'resenas' && (
           <section className="space-y-5">
-            {DEMO_REVIEWS.length === 0 ? (
+            {reviews.length === 0 ? (
               <div className="bg-sf rounded-xl p-6 text-center border border-[var(--br)]">
                 <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center mx-auto mb-3 border border-[var(--br)]">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -682,21 +707,23 @@ export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'res
               </div>
             ) : (
               <>
-                {/* Aggregate card: big rating + stars + bar chart 5→1 */}
-                <ReviewAggregateCard rating={averageRating} count={reviewCount} reviews={DEMO_REVIEWS} />
+                <ReviewAggregateCard
+                  rating={averageRating}
+                  count={reviewCount}
+                  reviews={reviews.map((r) => ({ score: r.score }))}
+                />
 
-                {/* Lista de reseñas individuales */}
                 <ul className="space-y-3">
-                  {DEMO_REVIEWS.map((r, i) => (
-                    <li key={i} className="bg-white rounded-xl p-3.5 border border-[var(--br)]">
+                  {reviews.map((r) => (
+                    <li key={r.id} className="bg-white rounded-xl p-3.5 border border-[var(--br)]">
                       <div className="flex items-center gap-2.5 mb-2.5">
                         <div className="w-9 h-9 rounded-full bg-c1 text-white
                                         flex items-center justify-center font-bold text-[13px]">
-                          {r.name[0]?.toUpperCase()}
+                          {r.author[0]?.toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-[13px] text-tx">{r.name}</p>
-                          <p className="text-[11px] text-tx3">{r.date}</p>
+                          <p className="font-bold text-[13px] text-tx">{r.author}</p>
+                          <p className="text-[11px] text-tx3">{formatAgo(r.created_at)}</p>
                         </div>
                         <div className="flex items-center gap-0.5">
                           {Array.from({ length: 5 }).map((_, j) => (
@@ -704,7 +731,9 @@ export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'res
                           ))}
                         </div>
                       </div>
-                      <p className="text-[13px] text-tx2 leading-[1.5]">{r.text}</p>
+                      {r.comment && (
+                        <p className="text-[13px] text-tx2 leading-[1.5]">{r.comment}</p>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -45,23 +46,6 @@ function LoginContent() {
       setError(error.message)
     }
     // Si no hay error, el browser está redirigiendo a Google — no resetear loading
-  }
-
-  async function handleForgotPassword() {
-    if (!email.trim()) {
-      setError('Ingresá tu email primero y te mandamos el link de recuperación.')
-      return
-    }
-    setError(null)
-    const redirectUrl = new URL('/auth/callback', window.location.origin).toString()
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: redirectUrl,
-    })
-    if (error) {
-      setError(error.message)
-      return
-    }
-    setEmailSent(true)
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -115,7 +99,11 @@ function LoginContent() {
 
     if (data.session) {
       await ensureProfile()
-      router.push(redirect)
+      // Post-signup: ir a onboarding (primer uso). Si el user salta, llega
+      // al home igual. Preservamos `redirect` vía query por si vino de un
+      // deep-link.
+      const qs = redirect && redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''
+      router.push(`/onboarding${qs}`)
       router.refresh()
     } else {
       setEmailSent(true)
@@ -301,14 +289,13 @@ function LoginContent() {
           </button>
 
           {mode === 'login' && (
-            <button
-              type="button"
-              onClick={handleForgotPassword}
+            <Link
+              href="/recuperar"
               className="block w-full text-center text-tx2 text-[13px] font-semibold
                          py-2 underline underline-offset-2"
             >
               Olvidé mi contraseña
-            </button>
+            </Link>
           )}
         </form>
       </div>

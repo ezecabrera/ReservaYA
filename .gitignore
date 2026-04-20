@@ -39,3 +39,11 @@ supabase/.branches/
 # Claude Code local settings — contiene tokens personales / no debe versionarse
 .claude/settings.local.json
 .claude/settings.local.json.backup
+
+# next-pwa: service worker generado en build time, no versionar
+app/public/sw.js
+app/public/sw.js.map
+app/public/workbox-*.js
+app/public/workbox-*.js.map
+app/public/worker-*.js
+app/public/worker-*.js.map

@@ -32,31 +32,73 @@ export function ReviewModal({ open, onClose, reservation, onSubmitted }: Props) 
 
   if (!open) return null
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
   async function handleSubmit() {
     if (score === 0) return
     setSubmitting(true)
+    setErrorMsg(null)
+
+    // Intento con backend real primero. Si falla (503 migration pending,
+    // 404, etc) cae a localStorage para que el usuario no pierda la acción.
+    let savedOnServer = false
     try {
-      // Guardar en localStorage mientras no haya backend real
-      const key = 'reservaya-reviews'
-      const existing = JSON.parse(localStorage.getItem(key) ?? '[]')
-      existing.push({
-        reservation_id: reservation.id,
-        venue_name: reservation.venueName,
-        score,
-        comment: comment.trim(),
-        created_at: new Date().toISOString(),
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservation_id: reservation.id,
+          score,
+          comment: comment.trim() || undefined,
+        }),
       })
-      localStorage.setItem(key, JSON.stringify(existing))
-      setDone(true)
-      setTimeout(() => {
-        onSubmitted?.()
-        onClose()
-        // Reset
-        setScore(0); setComment(''); setDone(false); setSubmitting(false)
-      }, 1500)
+      if (res.ok) {
+        savedOnServer = true
+      } else {
+        const data = await res.json().catch(() => ({}))
+        // 503 (migration pending) o 403 (no fue checked_in) → fallback silencioso
+        if (res.status === 503) {
+          savedOnServer = false   // caer a localStorage
+        } else if (res.status === 409) {
+          setErrorMsg('Ya dejaste una reseña para esta reserva.')
+          setSubmitting(false)
+          return
+        } else if (res.status === 403) {
+          setErrorMsg('Sólo podés dejar reseña después de asistir a tu reserva.')
+          setSubmitting(false)
+          return
+        } else {
+          setErrorMsg(data?.error ?? 'No pudimos guardar tu reseña.')
+          setSubmitting(false)
+          return
+        }
+      }
     } catch {
-      setSubmitting(false)
+      savedOnServer = false
     }
+
+    // Fallback localStorage — tracking optimista en caso de 503
+    if (!savedOnServer) {
+      try {
+        const key = 'reservaya-reviews'
+        const existing = JSON.parse(localStorage.getItem(key) ?? '[]')
+        existing.push({
+          reservation_id: reservation.id,
+          venue_name: reservation.venueName,
+          score,
+          comment: comment.trim(),
+          created_at: new Date().toISOString(),
+        })
+        localStorage.setItem(key, JSON.stringify(existing))
+      } catch { /* storage bloqueado */ }
+    }
+
+    setDone(true)
+    setTimeout(() => {
+      onSubmitted?.()
+      onClose()
+      setScore(0); setComment(''); setDone(false); setSubmitting(false); setErrorMsg(null)
+    }, 1500)
   }
 
   return (
@@ -151,6 +193,12 @@ export function ReviewModal({ open, onClose, reservation, onSubmitted }: Props) 
               />
               <p className="text-[11px] text-tx3 text-right mt-1">{comment.length}/500</p>
             </div>
+
+            {errorMsg && (
+              <div className="mt-3 rounded-md bg-c1l px-3 py-2 text-[13px] text-c1 font-semibold">
+                {errorMsg}
+              </div>
+            )}
 
             <button
               onClick={handleSubmit}

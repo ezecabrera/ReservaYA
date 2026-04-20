@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { SplashScreen } from '@/components/ui/SplashScreen'
+import { OfflineBanner } from '@/components/ui/OfflineBanner'
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -64,6 +65,7 @@ export default function RootLayout({
       <body className="font-body bg-bg text-tx min-h-screen">
         <a href="#main" className="skip-link">Saltar al contenido</a>
         <SplashScreen />
+        <OfflineBanner />
         <main id="main">{children}</main>
       </body>
     </html>
