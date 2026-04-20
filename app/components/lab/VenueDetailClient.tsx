@@ -68,6 +68,8 @@ interface Props {
   venue: Venue
   menu?: MenuPreview
   prefill?: { date?: string; time?: string; partySize?: number }
+  /** Tab donde aterriza el cliente (ej. 'resenas' al venir de LiveReviewsStrip) */
+  initialTab?: DetailTab
 }
 
 function cuisineLabel(v: Venue): string {
@@ -120,7 +122,7 @@ function isOpenAt(shifts: ServiceHours[]): boolean {
   return shifts.some((s) => s.opens_at <= hhmm && hhmm <= s.closes_at)
 }
 
-export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
+export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'reservar' }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
   // Para pausar el auto-scroll cuando el usuario interactúa manualmente con
   // los dots o cuando el fullscreen gallery está abierto.
@@ -128,7 +130,7 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
   const [showFullMenu, setShowFullMenu] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
   const [fullscreenGallery, setFullscreenGallery] = useState(false)
-  const [activeTab, setActiveTab] = useState<DetailTab>('reservar')
+  const [activeTab, setActiveTab] = useState<DetailTab>(initialTab)
   const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const saved = isFavorite(venue.id)
 
