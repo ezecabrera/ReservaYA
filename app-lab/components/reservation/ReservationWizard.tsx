@@ -14,19 +14,24 @@ import { TableCardSkeleton } from '@/components/ui/Skeleton'
  * - Si está debajo del fold → scrollea con offset para dar respiro al header.
  * - Usa requestAnimationFrame para esperar que React pinte antes de medir.
  */
+import { smoothScrollTo, smoothScrollToElement } from '@/lib/scroll'
+
+/**
+ * Scrollea al ref SÓLO si el target está fuera de viewport o sus primeros
+ * píxeles quedan muy al fondo. Premisa de UX: si el user ya puede ver la
+ * siguiente sección (aunque sea parcialmente), NO se mueve la pantalla —
+ * evita el "rebote" molesto entre secciones chicas que caben todas en
+ * viewport de iPhone/tablet estándar.
+ */
 function scrollToRef(ref: React.RefObject<HTMLElement>, offset = 90) {
   if (!ref.current) return
-  requestAnimationFrame(() => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    const vh = window.innerHeight
-    // Si el top ya está visible en la primera mitad del viewport y su bottom
-    // también se ve, no movemos nada — evita jitter.
-    const alreadyVisible = rect.top >= 0 && rect.top < vh * 0.6 && rect.bottom <= vh
-    if (alreadyVisible) return
-    const y = rect.top + window.scrollY - offset
-    window.scrollTo({ top: y, behavior: 'smooth' })
-  })
+  const rect = ref.current.getBoundingClientRect()
+  const vh = window.innerHeight
+  // Mantener quieta la pantalla si el top del target está en la mitad
+  // superior del viewport (el user ya lo está viendo confortablemente).
+  const topIsComfortable = rect.top >= 0 && rect.top <= vh * 0.75
+  if (topIsComfortable) return
+  smoothScrollToElement(ref.current, offset)
 }
 
 type WizardStep = 'datetime' | 'table' | 'menu' | 'summary'
@@ -176,6 +181,13 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
     }
   }, [state.date, state.timeSlot, state.partySize, venue.id, showToast])
 
+  // Tracking de step para disparar scroll-al-top SÓLO cuando el step cambia
+  // de verdad. Sin este guard, cualquier re-render que cambie la referencia
+  // de loadTables/loadMenu (ej. al pickear una fecha, date cambia → loadTables
+  // useCallback emite nueva ref) reejecuta el efecto y dispara scrollTo(0),
+  // peleándose con el scroll progresivo del wizard.
+  const isFirstStepRun = useRef(true)
+  const prevStep = useRef<WizardStep>(step)
   useEffect(() => {
     if (step === 'table') loadTables()
     if (step === 'menu') {
@@ -184,8 +196,32 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
       // para que el usuario pueda saltar sin scrollear todas las categorías.
       setShowMenuModal(true)
     }
-    // Al cambiar de step, scroll arriba
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (isFirstStepRun.current) {
+      isFirstStepRun.current = false
+      prevStep.current = step
+      return
+    }
+    // Sólo scrollear si el step realmente cambió (no si re-rendereó por
+    // cambio de deps de loadTables/loadMenu). Apuntamos al wrapper del
+    // wizard (#reservar) en lugar de a y=0, para que el user vea el inicio
+    // del nuevo paso (con título + progress bar) en vez de saltar al hero
+    // del venue allá arriba.
+    if (prevStep.current !== step) {
+      prevStep.current = step
+      const anchor = typeof document !== 'undefined'
+        ? document.getElementById('reservar')
+        : null
+      if (anchor) {
+        // Offset = tabs bar height (~57) + margin (12) para que el título
+        // "Hacé tu reserva" quede pegado debajo de la tab bar sticky y no
+        // deje un hueco vacío grande arriba del wizard.
+        const tabsBar = document.querySelector('[data-tabs-bar="true"]') as HTMLElement | null
+        const tabsHeight = tabsBar?.offsetHeight ?? 57
+        smoothScrollToElement(anchor, tabsHeight + 12)
+      } else {
+        smoothScrollTo(0)
+      }
+    }
   }, [step, loadTables, loadMenu])
 
   async function handleSelectTable(table: Table) {

@@ -1,11 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Venue, ServiceHours } from '@/lib/shared'
 import { ReservationWizard } from '@/components/reservation/ReservationWizard'
 import { useFavorites } from '@/lib/favorites'
+import { isProgrammaticScrollActive, smoothScrollToElement } from '@/lib/scroll'
 import { VenueMap } from './VenueMap'
+
+type DetailTab = 'menu' | 'horarios' | 'ubicacion' | 'detalles'
+
+const TAB_META: { key: DetailTab; label: string; emoji: string }[] = [
+  { key: 'menu',      label: 'Menú',      emoji: '🍽️' },
+  { key: 'horarios',  label: 'Horarios',  emoji: '🕐' },
+  { key: 'ubicacion', label: 'Ubicación', emoji: '📍' },
+  { key: 'detalles',  label: 'Detalles',  emoji: 'ℹ️' },
+]
+
+const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
 
 // ─── Helpers horario / features ──────────────────────────────────────────
 
@@ -105,8 +117,60 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
   const [showFullMenu, setShowFullMenu] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
   const [fullscreenGallery, setFullscreenGallery] = useState(false)
+  const [activeTab, setActiveTab] = useState<DetailTab>('menu')
   const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const saved = isFavorite(venue.id)
+
+  // Refs para scroll navegación de las tabs
+  const menuRef = useRef<HTMLElement>(null)
+  const horariosRef = useRef<HTMLElement>(null)
+  const ubicacionRef = useRef<HTMLElement>(null)
+  const detallesRef = useRef<HTMLElement>(null)
+  const tabsBarRef = useRef<HTMLDivElement>(null)
+
+  const sectionRefs = useMemo(
+    () => ({
+      menu: menuRef,
+      horarios: horariosRef,
+      ubicacion: ubicacionRef,
+      detalles: detallesRef,
+    }),
+    [],
+  )
+
+  // IntersectionObserver para actualizar activeTab cuando el user scrollea
+  // manualmente (no vía click en tab)
+  useEffect(() => {
+    const entries: DetailTab[] = ['menu', 'horarios', 'ubicacion', 'detalles']
+    const observer = new IntersectionObserver(
+      (obs) => {
+        // Si hay un scroll programático (vía click en tab), ignoramos los
+        // updates spurios — la posición final ya la decidió handleTabClick.
+        if (isProgrammaticScrollActive()) return
+        // Tomamos el primer section visible "más arriba"
+        const visible = obs
+          .filter((o) => o.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        if (visible.length > 0) {
+          const id = (visible[0].target as HTMLElement).dataset.tabId as DetailTab
+          if (id && entries.includes(id)) setActiveTab(id)
+        }
+      },
+      { rootMargin: '-120px 0px -60% 0px', threshold: 0 },
+    )
+    entries.forEach((k) => {
+      const el = sectionRefs[k].current
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [sectionRefs])
+
+  function handleTabClick(tab: DetailTab) {
+    setActiveTab(tab)
+    const el = sectionRefs[tab].current
+    const tabsHeight = tabsBarRef.current?.offsetHeight ?? 56
+    smoothScrollToElement(el, tabsHeight + 12)
+  }
 
   async function handleShare() {
     const url = typeof window !== 'undefined'
@@ -304,8 +368,8 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
       </div>
 
       {/* Contenido */}
-      <div className="screen-x pt-5 space-y-6">
-        {/* Título + rating */}
+      <div className="screen-x pt-5 space-y-5">
+        {/* Título + badges */}
         <section>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="badge bg-sf text-tx2">
@@ -323,7 +387,6 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
             {deposit > 0 && (
               <span className="badge bg-c3l text-[#B78200]">Seña ${deposit.toLocaleString('es-AR')}</span>
             )}
-            {/* Tags dietary: Celíacos, Vegano, Vegetariano */}
             {((venue.config_json as { dietary?: string[] } | null)?.dietary ?? []).map((d) => {
               const labels: Record<string, string> = {
                 vegetarian: 'Vegetariano',
@@ -343,207 +406,204 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
           </div>
         </section>
 
-        {/* Precio promedio por persona (derivado del menú) + botón llamar */}
+        {/* Dirección clickeable → abre Google/Apple Maps nativo */}
         {(() => {
-          if (!menu || menu.length === 0) return null
-          // Heurística: promedio de principales + 1 bebida + propina 10%
-          const allPrices = menu.flatMap((c) => c.items.map((it) => it.price))
-          if (allPrices.length === 0) return null
-          const avg = allPrices.reduce((a, b) => a + b, 0) / allPrices.length
-          const perPerson = Math.round((avg * 2 + allPrices[0] * 0.3) * 1.1 / 100) * 100
+          const coords = (venue.config_json as { coords?: { lat: number; lng: number } } | null)?.coords
+          const mapsHref = coords
+            ? `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}&destination_place_id=${encodeURIComponent(`${venue.name}, ${venue.address}`)}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name}, ${venue.address}`)}`
           return (
-            <section className="flex items-center justify-between bg-sf rounded-xl px-4 py-3 border border-[var(--br)]">
-              <div>
-                <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">Promedio por persona</p>
-                <p className="font-display text-[20px] font-bold text-tx">~${perPerson.toLocaleString('es-AR')}</p>
+            <a
+              href={mapsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-[var(--br)]
+                         active:scale-[0.99] hover:border-c1/40 transition-all"
+            >
+              <div className="w-8 h-8 rounded-full bg-c1l flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 21s-7-6.6-7-12a7 7 0 1114 0c0 5.4-7 12-7 12z" stroke="var(--c1)" strokeWidth="2" strokeLinejoin="round" />
+                  <circle cx="12" cy="9" r="2.5" stroke="var(--c1)" strokeWidth="2" />
+                </svg>
               </div>
-              {venue.phone && (
-                <a
-                  href={`tel:${venue.phone.replace(/[^+\d]/g, '')}`}
-                  className="flex items-center gap-2 bg-c2 text-white rounded-full px-4 py-2
-                             text-[13px] font-bold shadow-c2 active:scale-95 transition-transform"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"
-                          stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                  </svg>
-                  Llamar
-                </a>
-              )}
-            </section>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">Dirección</p>
+                <p className="text-[14px] text-tx font-semibold truncate">{venue.address}</p>
+                <p className="text-[11.5px] text-c1 font-semibold mt-0.5">
+                  Abrir en Maps →
+                </p>
+              </div>
+            </a>
           )
         })()}
 
-        {/* Info rápida */}
-        <section className="grid grid-cols-2 gap-3">
-          <InfoTile
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-6.6-7-12a7 7 0 1114 0c0 5.4-7 12-7 12z" stroke="var(--tx)" strokeWidth="2" strokeLinejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="var(--tx)" strokeWidth="2"/></svg>}
-            title="Dirección"
-            value={venue.address}
-          />
-          <InfoTile
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--tx)" strokeWidth="2"/><path d="M12 7v5l3 2" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-            title="Horario hoy"
-            value={todayHoursLabel(venue)}
-          />
-        </section>
-
-        {/* Descripción editorial */}
-        {venue.description && (
-          <section>
-            <p className="font-display text-[15px] text-tx leading-relaxed italic border-l-2 border-c1 pl-3">
-              {venue.description}
-            </p>
-          </section>
-        )}
-
-        {/* Sectores / zonas */}
+        {/* Sectores inline compacto */}
         {zonesEnabled && (
           <section>
-            <h2 className="font-display text-[17px] font-bold text-tx mb-2">
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2">
               Sectores disponibles
-            </h2>
+            </p>
             <div className="flex flex-wrap gap-2">
               <SectorChip emoji="🏠" label="Salón principal" />
               <SectorChip emoji="🌿" label="Terraza" />
               <SectorChip emoji="🍸" label="Barra" />
               <SectorChip emoji="🔒" label="Privado" />
             </div>
-            <p className="text-tx3 text-[12px] mt-2">
-              Elegí tu sector preferido al reservar.
-            </p>
           </section>
         )}
+      </div>
 
-        {/* Menú preview */}
-        {menu.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display text-[17px] font-bold text-tx">La carta</h2>
-              {menu.length > 2 && (
-                <button
-                  onClick={() => setShowFullMenu((v) => !v)}
-                  className="text-[12px] font-semibold text-c1 underline underline-offset-2"
-                >
-                  {showFullMenu ? 'Ver menos' : `Ver toda (${menu.length} secciones)`}
-                </button>
-              )}
-            </div>
-            <div className="space-y-4">
-              {(showFullMenu ? menu : menu.slice(0, 2)).map((cat) => (
-                <div key={cat.name} className="bg-white rounded-xl p-4 border border-[var(--br)]">
-                  <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2.5">
-                    {cat.name}
-                  </p>
-                  <ul className="space-y-2.5">
-                    {cat.items.map((it) => (
-                      <li key={it.name} className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-tx truncate">{it.name}</p>
-                          {it.description && (
-                            <p className="text-[12px] text-tx2 mt-0.5 line-clamp-2 leading-snug">
-                              {it.description}
-                            </p>
-                          )}
-                        </div>
-                        <span className="font-display font-bold text-tx text-[15px] tabular-nums flex-shrink-0">
-                          ${it.price.toLocaleString('es-AR')}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-            <p className="text-[11px] text-tx3 mt-2 text-center">
-              Los precios pueden variar. Consultá al llegar.
-            </p>
-          </section>
-        )}
+      {/* ═══════ Tabs sticky ═══════ */}
+      <div
+        ref={tabsBarRef}
+        data-tabs-bar="true"
+        className="sticky top-0 z-30 bg-bg/95 backdrop-blur-md
+                   border-b border-[var(--br)] -mx-[18px] px-[18px] mt-6"
+      >
+        <div className="flex overflow-x-auto no-scrollbar gap-1 py-2.5">
+          {TAB_META.map((t) => {
+            const isActive = activeTab === t.key
+            return (
+              <button
+                key={t.key}
+                onClick={() => handleTabClick(t.key)}
+                className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 h-9
+                            rounded-full text-[13px] font-semibold transition-colors
+                            ${isActive
+                              ? 'bg-tx text-white'
+                              : 'bg-sf text-tx2 border border-[var(--br)] hover:text-tx'}`}
+                aria-pressed={isActive}
+              >
+                <span aria-hidden>{t.emoji}</span>
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
-        {/* Features rápidas */}
-        <section>
-          <h2 className="font-display text-[17px] font-bold text-tx mb-2">Lo bueno de acá</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {venueFeatures(venue).map((f) => (
-              <Feature key={f.label} emoji={f.emoji} text={f.label} />
-            ))}
-          </div>
-        </section>
-
-        {/* Mapa + Cómo llegar */}
-        {(() => {
-          const coords = (venue.config_json as { coords?: { lat: number; lng: number } } | null)?.coords
-          return coords ? (
-            <VenueMap name={venue.name} address={venue.address} coords={coords} />
-          ) : null
-        })()}
-
-        {/* Política de cancelación visible pre-checkout */}
-        <section className="bg-sf rounded-xl p-4 border border-[var(--br)]">
-          <div className="flex items-start gap-2">
-            <span className="text-[18px]">🛡️</span>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-[13px] text-tx">Política de cancelación</p>
-              <p className="text-[12px] text-tx2 mt-1 leading-relaxed">
-                Cancelá gratis hasta <b>{cancellationHours}h antes</b> de tu turno.
-                {deposit > 0 && ' La seña se devuelve automáticamente 24h antes.'}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Reviews */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-[17px] font-bold text-tx">Reseñas verificadas</h2>
-            <span className="text-[11px] text-tx3">Post-visita</span>
-          </div>
-          {DEMO_REVIEWS.length === 0 ? (
-            <div className="bg-sf rounded-xl p-5 border border-[var(--br)] text-center">
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mx-auto mb-2 border border-[var(--br)]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-c3">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-              </div>
-              <p className="text-[13px] font-semibold text-tx">Aún no hay reseñas</p>
-              <p className="text-[12px] text-tx2 mt-1 leading-relaxed">
-                Reservá, comé y sé el primero en opinar. Sólo podés reseñar si
-                visitaste el local — todas las reseñas son verificadas.
+      {/* Secciones por tab */}
+      <div className="screen-x pt-5 space-y-8">
+        {/* #menu */}
+        <section ref={menuRef} data-tab-id="menu" className="scroll-mt-24">
+          <h2 className="font-display text-[20px] font-bold text-tx mb-3">La carta</h2>
+          {menu.length === 0 ? (
+            <div className="bg-sf rounded-xl p-5 text-center border border-[var(--br)]">
+              <p className="text-[13px] text-tx2">La carta todavía no está disponible online.</p>
+              <p className="text-[11.5px] text-tx3 mt-1">
+                Consultá al llegar o llamá al local.
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {DEMO_REVIEWS.map((r, i) => (
-                <article key={i} className="bg-white rounded-xl p-4 border border-[var(--br)]">
-                  <header className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-c1 to-c3
-                                      flex items-center justify-center text-white font-bold text-[12px]">
-                        {r.name[0]}
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-semibold text-tx">{r.name}</p>
-                        <p className="text-[11px] text-tx3">{r.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex text-c3">
-                      {Array.from({ length: r.score }).map((_, i) => (
-                        <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
+            <>
+              <div className="space-y-3">
+                {(showFullMenu ? menu : menu.slice(0, 2)).map((cat) => (
+                  <div key={cat.name} className="bg-white rounded-xl p-4 border border-[var(--br)]">
+                    <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2.5">
+                      {cat.name}
+                    </p>
+                    <ul className="space-y-2.5">
+                      {cat.items.map((it) => (
+                        <li key={it.name} className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[14px] font-semibold text-tx truncate">{it.name}</p>
+                            {it.description && (
+                              <p className="text-[12px] text-tx2 mt-0.5 line-clamp-2 leading-snug">
+                                {it.description}
+                              </p>
+                            )}
+                          </div>
+                          <span className="font-display font-bold text-tx text-[15px] tabular-nums flex-shrink-0">
+                            ${it.price.toLocaleString('es-AR')}
+                          </span>
+                        </li>
                       ))}
-                    </div>
-                  </header>
-                  <p className="text-[13px] text-tx2 leading-relaxed">{r.text}</p>
-                </article>
-              ))}
-            </div>
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              {menu.length > 2 && (
+                <button
+                  onClick={() => setShowFullMenu((v) => !v)}
+                  className="mt-3 w-full py-2.5 rounded-lg bg-sf border border-[var(--br)]
+                             text-[13px] font-semibold text-tx hover:bg-sf2 transition-colors"
+                >
+                  {showFullMenu ? 'Ver menos' : `Ver toda la carta (${menu.length} secciones)`}
+                </button>
+              )}
+              <p className="text-[11px] text-tx3 mt-2 text-center">
+                Los precios pueden variar. Consultá al llegar.
+              </p>
+            </>
           )}
         </section>
 
-        {/* Wizard section */}
-        <section id="reservar" className="pt-2">
+        {/* #horarios */}
+        <section ref={horariosRef} data-tab-id="horarios" className="scroll-mt-24">
+          <h2 className="font-display text-[20px] font-bold text-tx mb-3">Horarios</h2>
+          <WeeklyHours venue={venue} />
+        </section>
+
+        {/* #ubicacion */}
+        <section ref={ubicacionRef} data-tab-id="ubicacion" className="scroll-mt-24">
+          <h2 className="font-display text-[20px] font-bold text-tx mb-3">Ubicación</h2>
+          {(() => {
+            const coords = (venue.config_json as { coords?: { lat: number; lng: number } } | null)?.coords
+            return coords ? (
+              <VenueMap name={venue.name} address={venue.address} coords={coords} />
+            ) : (
+              <div className="bg-sf rounded-xl p-5 text-center border border-[var(--br)]">
+                <p className="text-[13px] text-tx2">{venue.address}</p>
+                <p className="text-[11.5px] text-tx3 mt-1">Coordenadas no configuradas.</p>
+              </div>
+            )
+          })()}
+        </section>
+
+        {/* #detalles — min-height garantiza que al scrollear a esta tab quede
+            debajo de la tab bar sin que el browser clampee el scroll por falta
+            de contenido debajo. Más limpio que agregar padding al wrapper,
+            que dejaba hueco vacío después del wizard. */}
+        <section
+          ref={detallesRef}
+          data-tab-id="detalles"
+          className="scroll-mt-24 space-y-5 min-h-[calc(100vh-120px)]"
+        >
+          <h2 className="font-display text-[20px] font-bold text-tx">Detalles</h2>
+
+          {venue.description && (
+            <p className="font-display text-[15px] text-tx leading-relaxed italic border-l-2 border-c1 pl-3">
+              {venue.description}
+            </p>
+          )}
+
+          <div>
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2">Lo bueno de acá</p>
+            <div className="grid grid-cols-2 gap-2">
+              {venueFeatures(venue).map((f) => (
+                <Feature key={f.label} emoji={f.emoji} text={f.label} />
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-sf rounded-xl p-4 border border-[var(--br)]">
+            <div className="flex items-start gap-2">
+              <span className="text-[18px]">🛡️</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-[13px] text-tx">Política de cancelación</p>
+                <p className="text-[12px] text-tx2 mt-1 leading-relaxed">
+                  Cancelá gratis hasta <b>{cancellationHours}h antes</b> de tu turno.
+                  {deposit > 0 && ' La seña se devuelve automáticamente 24h antes.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Wizard section — min-h garantiza que al cambiar de step el browser
+            tenga contenido suficiente para scrollear el título al top debajo
+            de la tab bar, sin que clampee a mitad de viewport. */}
+        <section id="reservar" className="pt-2 min-h-[calc(100vh-120px)]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-[22px] font-bold text-tx">Hacé tu reserva</h2>
             {!showWizard && (
@@ -588,9 +648,12 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
           <button
             onClick={() => {
               setShowWizard(true)
+              // Esperar 2 frames + margen para que el wizard monte y su
+              // useEffect de mount termine antes de scrollear al anclar.
               setTimeout(() => {
-                document.getElementById('reservar')?.scrollIntoView({ behavior: 'smooth' })
-              }, 50)
+                const target = document.getElementById('reservar')
+                smoothScrollToElement(target, 16)
+              }, 120)
             }}
             className="pointer-events-auto w-full bg-c1 text-white font-bold text-[15px]
                        py-4 rounded-full shadow-[0_8px_24px_rgba(255,71,87,0.4)]
@@ -604,14 +667,68 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
   )
 }
 
-function InfoTile({ icon, title, value }: { icon: React.ReactNode; title: string; value: string }) {
+/**
+ * Grilla semanal de horarios — día de la semana con sus shifts.
+ * Hoy resaltado en coral; cerrado en gris tenue.
+ */
+function WeeklyHours({ venue }: { venue: Venue }) {
+  const hours = (venue.config_json?.service_hours ?? []) as ServiceHours[]
+  const today = new Date().getDay()
+
+  // Agrupar por día_of_week
+  const byDay: Record<number, ServiceHours[]> = {}
+  for (const h of hours) {
+    if (!byDay[h.day_of_week]) byDay[h.day_of_week] = []
+    byDay[h.day_of_week].push(h)
+  }
+
+  // Orden: empezar por hoy para que la info más útil esté arriba
+  const order = [today, ...[0, 1, 2, 3, 4, 5, 6].filter((d) => d !== today)]
+
   return (
-    <div className="bg-sf rounded-lg p-3 border border-[var(--br)]">
-      <div className="flex items-center gap-1.5 mb-1">
-        {icon}
-        <p className="text-[10px] font-bold text-tx3 uppercase tracking-wider">{title}</p>
-      </div>
-      <p className="text-[12px] text-tx font-semibold leading-snug line-clamp-2">{value}</p>
+    <div className="bg-white rounded-xl border border-[var(--br)] overflow-hidden">
+      {order.map((dow, i) => {
+        const shifts = (byDay[dow] ?? []).filter((h) => h.is_open)
+        const isToday = dow === today
+        return (
+          <div
+            key={dow}
+            className={`flex items-center justify-between px-4 py-3
+                        ${i < 6 ? 'border-b border-[var(--br)]' : ''}
+                        ${isToday ? 'bg-c1l' : ''}`}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={`font-semibold text-[13.5px] capitalize
+                            ${isToday ? 'text-c1' : 'text-tx'}`}
+              >
+                {DAY_NAMES[dow]}
+              </span>
+              {isToday && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-c1
+                                 bg-white px-1.5 py-0.5 rounded-full border border-c1/25">
+                  Hoy
+                </span>
+              )}
+            </div>
+            {shifts.length === 0 ? (
+              <span className="text-[12.5px] text-tx3 font-medium">Cerrado</span>
+            ) : (
+              <div className="flex gap-1.5 flex-wrap justify-end">
+                {shifts.map((h, idx) => (
+                  <span
+                    key={idx}
+                    className={`text-[12px] font-mono tabular-nums font-semibold
+                                ${isToday ? 'text-tx' : 'text-tx2'}`}
+                  >
+                    {h.opens_at}–{h.closes_at}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
