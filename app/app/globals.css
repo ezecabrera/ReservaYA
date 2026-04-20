@@ -69,6 +69,16 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Fraunces (display) siempre bold por default — es una serif editorial
+     que funciona mal en regular sobre mobile, y el producto pide el tono
+     robusto en todos los títulos. */
+  .font-display {
+    font-weight: 700;
+  }
+  h1.font-display, h2.font-display, h3.font-display {
+    font-weight: 800;
+  }
+
   /* Safe area para iOS */
   .safe-bottom {
     padding-bottom: max(18px, env(safe-area-inset-bottom));
