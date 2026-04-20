@@ -17,16 +17,51 @@ function LoginContent() {
   const [email, setEmail]   = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
 
   const router       = useRouter()
   const searchParams = useSearchParams()
   const redirect     = searchParams.get('redirect') ?? '/'
+  const oauthError   = searchParams.get('error')
   const supabase     = createClient()
 
   async function ensureProfile() {
     await fetch('/api/auth/ensure-profile', { method: 'POST' })
+  }
+
+  async function handleGoogleLogin() {
+    setGoogleLoading(true)
+    setError(null)
+    const callbackUrl = new URL('/auth/callback', window.location.origin)
+    callbackUrl.searchParams.set('redirect', redirect)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: callbackUrl.toString() },
+    })
+    if (error) {
+      setGoogleLoading(false)
+      setError(error.message)
+    }
+    // Si no hay error, el browser está redirigiendo a Google — no resetear loading
+  }
+
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      setError('Ingresá tu email primero y te mandamos el link de recuperación.')
+      return
+    }
+    setError(null)
+    const redirectUrl = new URL('/auth/callback', window.location.origin).toString()
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: redirectUrl,
+    })
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setEmailSent(true)
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -156,6 +191,45 @@ function LoginContent() {
         </div>
       </div>
 
+      {/* Google OAuth */}
+      <div className="screen-x mb-4">
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading || loading}
+          className="w-full flex items-center justify-center gap-3 bg-white border
+                     border-[rgba(0,0,0,0.12)] text-tx font-semibold text-[14px]
+                     py-3.5 rounded-md shadow-sm active:scale-[0.98]
+                     transition-transform duration-[180ms] disabled:opacity-60"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18">
+            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.183l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+            <path fill="#FBBC05" d="M3.964 10.708A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.708V4.96H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.04l3.007-2.332z"/>
+            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.96L3.964 7.29C4.672 5.164 6.656 3.58 9 3.58z"/>
+          </svg>
+          {googleLoading ? 'Redirigiendo a Google…' : 'Continuar con Google'}
+        </button>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 mt-5 mb-1">
+          <div className="flex-1 h-px bg-[var(--br)]" />
+          <span className="text-[11px] text-tx3 font-semibold uppercase tracking-wider">
+            O con email
+          </span>
+          <div className="flex-1 h-px bg-[var(--br)]" />
+        </div>
+      </div>
+
+      {/* OAuth error */}
+      {oauthError && !error && (
+        <div className="screen-x mb-3">
+          <p className="text-[13px] text-[#D63646] bg-c1l rounded-lg px-3 py-2">
+            {oauthError}
+          </p>
+        </div>
+      )}
+
       {/* Form */}
       <div className="screen-x flex-1">
         <form
@@ -225,6 +299,17 @@ function LoginContent() {
               ? (mode === 'login' ? 'Ingresando…' : 'Creando cuenta…')
               : (mode === 'login' ? 'Ingresar' : 'Crear cuenta')}
           </button>
+
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="block w-full text-center text-tx2 text-[13px] font-semibold
+                         py-2 underline underline-offset-2"
+            >
+              Olvidé mi contraseña
+            </button>
+          )}
         </form>
       </div>
     </div>

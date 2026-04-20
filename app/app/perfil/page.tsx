@@ -1,9 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { Countdown } from '@/components/lab/Countdown'
+
+interface RewardsData {
+  tier: 'bronce' | 'plata' | 'oro'
+  tierLabel: string
+  reservationsThisMonth: number
+  toNextTier: number | null
+  nextTierLabel: string | null
+  incentive: string
+  streaks: Array<{ icon: string; title: string; subtitle: string }>
+}
 
 interface ProfileData {
   name: string
@@ -13,8 +25,39 @@ interface ProfileData {
   stats: {
     total: number
     checkedIn: number
+    pending?: number
     favoriteVenue: string | null
   }
+  rewards?: RewardsData
+}
+
+const TIER_META: Record<RewardsData['tier'], {
+  label: string; emoji: string; gradient: string; text: string; bar: string; max: number
+}> = {
+  bronce: {
+    label: 'Bronce', emoji: '🥉',
+    gradient: 'linear-gradient(135deg, #F3E3D2 0%, #E5C8A8 100%)',
+    text: '#7A4A24', bar: '#7A4A24', max: 3,
+  },
+  plata:  {
+    label: 'Plata', emoji: '🥈',
+    gradient: 'linear-gradient(135deg, #E8EBEF 0%, #C8D0DA 100%)',
+    text: '#525966', bar: '#525966', max: 7,
+  },
+  oro:    {
+    label: 'Oro', emoji: '🥇',
+    gradient: 'linear-gradient(135deg, #FFF2C4 0%, #F0C866 100%)',
+    text: '#8A6310', bar: '#8A6310', max: 7,
+  },
+}
+
+interface UpcomingReservation {
+  id: string
+  date: string
+  time_slot: string
+  status: string
+  venues: { name: string } | null
+  tables: { label: string } | null
 }
 
 const AVATAR_COLORS = ['#FF4757', '#2ED8A8', '#4E8EFF', '#9B59FF', '#FFB800', '#FF8C42']
@@ -36,6 +79,7 @@ export default function PerfilPage() {
   const [newName, setNewName] = useState('')
   const [saving, setSaving] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [nextUp, setNextUp] = useState<UpcomingReservation | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -47,6 +91,28 @@ export default function PerfilPage() {
       })
       .then(d => { if (d) { setData(d); setNewName(d.name) } })
       .finally(() => setLoading(false))
+
+    // Fetch próxima reserva en paralelo (silencioso si falla)
+    fetch('/api/mis-reservas')
+      .then(r => r.ok ? r.json() : [])
+      .then((list: UpcomingReservation[]) => {
+        if (!Array.isArray(list)) return
+        const now = Date.now()
+        const toTs = (date: string, timeSlot: string) => {
+          // time_slot viene como "HH:MM:SS" o "HH:MM" — normalizar a HH:MM
+          const t = timeSlot.slice(0, 5)
+          return new Date(`${date}T${t}:00`).getTime()
+        }
+        const upcoming = list
+          .map(r => ({ ...r, time_slot: r.time_slot.slice(0, 5) }))
+          .filter(r => {
+            const t = toTs(r.date, r.time_slot)
+            return t > now && (r.status === 'confirmed' || r.status === 'pending_payment')
+          })
+          .sort((a, b) => toTs(a.date, a.time_slot) - toTs(b.date, b.time_slot))
+        setNextUp(upcoming[0] ?? null)
+      })
+      .catch(() => { /* silent */ })
   }, [router])
 
   async function handleSaveName() {
@@ -168,13 +234,116 @@ export default function PerfilPage() {
 
       <div className="screen-x space-y-4">
 
+        {/* Próxima reserva */}
+        {nextUp && (
+          <Link
+            href={`/reserva/${nextUp.id}/confirmacion`}
+            className="block active:scale-[0.99] transition-transform duration-[180ms] space-y-2"
+          >
+            <div className="bg-white rounded-xl p-4 border border-[var(--br)] shadow-sm">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-c1 animate-pulse" />
+                <p className="text-tx3 text-[10px] font-bold uppercase tracking-[0.15em]">
+                  Tu próxima salida
+                </p>
+              </div>
+              <p className="font-display text-[18px] font-bold text-tx truncate">
+                {nextUp.venues?.name}
+              </p>
+              <p className="text-tx2 text-[12px] mt-0.5">
+                {new Date(nextUp.date + 'T12:00:00').toLocaleDateString('es-AR', {
+                  weekday: 'short', day: 'numeric', month: 'short',
+                })} · {nextUp.time_slot} hs · Mesa {nextUp.tables?.label}
+              </p>
+            </div>
+            <Countdown date={nextUp.date} time={nextUp.time_slot} />
+          </Link>
+        )}
+
+        {/* Tu nivel + incentivo — gradient por tier (diseño Claude Design) */}
+        {data.rewards && (() => {
+          const r = data.rewards
+          const meta = TIER_META[r.tier]
+          const progress = Math.min(r.reservationsThisMonth / meta.max, 1)
+          return (
+            <div
+              className="rounded-xl p-[18px] overflow-hidden"
+              style={{ background: meta.gradient, color: meta.text, border: '1px solid rgba(0,0,0,0.06)' }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] opacity-65">
+                    Tu nivel
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[28px]" aria-hidden>{meta.emoji}</span>
+                    <span className="font-display text-[26px] font-black leading-none tracking-tight capitalize">
+                      {r.tierLabel}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-display text-[34px] font-black leading-none">
+                    {r.reservationsThisMonth}
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-[1px] opacity-65 mt-1 leading-tight">
+                    reservas<br/>este mes
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="mt-3.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.12)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progress * 100}%`, background: meta.bar }}
+                />
+              </div>
+
+              {/* Incentivo + próximo tier */}
+              <div className="flex items-center justify-between mt-2.5 gap-3">
+                <p className="text-[12.5px] font-bold leading-snug flex-1">
+                  {r.incentive}
+                </p>
+                {r.nextTierLabel && (
+                  <p className="text-[11px] font-bold uppercase tracking-[0.8px] opacity-60 whitespace-nowrap">
+                    {r.nextTierLabel === 'Plata' ? '🥈' : '🥇'} {r.nextTierLabel}
+                  </p>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Rachas (si hay) */}
+        {data.rewards?.streaks && data.rewards.streaks.length > 0 && (
+          <div className="space-y-2">
+            {data.rewards.streaks.map((s) => (
+              <div key={s.title} className="card p-3.5 flex items-start gap-3">
+                <span className="text-[22px] flex-shrink-0" aria-hidden>{s.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13.5px] font-bold text-tx leading-tight">{s.title}</p>
+                  <p className="text-[12px] text-tx3 mt-0.5 leading-snug">{s.subtitle}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <div className="card p-3.5 text-center">
             <p className="font-display text-[26px] font-bold text-tx leading-none">
               {data.stats.total}
             </p>
-            <p className="text-tx3 text-[11px] font-semibold mt-1">Reservas</p>
+            <p className="text-tx3 text-[11px] font-semibold mt-1">
+              {(data.stats.pending ?? 0) > 0 ? 'Total' : 'Reservas'}
+            </p>
+            {(data.stats.pending ?? 0) > 0 && (
+              <p className="text-c3 text-[10px] font-bold mt-0.5">
+                {data.stats.pending} en proceso
+              </p>
+            )}
           </div>
           <div className="card p-3.5 text-center">
             <p className="font-display text-[26px] font-bold text-c2 leading-none">
@@ -184,8 +353,8 @@ export default function PerfilPage() {
           </div>
           <div className="card p-3.5 text-center">
             <p className="font-display text-[22px] font-bold text-tx leading-none">
-              {data.stats.total > 0
-                ? `${Math.round((data.stats.checkedIn / data.stats.total) * 100)}%`
+              {data.stats.checkedIn + data.stats.total - (data.stats.pending ?? 0) > 0
+                ? `${Math.round((data.stats.checkedIn / Math.max(1, data.stats.total - (data.stats.pending ?? 0))) * 100)}%`
                 : '—'
               }
             </p>
@@ -229,13 +398,20 @@ export default function PerfilPage() {
 
         {/* Acciones rápidas */}
         <div className="card divide-y divide-[var(--br)]">
-          <a href="/mis-reservas"
+          <Link href="/mis-reservas"
             className="px-4 py-3.5 flex items-center justify-between active:bg-sf transition-colors">
             <span className="text-[14px] font-semibold text-tx">Mis reservas</span>
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
               <path d="M9 18l6-6-6-6" stroke="var(--tx3)" strokeWidth="2" strokeLinecap="round" />
             </svg>
-          </a>
+          </Link>
+          <Link href="/perfil/configuracion"
+            className="px-4 py-3.5 flex items-center justify-between active:bg-sf transition-colors">
+            <span className="text-[14px] font-semibold text-tx">Configuración</span>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+              <path d="M9 18l6-6-6-6" stroke="var(--tx3)" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </Link>
         </div>
 
         {/* Cerrar sesión */}
@@ -250,7 +426,7 @@ export default function PerfilPage() {
         </button>
 
         <p className="text-center text-tx3 text-[11px] pb-2">
-          ReservaYA · v1.0
+          Un Toque · v1.0
         </p>
 
       </div>

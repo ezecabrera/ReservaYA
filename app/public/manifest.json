@@ -1,26 +1,42 @@
 {
-  "name": "ReservaYa",
-  "short_name": "ReservaYa",
-  "description": "Reservá tu mesa sin descargar ninguna app",
+  "name": "Un Toque",
+  "short_name": "Un Toque",
+  "description": "Reservá tu mesa en segundos — restaurantes de Buenos Aires",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#FFFFFF",
   "theme_color": "#FF4757",
   "orientation": "portrait",
-  "lang": "es",
-  "categories": ["food", "lifestyle"],
+  "lang": "es-AR",
+  "dir": "ltr",
+  "categories": ["food", "lifestyle", "travel"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/apple-touch-icon.png",
@@ -32,8 +48,16 @@
   "shortcuts": [
     {
       "name": "Mis reservas",
+      "short_name": "Reservas",
       "url": "/mis-reservas",
       "description": "Ver mis reservas activas"
+    },
+    {
+      "name": "Favoritos",
+      "short_name": "Favoritos",
+      "url": "/favoritos",
+      "description": "Los restaurantes que guardé"
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }

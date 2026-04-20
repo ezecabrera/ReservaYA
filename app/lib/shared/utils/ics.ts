@@ -43,7 +43,7 @@ export function generateICS(params: {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//ReservaYa//ES',
+    'PRODID:-//Un Toque//ES',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

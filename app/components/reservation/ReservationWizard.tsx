@@ -1,12 +1,38 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Venue, Table, MenuCategory, MenuItem } from '@/lib/shared'
 import { getAvailableDates, getAvailableTimeSlots, formatDateEs } from '@/lib/shared'
 import { createClient } from '@/lib/supabase/client'
 import { Toast, useToast } from '@/components/ui/Toast'
 import { TableCardSkeleton } from '@/components/ui/Skeleton'
+
+/**
+ * Scroll suave a un elemento si NO está visible en viewport.
+ * - Si ya se ve entero → no scrollea (evita movimientos innecesarios).
+ * - Si está debajo del fold → scrollea con offset para dar respiro al header.
+ * - Usa requestAnimationFrame para esperar que React pinte antes de medir.
+ */
+import { smoothScrollTo, smoothScrollToElement } from '@/lib/scroll'
+
+/**
+ * Scrollea al ref SÓLO si el target está fuera de viewport o sus primeros
+ * píxeles quedan muy al fondo. Premisa de UX: si el user ya puede ver la
+ * siguiente sección (aunque sea parcialmente), NO se mueve la pantalla —
+ * evita el "rebote" molesto entre secciones chicas que caben todas en
+ * viewport de iPhone/tablet estándar.
+ */
+function scrollToRef(ref: React.RefObject<HTMLElement>, offset = 90) {
+  if (!ref.current) return
+  const rect = ref.current.getBoundingClientRect()
+  const vh = window.innerHeight
+  // Mantener quieta la pantalla si el top del target está en la mitad
+  // superior del viewport (el user ya lo está viendo confortablemente).
+  const topIsComfortable = rect.top >= 0 && rect.top <= vh * 0.75
+  if (topIsComfortable) return
+  smoothScrollToElement(ref.current, offset)
+}
 
 type WizardStep = 'datetime' | 'table' | 'menu' | 'summary'
 
@@ -29,14 +55,17 @@ interface WizardState {
 
 interface ReservationWizardProps {
   venue: Venue
+  prefill?: { date?: string; time?: string; partySize?: number }
 }
 
 const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8]
 
-export function ReservationWizard({ venue }: ReservationWizardProps) {
+export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
   const [step, setStep] = useState<WizardStep>('datetime')
   const [state, setState] = useState<WizardState>({
-    date: null, timeSlot: null, partySize: 2,
+    date: prefill?.date ?? null,
+    timeSlot: prefill?.time ?? null,
+    partySize: prefill?.partySize ?? 2,
     selectedTable: null, lockId: null, lockExpiresAt: null,
     orderItems: [],
   })
@@ -48,6 +77,13 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loadingMenu, setLoadingMenu] = useState(false)
   const [lastOrder, setLastOrder] = useState<{ menu_item_id: string; name: string; qty: number; unit_price: number }[]>([])
+  const [showMenuModal, setShowMenuModal] = useState(false)
+  const [guestNote, setGuestNote] = useState('')
+
+  // Refs para auto-scroll progresivo en el step datetime
+  const timeRef  = useRef<HTMLDivElement>(null)
+  const partyRef = useRef<HTMLDivElement>(null)
+  const ctaRef   = useRef<HTMLDivElement>(null)
 
   function adjustQty(item: MenuItem, delta: number) {
     setState(s => {
@@ -145,9 +181,47 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
     }
   }, [state.date, state.timeSlot, state.partySize, venue.id, showToast])
 
+  // Tracking de step para disparar scroll-al-top SÓLO cuando el step cambia
+  // de verdad. Sin este guard, cualquier re-render que cambie la referencia
+  // de loadTables/loadMenu (ej. al pickear una fecha, date cambia → loadTables
+  // useCallback emite nueva ref) reejecuta el efecto y dispara scrollTo(0),
+  // peleándose con el scroll progresivo del wizard.
+  const isFirstStepRun = useRef(true)
+  const prevStep = useRef<WizardStep>(step)
   useEffect(() => {
     if (step === 'table') loadTables()
-    if (step === 'menu') loadMenu()
+    if (step === 'menu') {
+      loadMenu()
+      // POP-UP OMITIR MENÚ: al entrar al paso menu, abrir modal inmediatamente
+      // para que el usuario pueda saltar sin scrollear todas las categorías.
+      setShowMenuModal(true)
+    }
+    if (isFirstStepRun.current) {
+      isFirstStepRun.current = false
+      prevStep.current = step
+      return
+    }
+    // Sólo scrollear si el step realmente cambió (no si re-rendereó por
+    // cambio de deps de loadTables/loadMenu). Apuntamos al wrapper del
+    // wizard (#reservar) en lugar de a y=0, para que el user vea el inicio
+    // del nuevo paso (con título + progress bar) en vez de saltar al hero
+    // del venue allá arriba.
+    if (prevStep.current !== step) {
+      prevStep.current = step
+      const anchor = typeof document !== 'undefined'
+        ? document.getElementById('reservar')
+        : null
+      if (anchor) {
+        // Offset = tabs bar height (~57) + margin (12) para que el título
+        // "Hacé tu reserva" quede pegado debajo de la tab bar sticky y no
+        // deje un hueco vacío grande arriba del wizard.
+        const tabsBar = document.querySelector('[data-tabs-bar="true"]') as HTMLElement | null
+        const tabsHeight = tabsBar?.offsetHeight ?? 57
+        smoothScrollToElement(anchor, tabsHeight + 12)
+      } else {
+        smoothScrollTo(0)
+      }
+    }
   }, [step, loadTables, loadMenu])
 
   async function handleSelectTable(table: Table) {
@@ -224,34 +298,62 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
         })
       }
 
-      // Crear preferencia de pago y redirigir a MP
-      const payRes = await fetch(`/api/reserva/${reservation.id}/pago`, {
-        method: 'POST',
-      })
-
-      if (!payRes.ok) {
-        showToast('Error al iniciar el pago', 'error')
-        setCreating(false)
-        return
-      }
-
-      const { init_point } = await payRes.json() as { init_point: string }
-      window.location.href = init_point
+      // Redirigir a la pantalla de selección de método de pago
+      // (antes se iba directo a MP; ahora el usuario elige tarjeta o MP)
+      window.location.href = `/reserva/${reservation.id}/pagar`
     } catch {
       showToast('Error inesperado', 'error')
       setCreating(false)
     }
   }
 
+  // Progreso 1/4 → 2/4 → 3/4 → 4/4
+  const stepNum = step === 'datetime' ? 1 : step === 'table' ? 2 : step === 'menu' ? 3 : 4
+  const progressBar = (
+    <div className="mb-5">
+      <div className="flex items-center gap-1 mb-2">
+        {[1, 2, 3, 4].map((n) => (
+          <div key={n}
+               className={`h-1 flex-1 rounded-full transition-colors duration-300
+                          ${n <= stepNum ? 'bg-c1' : 'bg-sf2'}`} />
+        ))}
+      </div>
+      <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+        Paso {stepNum} de 4 · {step === 'datetime' ? 'Cuándo' : step === 'table' ? 'Mesa' : step === 'menu' ? 'Menú' : 'Confirmar'}
+      </p>
+    </div>
+  )
+
   // ─── STEP: DATE / TIME / PARTY SIZE ───────────────────────────────────────
   if (step === 'datetime') {
+    const selectedDateObj = state.date ? new Date(state.date + 'T12:00:00') : null
+    const selectedDateLabel = selectedDateObj
+      ? selectedDateObj.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+      : null
+    const timeActive  = !!state.date
+    const partyActive = !!state.timeSlot
+    const ctaActive   = !!state.date && !!state.timeSlot
+
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 pb-44">
+        {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
-        {/* Fecha */}
-        <div>
-          <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Fecha</p>
+        {/* ─── 1. Fecha ─── */}
+        <section className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-c1 text-white text-[11px] font-bold flex items-center justify-center">
+                {state.date ? '✓' : '1'}
+              </span>
+              <p className="text-[13px] font-bold text-tx uppercase tracking-wider">Fecha</p>
+            </div>
+            {selectedDateLabel && (
+              <span className="text-[12px] text-c1 font-bold capitalize truncate max-w-[180px]">
+                {selectedDateLabel}
+              </span>
+            )}
+          </div>
           <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
             {availableDates.slice(0, 10).map((d) => {
               const dateObj = new Date(d + 'T12:00:00')
@@ -262,7 +364,11 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
               return (
                 <button
                   key={d}
-                  onClick={() => setState(s => ({ ...s, date: d, timeSlot: null }))}
+                  onClick={() => {
+                    setState(s => ({ ...s, date: d, timeSlot: null }))
+                    // Auto-scroll al selector de horario
+                    setTimeout(() => scrollToRef(timeRef), 150)
+                  }}
                   className={`flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl
                               px-3 py-2.5 min-w-[56px] border-2 transition-all duration-[180ms]
                               ${isSelected
@@ -277,43 +383,86 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
               )
             })}
           </div>
-        </div>
+        </section>
 
-        {/* Horarios */}
-        {state.date && (
-          <div>
-            <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Horario</p>
-            {availableSlots.length === 0 ? (
-              <div className="bg-c3l border border-[rgba(255,184,0,0.3)] rounded-xl p-4 text-center">
-                <p className="text-[#CC7700] text-[13px] font-semibold">
-                  Las reservas para este turno ya cerraron. Elegí otro día.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {availableSlots.map((slot) => (
-                  <button
-                    key={slot}
-                    onClick={() => setState(s => ({ ...s, timeSlot: slot }))}
-                    className={`chip ${state.timeSlot === slot ? 'chip-active' : ''}`}
-                  >
-                    {slot} hs
-                  </button>
-                ))}
-              </div>
+        {/* ─── 2. Horario ─── */}
+        <section
+          ref={timeRef}
+          style={{ opacity: timeActive ? 1 : 0.5, transition: 'opacity 0.3s ease' }}
+          className="card p-4 space-y-3 scroll-mt-24"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center
+                                ${state.timeSlot ? 'bg-c1 text-white' : timeActive ? 'bg-c1 text-white' : 'bg-sf2 text-tx3'}`}>
+                {state.timeSlot ? '✓' : '2'}
+              </span>
+              <p className="text-[13px] font-bold text-tx uppercase tracking-wider">Horario</p>
+            </div>
+            {state.timeSlot && (
+              <span className="text-[12px] text-c1 font-bold">{state.timeSlot} hs</span>
             )}
           </div>
-        )}
 
-        {/* Personas */}
-        {state.timeSlot && (
-          <div>
-            <p className="text-[13px] font-bold text-tx2 mb-3 uppercase tracking-wider">Personas</p>
+          {!timeActive ? (
+            <p className="text-[12px] text-tx3">Elegí primero la fecha.</p>
+          ) : availableSlots.length === 0 ? (
+            <div className="bg-c3l border border-[rgba(255,184,0,0.3)] rounded-lg p-3 text-center">
+              <p className="text-[#CC7700] text-[12px] font-semibold">
+                Reservas cerradas para este turno. Elegí otro día.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {availableSlots.map((slot) => (
+                <button
+                  key={slot}
+                  onClick={() => {
+                    setState(s => ({ ...s, timeSlot: slot }))
+                    // Auto-scroll a Personas (sólo si no está visible ya)
+                    scrollToRef(partyRef)
+                  }}
+                  className={`chip ${state.timeSlot === slot ? 'chip-active' : ''}`}
+                >
+                  {slot} hs
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ─── 3. Personas ─── */}
+        <section
+          ref={partyRef}
+          style={{ opacity: partyActive ? 1 : 0.5, transition: 'opacity 0.3s ease' }}
+          className="card p-4 space-y-3 scroll-mt-24"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center
+                                ${partyActive ? 'bg-c1 text-white' : 'bg-sf2 text-tx3'}`}>
+                {partyActive ? '✓' : '3'}
+              </span>
+              <p className="text-[13px] font-bold text-tx uppercase tracking-wider">Personas</p>
+            </div>
+            {partyActive && (
+              <span className="text-[12px] text-c1 font-bold">
+                {state.partySize} {state.partySize === 1 ? 'persona' : 'personas'}
+              </span>
+            )}
+          </div>
+
+          {!partyActive ? (
+            <p className="text-[12px] text-tx3">Elegí primero el horario.</p>
+          ) : (
             <div className="flex gap-2 flex-wrap">
               {PARTY_SIZES.map((n) => (
                 <button
                   key={n}
-                  onClick={() => setState(s => ({ ...s, partySize: n }))}
+                  onClick={() => {
+                    setState(s => ({ ...s, partySize: n }))
+                    scrollToRef(ctaRef)
+                  }}
                   className={`w-11 h-11 rounded-full font-bold text-[15px] border-2
                               transition-all duration-[180ms]
                               ${state.partySize === n
@@ -325,18 +474,28 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </section>
 
-        {/* CTA */}
-        {state.date && state.timeSlot && (
+        {/* ─── CTA sticky ARRIBA del BottomNav (no overlap, no bleed coral) ─── */}
+        <div
+          ref={ctaRef}
+          className="fixed left-0 right-0 z-40 px-[18px] py-2
+                     bg-bg/95 backdrop-blur-md border-t border-[var(--br)]"
+          style={{
+            // El BottomNav mide ~72px + safe-area bottom. Posicionamos el CTA
+            // justo encima para que no se tapen visualmente.
+            bottom: 'calc(72px + env(safe-area-inset-bottom, 18px))',
+          }}
+        >
           <button
             onClick={() => setStep('table')}
-            className="btn-primary"
+            disabled={!ctaActive}
+            className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Ver mesas disponibles
+            {ctaActive ? 'Ver mesas disponibles →' : 'Elegí fecha, horario y personas'}
           </button>
-        )}
+        </div>
       </div>
     )
   }
@@ -345,6 +504,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   if (step === 'table') {
     return (
       <div className="space-y-5">
+        {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
         <div className="flex items-center gap-3">
@@ -418,8 +578,55 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
     const orderTotal = state.orderItems.reduce((sum, i) => sum + i.qty * i.unit_price, 0)
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-5 relative">
+        {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
+
+        {/* MODAL OMITIR PRE-PEDIDO — aparece al entrar al step menu */}
+        {showMenuModal && (
+          <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4">
+            <button
+              aria-label="Cerrar"
+              onClick={() => setShowMenuModal(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+            <div className="relative bg-bg rounded-2xl w-full max-w-md p-6
+                            shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+              <div className="w-14 h-14 rounded-full bg-c3l flex items-center justify-center mx-auto mb-3">
+                <span className="text-[28px]">🍽️</span>
+              </div>
+              <h3 className="font-display text-[20px] font-bold text-tx text-center">
+                ¿Pre-pedir tu menú?
+              </h3>
+              <p className="text-tx2 text-[14px] text-center mt-2 leading-relaxed">
+                Podés adelantar tu pedido para que el restaurante lo tenga listo al llegar.
+                O seguir y pedirlo ahí.
+              </p>
+              <div className="mt-6 space-y-2.5">
+                <button
+                  onClick={() => setShowMenuModal(false)}
+                  className="btn-primary"
+                >
+                  Ver menú
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenuModal(false)
+                    setStep('summary')
+                  }}
+                  className="w-full bg-sf text-tx font-semibold text-[15px] py-[15px] px-6
+                             rounded-md border border-[var(--br)]
+                             active:scale-[0.97] transition-transform duration-[180ms]"
+                >
+                  Continuar sin pre-pedido
+                </button>
+              </div>
+              <p className="text-center text-tx3 text-[11px] mt-4">
+                Podés cambiar esto después
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <button onClick={() => setStep('table')}
@@ -558,6 +765,7 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
   // ─── STEP: RESUMEN + CONFIRMAR ─────────────────────────────────────────────
   return (
     <div className="space-y-4">
+      {progressBar}
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
       <div className="flex items-center gap-3">
@@ -644,6 +852,23 @@ export function ReservationWizard({ venue }: ReservationWizardProps) {
           </div>
         </div>
       )}
+
+      {/* Nota al restaurante */}
+      <div className="card p-4">
+        <label className="block text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2">
+          Nota al restaurante (opcional)
+        </label>
+        <textarea
+          value={guestNote}
+          onChange={(e) => setGuestNote(e.target.value.slice(0, 240))}
+          placeholder="Ej. alérgico a los mariscos · mesa con silla alta · festejo un cumpleaños…"
+          rows={2}
+          className="w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf px-3 py-2
+                     text-[13px] text-tx outline-none resize-none
+                     focus:border-c4 focus:ring-2 focus:ring-[var(--c4)]/20"
+        />
+        <p className="text-[10px] text-tx3 text-right mt-1">{guestNote.length}/240</p>
+      </div>
 
       {/* Seña */}
       <div className="card p-4 flex items-center justify-between">

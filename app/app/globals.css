@@ -52,7 +52,7 @@
     --r-full: 99px;
 
     /* ── Tipografía ── */
-    --font-display: 'Fraunces', serif;
+    --font-display: 'Fraunces', 'Georgia', serif;
     --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
 
     /* ── Transiciones ── */
@@ -69,9 +69,79 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Fraunces (display) siempre black (900) por default — es una serif
+     editorial que funciona mal en pesos medios sobre mobile; el producto
+     pide el tono robusto en todos los títulos. Font weight 900 por diseño. */
+  .font-display {
+    font-weight: 900;
+  }
+
   /* Safe area para iOS */
   .safe-bottom {
     padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+
+  /* ── Accesibilidad: focus visible global ─────────────────────────────── */
+  /* WCAG 2.4.7 — el outline del browser queda invisible sobre nuestros
+     colores coral; definimos uno explícito con buen contraste sobre todos
+     los backgrounds del sistema (coral CTA, sf, white, tx). */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c4);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  /* Sobre fondos oscuros, usar el mismo azul pero más opaco */
+  .bg-tx :focus-visible,
+  [class*="bg-tx"] :focus-visible,
+  [class*="from-tx"] :focus-visible {
+    outline-color: #7FA8FF;
+  }
+
+  /* ── prefers-reduced-motion ──────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── Skip link ───────────────────────────────────────────────────────── */
+  .skip-link {
+    @apply absolute left-2 top-2 z-[100] px-4 py-2 rounded-md
+           bg-tx text-white text-[13px] font-semibold
+           -translate-y-16 focus:translate-y-0 transition-transform;
+  }
+
+}
+
+/* ── Bottom sheet ── visible desde el mount, sin animación compleja */
+.sheet-slide-up {
+  transform: translateY(0);
+}
+
+/* ── Hero overlay ── gradient de negro abajo a transparente arriba para
+   asegurar legibilidad del overlay (título venue, categorías, meta) sobre
+   cualquier imagen del hero. */
+.hero-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0) 100%);
+}
+
+/* ── Splash screen ── sprite animado de la mano del cliente */
+@keyframes splashPlay {
+  from { background-position: 0 0; }
+  to   { background-position: -6144px 0; } /* 256 × 24 frames */
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-sprite {
+    animation: none !important;
+    background-position: 0 0 !important;
   }
 }
 

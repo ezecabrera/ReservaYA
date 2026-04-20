@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Confetti } from './Confetti'
 import { QRDisplay } from './QRDisplay'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { Countdown } from '@/components/lab/Countdown'
 import { buildWhatsAppUrl, buildWhatsAppMessage, generateICS } from '@/lib/shared'
 
 interface ConfirmationData {
@@ -168,6 +169,12 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
           </div>
         </div>
 
+        {/* Countdown prominente */}
+        <div className={`transition-all duration-400
+          ${animStep >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <Countdown date={data.date} time={data.timeSlot} />
+        </div>
+
         {/* 3. Card de código de mesa — el elemento más prominente */}
         <div
           className={`transition-all duration-400
@@ -222,6 +229,20 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
             </span>
           </button>
 
+          {/* Add to Apple Wallet — stub (genera .ics + badge visual, integración real en backlog) */}
+          <button
+            onClick={handleAddToCalendar}
+            className="w-full bg-tx text-white rounded-md py-3.5 px-6 font-bold text-[15px]
+                       flex items-center justify-center gap-2 active:scale-[0.97]
+                       transition-transform duration-[180ms]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.53-3.22 0-1.44.62-2.2.44-3.05-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.19 2.31-.9 3.56-.8 1.5.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.47 7.13-.57 1.5-1.31 2.99-2.51 4.04zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            Add to Apple Wallet
+            <span className="badge bg-white/20 text-white text-[9px]">beta</span>
+          </button>
+
           {/* Modo grupo */}
           {!groupToken ? (
             <button
@@ -248,9 +269,10 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
               </div>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
-                  `¡Te invito a la salida! 🎉\n${data.venueName} el ${
-                    new Date(data.date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
-                  } a las ${data.timeSlot} hs.\nConfirmá tu lugar acá: ${groupUrl}`
+                  `🎉 Te invitaron a ${data.venueName}\n` +
+                  `📅 ${new Date(data.date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · ${data.timeSlot} hs\n\n` +
+                  `Confirmá tu asistencia y elegí tu pedido 👇\n` +
+                  `${groupUrl}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"

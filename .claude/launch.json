@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "app (PWA cliente)",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--filter", "@reservaya/app", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "panel (negocio)",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--filter", "@reservaya/panel", "dev"],
+      "port": 3001
+    }
+  ]
+}
