@@ -15,13 +15,16 @@ export default async function HomePage() {
 
   const all = (venues ?? []) as Venue[]
 
-  // Primer nombre del user (metadata o email fallback)
-  const fullName = (user?.user_metadata?.name ?? '') as string
+  // Cómo saludar al usuario: preferir sobrenombre si lo configuró, si no
+  // el primer nombre (user_metadata.name).
+  const meta = (user?.user_metadata ?? {}) as { name?: string; nickname?: string }
+  const fullName = meta.name ?? ''
   const firstName = fullName.trim().split(/\s+/)[0] || null
+  const greetingName = meta.nickname?.trim() || firstName
 
   return (
     <div className="min-h-screen bg-bg pb-28">
-      <HomeClient venues={all} userFirstName={firstName} />
+      <HomeClient venues={all} userFirstName={greetingName} />
       <BottomNav />
     </div>
   )

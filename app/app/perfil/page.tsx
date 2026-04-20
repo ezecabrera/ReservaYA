@@ -7,6 +7,16 @@ import { createClient } from '@/lib/supabase/client'
 import { BottomNav } from '@/components/ui/BottomNav'
 import { Countdown } from '@/components/lab/Countdown'
 
+interface RewardsData {
+  tier: 'bronce' | 'plata' | 'oro'
+  tierLabel: string
+  reservationsThisMonth: number
+  toNextTier: number | null
+  nextTierLabel: string | null
+  incentive: string
+  streaks: Array<{ icon: string; title: string; subtitle: string }>
+}
+
 interface ProfileData {
   name: string
   phone: string
@@ -18,6 +28,13 @@ interface ProfileData {
     pending?: number
     favoriteVenue: string | null
   }
+  rewards?: RewardsData
+}
+
+const TIER_META: Record<RewardsData['tier'], { label: string; emoji: string; bg: string; bar: string; max: number }> = {
+  bronce: { label: 'Bronce', emoji: '🥉', bg: '#F5E9DC', bar: '#B78200', max: 3 },
+  plata:  { label: 'Plata',  emoji: '🥈', bg: '#E6EAF0', bar: '#6B7280', max: 7 },
+  oro:    { label: 'Oro',    emoji: '🥇', bg: '#FFF4D6', bar: '#D4A017', max: 7 },
 }
 
 interface UpcomingReservation {
@@ -229,6 +246,65 @@ export default function PerfilPage() {
           </Link>
         )}
 
+        {/* Tu nivel + incentivo */}
+        {data.rewards && (() => {
+          const r = data.rewards
+          const meta = TIER_META[r.tier]
+          const progress = Math.min(r.reservationsThisMonth / meta.max, 1)
+          return (
+            <div className="rounded-xl p-4 border border-[var(--br)]"
+                 style={{ background: `linear-gradient(135deg, ${meta.bg} 0%, #FFF 120%)` }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-[22px]" aria-hidden>{meta.emoji}</span>
+                  <div>
+                    <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+                      Tu nivel
+                    </p>
+                    <p className="font-display text-[20px] font-bold text-tx leading-none mt-0.5">
+                      {r.tierLabel}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-[12px] text-tx2 text-right leading-tight">
+                  <span className="font-bold text-tx">{r.reservationsThisMonth}</span>
+                  <br />
+                  {r.reservationsThisMonth === 1 ? 'reserva' : 'reservas'}
+                  <br />este mes
+                </p>
+              </div>
+
+              {/* Progress bar */}
+              <div className="mt-3.5 h-1.5 rounded-full bg-white/70 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progress * 100}%`, background: meta.bar }}
+                />
+              </div>
+
+              {/* Incentivo */}
+              <p className="text-[13px] text-tx mt-3 leading-snug">
+                {r.incentive}
+              </p>
+            </div>
+          )
+        })()}
+
+        {/* Rachas (si hay) */}
+        {data.rewards?.streaks && data.rewards.streaks.length > 0 && (
+          <div className="space-y-2">
+            {data.rewards.streaks.map((s) => (
+              <div key={s.title} className="card p-3.5 flex items-start gap-3">
+                <span className="text-[22px] flex-shrink-0" aria-hidden>{s.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13.5px] font-bold text-tx leading-tight">{s.title}</p>
+                  <p className="text-[12px] text-tx3 mt-0.5 leading-snug">{s.subtitle}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <div className="card p-3.5 text-center">
@@ -297,13 +373,20 @@ export default function PerfilPage() {
 
         {/* Acciones rápidas */}
         <div className="card divide-y divide-[var(--br)]">
-          <a href="/mis-reservas"
+          <Link href="/mis-reservas"
             className="px-4 py-3.5 flex items-center justify-between active:bg-sf transition-colors">
             <span className="text-[14px] font-semibold text-tx">Mis reservas</span>
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
               <path d="M9 18l6-6-6-6" stroke="var(--tx3)" strokeWidth="2" strokeLinecap="round" />
             </svg>
-          </a>
+          </Link>
+          <Link href="/perfil/configuracion"
+            className="px-4 py-3.5 flex items-center justify-between active:bg-sf transition-colors">
+            <span className="text-[14px] font-semibold text-tx">Configuración</span>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+              <path d="M9 18l6-6-6-6" stroke="var(--tx3)" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </Link>
         </div>
 
         {/* Cerrar sesión */}

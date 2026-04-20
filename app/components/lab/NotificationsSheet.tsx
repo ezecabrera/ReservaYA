@@ -17,12 +17,22 @@ import Link from 'next/link'
 
 interface Notif {
   id: string
-  kind: 'reservation_upcoming' | 'pending_payment' | 'confirmed'
+  kind: 'reservation_upcoming' | 'pending_payment' | 'confirmed' | 'streak' | 'tier'
   title: string
   body: string
   href: string
-  createdAt: number  // ms
+  icon?: string          // emoji para kinds 'streak' y 'tier'
+  createdAt: number      // ms
   read: boolean
+}
+
+interface RewardsMini {
+  tier: 'bronce' | 'plata' | 'oro'
+  tierLabel: string
+  toNextTier: number | null
+  nextTierLabel: string | null
+  incentive: string
+  streaks: Array<{ icon: string; title: string; subtitle: string }>
 }
 
 function readLocalReadIds(): Set<string> {
@@ -61,12 +71,18 @@ export function NotificationsSheet({ open, onClose }: Props) {
     if (!open) return
     const readIds = readLocalReadIds()
     setLoading(true)
-    fetch('/api/mis-reservas')
-      .then((r) => r.ok ? r.json() : [])
-      .then((list: Array<{ id: string; status: string; date: string; time_slot: string; venues: { name: string } | null }>) => {
-        if (!Array.isArray(list)) { setNotifs([]); return }
-        const now = Date.now()
-        const items: Notif[] = []
+    Promise.all([
+      fetch('/api/mis-reservas').then((r) => r.ok ? r.json() : []).catch(() => []),
+      fetch('/api/perfil').then((r) => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([list, profile]: [
+      Array<{ id: string; status: string; date: string; time_slot: string; venues: { name: string } | null }>,
+      { rewards?: RewardsMini } | null,
+    ]) => {
+      const now = Date.now()
+      const items: Notif[] = []
+
+      // Reservas
+      if (Array.isArray(list)) {
         for (const r of list) {
           const ts = new Date(`${r.date}T${r.time_slot.slice(0, 5)}:00`).getTime()
           if (r.status === 'pending_payment') {
@@ -101,10 +117,42 @@ export function NotificationsSheet({ open, onClose }: Props) {
             })
           }
         }
-        items.sort((a, b) => b.createdAt - a.createdAt)
-        setNotifs(items)
-      })
-      .finally(() => setLoading(false))
+      }
+
+      // Rewards: rachas + nudge de tier
+      const rewards = profile?.rewards
+      if (rewards) {
+        rewards.streaks.forEach((s, i) => {
+          const id = `streak-${i}-${s.title}`
+          items.push({
+            id,
+            kind: 'streak',
+            icon: s.icon,
+            title: s.title,
+            body: s.subtitle,
+            href: '/perfil',
+            createdAt: now - (2 + i) * 3600_000,
+            read: readIds.has(id),
+          })
+        })
+        if (rewards.toNextTier !== null && rewards.toNextTier <= 2 && rewards.toNextTier > 0) {
+          const id = `tier-next-${rewards.nextTierLabel}`
+          items.push({
+            id,
+            kind: 'tier',
+            icon: '🔥',
+            title: `A ${rewards.toNextTier} reserva${rewards.toNextTier === 1 ? '' : 's'} de ${rewards.nextTierLabel}`,
+            body: rewards.incentive,
+            href: '/perfil',
+            createdAt: now - 4 * 3600_000,
+            read: readIds.has(id),
+          })
+        }
+      }
+
+      items.sort((a, b) => b.createdAt - a.createdAt)
+      setNotifs(items)
+    }).finally(() => setLoading(false))
   }, [open])
 
   function markAllRead() {
@@ -171,10 +219,15 @@ export function NotificationsSheet({ open, onClose }: Props) {
                     className="flex gap-3 p-4 active:bg-sf transition-colors"
                   >
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
-                                    ${n.kind === 'pending_payment' ? 'bg-c3l' : n.kind === 'reservation_upcoming' ? 'bg-c1l' : 'bg-c2l'}`}>
+                                    ${n.kind === 'pending_payment' ? 'bg-c3l'
+                                      : n.kind === 'reservation_upcoming' ? 'bg-c1l'
+                                      : n.kind === 'streak' ? 'bg-c3l'
+                                      : n.kind === 'tier' ? 'bg-c1l'
+                                      : 'bg-c2l'}`}>
                       {n.kind === 'pending_payment' && <span className="text-[16px]">💳</span>}
                       {n.kind === 'reservation_upcoming' && <span className="text-[16px]">⏰</span>}
                       {n.kind === 'confirmed' && <span className="text-[16px]">✓</span>}
+                      {(n.kind === 'streak' || n.kind === 'tier') && <span className="text-[16px]">{n.icon}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -204,18 +257,34 @@ export function useUnreadCount(): number {
     let cancelled = false
     async function load() {
       try {
-        const res = await fetch('/api/mis-reservas')
-        if (!res.ok) return
-        const list = await res.json()
-        if (!Array.isArray(list) || cancelled) return
+        const [resList, resProfile] = await Promise.all([
+          fetch('/api/mis-reservas'),
+          fetch('/api/perfil'),
+        ])
+        const list = resList.ok ? await resList.json() : []
+        const profile = resProfile.ok ? await resProfile.json() : null
+        if (cancelled) return
         const readIds = readLocalReadIds()
         const now = Date.now()
         let count = 0
-        for (const r of list) {
-          const ts = new Date(`${r.date}T${r.time_slot.slice(0, 5)}:00`).getTime()
-          if (r.status === 'pending_payment' && !readIds.has(`pay-${r.id}`)) count++
-          else if (r.status === 'confirmed' && ts > now && ts - now < 24 * 3600_000 && !readIds.has(`upc-${r.id}`)) count++
-          else if (r.status === 'confirmed' && !readIds.has(`cfm-${r.id}`)) count++
+        if (Array.isArray(list)) {
+          for (const r of list) {
+            const ts = new Date(`${r.date}T${r.time_slot.slice(0, 5)}:00`).getTime()
+            if (r.status === 'pending_payment' && !readIds.has(`pay-${r.id}`)) count++
+            else if (r.status === 'confirmed' && ts > now && ts - now < 24 * 3600_000 && !readIds.has(`upc-${r.id}`)) count++
+            else if (r.status === 'confirmed' && !readIds.has(`cfm-${r.id}`)) count++
+          }
+        }
+        const rewards = (profile as { rewards?: RewardsMini } | null)?.rewards
+        if (rewards) {
+          rewards.streaks.forEach((s, i) => {
+            const id = `streak-${i}-${s.title}`
+            if (!readIds.has(id)) count++
+          })
+          if (rewards.toNextTier !== null && rewards.toNextTier <= 2 && rewards.toNextTier > 0) {
+            const id = `tier-next-${rewards.nextTierLabel}`
+            if (!readIds.has(id)) count++
+          }
         }
         setN(count)
       } catch { /* silent */ }
