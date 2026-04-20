@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL(`/login?error=${msg}`, url.origin))
   }
 
+  // Upsert en public.users con el nombre del proveedor (full_name para Google)
   try {
     const admin = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
       )
     }
   } catch {
-    // No bloquear el login si la sincronización falla
+    // No bloquear el login si la sincronización falla — el usuario igual queda autenticado
   }
 
   return NextResponse.redirect(new URL(redirect, url.origin))

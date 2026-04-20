@@ -36,7 +36,7 @@ const config: Config = {
       },
       // ── Tipografía del design system ────────────────────────────────────
       fontFamily: {
-        display: ['var(--font-display)', 'serif'],
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
         body: ['var(--font-body)', 'system-ui', 'sans-serif'],
       },
       // ── Border radius del design system ─────────────────────────────────

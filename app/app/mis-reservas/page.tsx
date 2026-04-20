@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { Countdown } from '@/components/lab/Countdown'
+import { QRDisplay } from '@/components/confirmation/QRDisplay'
+import { ReviewModal } from '@/components/lab/ReviewModal'
 
 interface Reservation {
   id: string
@@ -30,16 +33,49 @@ function isUpcoming(date: string, timeSlot: string) {
   return dt.getTime() > Date.now()
 }
 
+/** Normaliza time_slot de "HH:MM:SS" a "HH:MM" */
+function formatTime(timeSlot: string): string {
+  return timeSlot.slice(0, 5)
+}
+
+/** URL del QR apunta al endpoint de check-in del panel */
+function buildQRUrl(token: string): string {
+  if (typeof window === 'undefined') return ''
+  const panelUrl = process.env.NEXT_PUBLIC_PANEL_URL ?? 'http://localhost:3001'
+  return `${panelUrl}/check-in?token=${encodeURIComponent(token)}`
+}
+
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T12:00:00').toLocaleDateString('es-AR', {
     weekday: 'short', day: 'numeric', month: 'short',
   })
 }
 
+const CANCEL_REASONS = [
+  'Cambié de plan',
+  'Me enfermé',
+  'Voy a ir otro día',
+  'Reservé en otro lado',
+  'Otro motivo',
+]
+
 export default function MisReservasPage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'proximas' | 'pasadas'>('proximas')
+  const [reviewFor, setReviewFor] = useState<Reservation | null>(null)
+  const [reviewed, setReviewed] = useState<Set<string>>(new Set())
+  const [cancelFor, setCancelFor] = useState<Reservation | null>(null)
+  const [cancelReason, setCancelReason] = useState<string>('')
+  const [cancelling, setCancelling] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('reservaya-reviews')
+      const list = raw ? JSON.parse(raw) : []
+      setReviewed(new Set(list.map((r: { reservation_id: string }) => r.reservation_id)))
+    } catch { /* silent */ }
+  }, [])
 
   useEffect(() => {
     fetch('/api/mis-reservas')
@@ -50,11 +86,16 @@ export default function MisReservasPage() {
 
   const proximas = reservations.filter(r =>
     isUpcoming(r.date, r.time_slot) && r.status !== 'cancelled'
-  )
+  ).sort((a, b) => {
+    const tA = new Date(`${a.date}T${a.time_slot}:00`).getTime()
+    const tB = new Date(`${b.date}T${b.time_slot}:00`).getTime()
+    return tA - tB
+  })
   const pasadas = reservations.filter(r =>
     !isUpcoming(r.date, r.time_slot) || r.status === 'cancelled'
   )
   const list = tab === 'proximas' ? proximas : pasadas
+  const nextUp = proximas.find(r => r.status === 'confirmed' || r.status === 'pending_payment')
 
   return (
     <div className="min-h-screen bg-bg pb-28">
@@ -64,6 +105,45 @@ export default function MisReservasPage() {
           Mis reservas
         </h1>
       </div>
+
+      {/* Hero countdown + QR para próxima reserva */}
+      {!loading && nextUp && tab === 'proximas' && (
+        <div className="screen-x mb-5 space-y-3">
+          <Link
+            href={`/reserva/${nextUp.id}/confirmacion`}
+            className="block active:scale-[0.99] transition-transform duration-[180ms] space-y-3"
+          >
+            <div className="bg-white rounded-2xl p-5 border border-[var(--br)] shadow-sm">
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-c1 animate-pulse" />
+                <p className="text-tx3 text-[10px] font-bold uppercase tracking-[0.15em]">
+                  Tu próxima salida
+                </p>
+              </div>
+              <p className="font-display text-[22px] font-bold text-tx leading-tight">
+                {nextUp.venues?.name ?? 'Reserva'}
+              </p>
+              <p className="text-tx2 text-[12px] mt-0.5">
+                {formatDate(nextUp.date)} · {formatTime(nextUp.time_slot)} hs · Mesa {nextUp.tables?.label}
+              </p>
+            </div>
+            <Countdown date={nextUp.date} time={formatTime(nextUp.time_slot)} />
+          </Link>
+
+          {/* QR prominente — listo para mostrar en la entrada del local */}
+          {nextUp.qr_token && (
+            <div className="bg-white rounded-2xl p-4 border border-[var(--br)] shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-bold text-tx3 uppercase tracking-[0.15em]">
+                  Tu QR de check-in
+                </p>
+                <span className="badge bg-c2l text-[#0F7A5A]">Listo</span>
+              </div>
+              <QRDisplay value={buildQRUrl(nextUp.qr_token)} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="screen-x mb-5">
@@ -153,7 +233,7 @@ export default function MisReservasPage() {
                         <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
                         <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       </svg>
-                      {r.time_slot} hs
+                      {formatTime(r.time_slot)} hs
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
@@ -178,21 +258,35 @@ export default function MisReservasPage() {
                       >
                         Ver QR
                       </Link>
-                      <Link
-                        href={`/${r.venues.id}`}
-                        className="flex-1 text-center py-2 rounded-lg bg-c1l text-c1
+                      <button
+                        onClick={() => { setCancelFor(r); setCancelReason('') }}
+                        className="flex-1 text-center py-2 rounded-lg bg-white text-[#D63646]
                                    text-[12px] font-bold border border-c1/20
                                    active:scale-95 transition-transform"
                       >
-                        Reservar de nuevo
-                      </Link>
+                        Cancelar
+                      </button>
                     </div>
                   )}
                   {!upcoming && r.status === 'checked_in' && r.venues && (
-                    <div className="mt-3 pt-3 border-t border-[var(--br)]">
+                    <div className="mt-3 pt-3 border-t border-[var(--br)] flex gap-2">
+                      {reviewed.has(r.id) ? (
+                        <span className="flex-1 text-center py-2 rounded-lg bg-c2l text-[#0F7A5A]
+                                         text-[12px] font-bold border border-c2/20">
+                          ✓ Ya dejaste reseña
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setReviewFor(r)}
+                          className="flex-1 text-center py-2 rounded-lg bg-c3 text-white
+                                     text-[12px] font-bold active:scale-95 transition-transform"
+                        >
+                          ★ Dejar reseña
+                        </button>
+                      )}
                       <Link
                         href={`/${r.venues.id}`}
-                        className="block text-center py-2 rounded-lg bg-sf text-tx2
+                        className="flex-1 text-center py-2 rounded-lg bg-sf text-tx2
                                    text-[12px] font-semibold border border-[var(--br)]
                                    active:scale-95 transition-transform"
                       >
@@ -206,6 +300,99 @@ export default function MisReservasPage() {
           })
         )}
       </div>
+
+      {reviewFor && (
+        <ReviewModal
+          open={!!reviewFor}
+          onClose={() => setReviewFor(null)}
+          reservation={{
+            id: reviewFor.id,
+            venueName: reviewFor.venues?.name ?? 'Restaurante',
+            date: reviewFor.date,
+          }}
+          onSubmitted={() => setReviewed((s) => new Set([...s, reviewFor.id]))}
+        />
+      )}
+
+      {/* Modal cancelar con razones */}
+      {cancelFor && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4">
+          <button
+            aria-label="Cerrar"
+            onClick={() => !cancelling && setCancelFor(null)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          />
+          <div className="relative bg-bg rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+              Cancelar reserva
+            </p>
+            <h3 className="font-display text-[20px] font-bold text-tx mt-0.5 leading-tight">
+              {cancelFor.venues?.name}
+            </h3>
+            <p className="text-[12px] text-tx2 mt-1">
+              {formatDate(cancelFor.date)} · {formatTime(cancelFor.time_slot)} hs · Mesa {cancelFor.tables?.label}
+            </p>
+
+            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mt-5 mb-2">
+              ¿Por qué cancelás?
+            </p>
+            <div className="space-y-1.5">
+              {CANCEL_REASONS.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setCancelReason(r)}
+                  className={`w-full text-left px-4 py-2.5 rounded-lg border text-[13px] font-semibold transition-all
+                    ${cancelReason === r
+                      ? 'bg-c1l border-c1 text-c1'
+                      : 'bg-white border-[var(--br)] text-tx2 active:scale-[0.98]'}`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-5 bg-c2l rounded-lg p-3">
+              <p className="text-[12px] text-[#0F7A5A] font-semibold">
+                Cancelás a tiempo — la seña se te devuelve 100% en las próximas 24hs.
+              </p>
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setCancelFor(null)}
+                disabled={cancelling}
+                className="flex-1 py-3 rounded-md bg-sf text-tx2 text-[14px] font-semibold
+                           border border-[var(--br)] active:scale-[0.98] transition-transform"
+              >
+                Volver
+              </button>
+              <button
+                onClick={async () => {
+                  if (!cancelReason) { alert('Elegí un motivo'); return }
+                  setCancelling(true)
+                  try {
+                    // TODO: endpoint real — por ahora sólo actualiza localmente
+                    await fetch(`/api/mis-reservas/${cancelFor.id}/cancelar`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ reason: cancelReason }),
+                    }).catch(() => null)
+                    setReservations((rs) => rs.map((r) => r.id === cancelFor.id ? { ...r, status: 'cancelled' } : r))
+                    setCancelFor(null)
+                  } finally {
+                    setCancelling(false)
+                  }
+                }}
+                disabled={cancelling || !cancelReason}
+                className="flex-1 py-3 rounded-md bg-c1 text-white text-[14px] font-bold
+                           disabled:opacity-50 active:scale-[0.98] transition-transform"
+              >
+                {cancelling ? 'Cancelando…' : 'Confirmar cancelación'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

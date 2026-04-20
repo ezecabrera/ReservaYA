@@ -76,64 +76,6 @@ importers:
         specifier: ^5.5.4
         version: 5.9.3
 
-  app-lab:
-    dependencies:
-      '@supabase/ssr':
-        specifier: ^0.5.1
-        version: 0.5.2(@supabase/supabase-js@2.103.2)
-      '@supabase/supabase-js':
-        specifier: ^2.45.4
-        version: 2.103.2
-      jose:
-        specifier: ^5.9.3
-        version: 5.10.0
-      mercadopago:
-        specifier: ^2.0.15
-        version: 2.12.0
-      next:
-        specifier: 14.2.15
-        version: 14.2.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      qrcode:
-        specifier: ^1.5.4
-        version: 1.5.4
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@types/node':
-        specifier: ^22.7.5
-        version: 22.19.17
-      '@types/qrcode':
-        specifier: ^1.5.5
-        version: 1.5.6
-      '@types/react':
-        specifier: ^18.3.11
-        version: 18.3.28
-      '@types/react-dom':
-        specifier: ^18.3.1
-        version: 18.3.7(@types/react@18.3.28)
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.0(postcss@8.5.10)
-      eslint:
-        specifier: ^8.57.1
-        version: 8.57.1
-      eslint-config-next:
-        specifier: 14.2.15
-        version: 14.2.15(eslint@8.57.1)(typescript@5.9.3)
-      postcss:
-        specifier: ^8.4.47
-        version: 8.5.10
-      tailwindcss:
-        specifier: ^3.4.14
-        version: 3.4.19
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.3
-
   panel:
     dependencies:
       '@supabase/ssr':

@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { Countdown } from '@/components/lab/Countdown'
 
 interface ProfileData {
   name: string
@@ -13,8 +15,18 @@ interface ProfileData {
   stats: {
     total: number
     checkedIn: number
+    pending?: number
     favoriteVenue: string | null
   }
+}
+
+interface UpcomingReservation {
+  id: string
+  date: string
+  time_slot: string
+  status: string
+  venues: { name: string } | null
+  tables: { label: string } | null
 }
 
 const AVATAR_COLORS = ['#FF4757', '#2ED8A8', '#4E8EFF', '#9B59FF', '#FFB800', '#FF8C42']
@@ -36,6 +48,7 @@ export default function PerfilPage() {
   const [newName, setNewName] = useState('')
   const [saving, setSaving] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [nextUp, setNextUp] = useState<UpcomingReservation | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -47,6 +60,28 @@ export default function PerfilPage() {
       })
       .then(d => { if (d) { setData(d); setNewName(d.name) } })
       .finally(() => setLoading(false))
+
+    // Fetch próxima reserva en paralelo (silencioso si falla)
+    fetch('/api/mis-reservas')
+      .then(r => r.ok ? r.json() : [])
+      .then((list: UpcomingReservation[]) => {
+        if (!Array.isArray(list)) return
+        const now = Date.now()
+        const toTs = (date: string, timeSlot: string) => {
+          // time_slot viene como "HH:MM:SS" o "HH:MM" — normalizar a HH:MM
+          const t = timeSlot.slice(0, 5)
+          return new Date(`${date}T${t}:00`).getTime()
+        }
+        const upcoming = list
+          .map(r => ({ ...r, time_slot: r.time_slot.slice(0, 5) }))
+          .filter(r => {
+            const t = toTs(r.date, r.time_slot)
+            return t > now && (r.status === 'confirmed' || r.status === 'pending_payment')
+          })
+          .sort((a, b) => toTs(a.date, a.time_slot) - toTs(b.date, b.time_slot))
+        setNextUp(upcoming[0] ?? null)
+      })
+      .catch(() => { /* silent */ })
   }, [router])
 
   async function handleSaveName() {
@@ -168,13 +203,46 @@ export default function PerfilPage() {
 
       <div className="screen-x space-y-4">
 
+        {/* Próxima reserva */}
+        {nextUp && (
+          <Link
+            href={`/reserva/${nextUp.id}/confirmacion`}
+            className="block active:scale-[0.99] transition-transform duration-[180ms] space-y-2"
+          >
+            <div className="bg-white rounded-xl p-4 border border-[var(--br)] shadow-sm">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-c1 animate-pulse" />
+                <p className="text-tx3 text-[10px] font-bold uppercase tracking-[0.15em]">
+                  Tu próxima salida
+                </p>
+              </div>
+              <p className="font-display text-[18px] font-bold text-tx truncate">
+                {nextUp.venues?.name}
+              </p>
+              <p className="text-tx2 text-[12px] mt-0.5">
+                {new Date(nextUp.date + 'T12:00:00').toLocaleDateString('es-AR', {
+                  weekday: 'short', day: 'numeric', month: 'short',
+                })} · {nextUp.time_slot} hs · Mesa {nextUp.tables?.label}
+              </p>
+            </div>
+            <Countdown date={nextUp.date} time={nextUp.time_slot} />
+          </Link>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <div className="card p-3.5 text-center">
             <p className="font-display text-[26px] font-bold text-tx leading-none">
               {data.stats.total}
             </p>
-            <p className="text-tx3 text-[11px] font-semibold mt-1">Reservas</p>
+            <p className="text-tx3 text-[11px] font-semibold mt-1">
+              {(data.stats.pending ?? 0) > 0 ? 'Total' : 'Reservas'}
+            </p>
+            {(data.stats.pending ?? 0) > 0 && (
+              <p className="text-c3 text-[10px] font-bold mt-0.5">
+                {data.stats.pending} en proceso
+              </p>
+            )}
           </div>
           <div className="card p-3.5 text-center">
             <p className="font-display text-[26px] font-bold text-c2 leading-none">
@@ -184,8 +252,8 @@ export default function PerfilPage() {
           </div>
           <div className="card p-3.5 text-center">
             <p className="font-display text-[22px] font-bold text-tx leading-none">
-              {data.stats.total > 0
-                ? `${Math.round((data.stats.checkedIn / data.stats.total) * 100)}%`
+              {data.stats.checkedIn + data.stats.total - (data.stats.pending ?? 0) > 0
+                ? `${Math.round((data.stats.checkedIn / Math.max(1, data.stats.total - (data.stats.pending ?? 0))) * 100)}%`
                 : '—'
               }
             </p>

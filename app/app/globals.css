@@ -52,7 +52,7 @@
     --r-full: 99px;
 
     /* ── Tipografía ── */
-    --font-display: 'Fraunces', serif;
+    --font-display: 'Poppins', system-ui, sans-serif;
     --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
 
     /* ── Transiciones ── */
@@ -73,6 +73,50 @@
   .safe-bottom {
     padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
+
+  /* ── Accesibilidad: focus visible global ─────────────────────────────── */
+  /* WCAG 2.4.7 — el outline del browser queda invisible sobre nuestros
+     colores coral; definimos uno explícito con buen contraste sobre todos
+     los backgrounds del sistema (coral CTA, sf, white, tx). */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c4);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  /* Sobre fondos oscuros, usar el mismo azul pero más opaco */
+  .bg-tx :focus-visible,
+  [class*="bg-tx"] :focus-visible,
+  [class*="from-tx"] :focus-visible {
+    outline-color: #7FA8FF;
+  }
+
+  /* ── prefers-reduced-motion ──────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── Skip link ───────────────────────────────────────────────────────── */
+  .skip-link {
+    @apply absolute left-2 top-2 z-[100] px-4 py-2 rounded-md
+           bg-tx text-white text-[13px] font-semibold
+           -translate-y-16 focus:translate-y-0 transition-transform;
+  }
+
+}
+
+/* ── Bottom sheet ── visible desde el mount, sin animación compleja */
+.sheet-slide-up {
+  transform: translateY(0);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

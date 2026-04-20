@@ -7,8 +7,10 @@ import { createServerClient } from '@supabase/ssr'
  * Crea un lock de selección (3 min) sobre la mesa.
  *
  * Usa admin client (service_role) porque el wizard permite seleccionar mesa
- * ANTES del login. Con el anon client, la policy RLS table_locks_auth_insert
- * rechaza porque auth.uid() es NULL.
+ * ANTES del login (se pide login recién al confirmar). Con el cliente anon,
+ * la policy RLS table_locks_auth_insert rechaza (auth.uid() IS NULL).
+ * Este endpoint es el único path para insertar locks, así que el control
+ * sigue siendo a través de esta route.
  */
 
 function adminClient() {
@@ -27,8 +29,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'table_id requerido' }, { status: 400 })
   }
 
+  // Limpiar locks expirados (RPC existe server-side con security definer)
   await admin.rpc('cleanup_expired_locks')
 
+  // Verificar que no haya lock activo sobre esta mesa
   const { data: existingLock } = await admin
     .from('table_locks')
     .select('id, expires_at')
