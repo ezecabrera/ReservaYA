@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { PushNotificationsToggle } from '@/components/ui/PushNotificationsToggle'
 
 interface ProfileConfig {
   name: string
@@ -138,6 +139,14 @@ export default function ConfiguracionPage() {
                 placeholder="Ger"
                 autoComplete="nickname"
               />
+            </div>
+
+            {/* Notificaciones push */}
+            <div>
+              <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider mb-2">
+                Alertas
+              </p>
+              <PushNotificationsToggle />
             </div>
 
             {/* Card cuenta */}
