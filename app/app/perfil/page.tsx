@@ -31,10 +31,24 @@ interface ProfileData {
   rewards?: RewardsData
 }
 
-const TIER_META: Record<RewardsData['tier'], { label: string; emoji: string; bg: string; bar: string; max: number }> = {
-  bronce: { label: 'Bronce', emoji: '🥉', bg: '#F5E9DC', bar: '#B78200', max: 3 },
-  plata:  { label: 'Plata',  emoji: '🥈', bg: '#E6EAF0', bar: '#6B7280', max: 7 },
-  oro:    { label: 'Oro',    emoji: '🥇', bg: '#FFF4D6', bar: '#D4A017', max: 7 },
+const TIER_META: Record<RewardsData['tier'], {
+  label: string; emoji: string; gradient: string; text: string; bar: string; max: number
+}> = {
+  bronce: {
+    label: 'Bronce', emoji: '🥉',
+    gradient: 'linear-gradient(135deg, #F3E3D2 0%, #E5C8A8 100%)',
+    text: '#7A4A24', bar: '#7A4A24', max: 3,
+  },
+  plata:  {
+    label: 'Plata', emoji: '🥈',
+    gradient: 'linear-gradient(135deg, #E8EBEF 0%, #C8D0DA 100%)',
+    text: '#525966', bar: '#525966', max: 7,
+  },
+  oro:    {
+    label: 'Oro', emoji: '🥇',
+    gradient: 'linear-gradient(135deg, #FFF2C4 0%, #F0C866 100%)',
+    text: '#8A6310', bar: '#8A6310', max: 7,
+  },
 }
 
 interface UpcomingReservation {
@@ -246,46 +260,57 @@ export default function PerfilPage() {
           </Link>
         )}
 
-        {/* Tu nivel + incentivo */}
+        {/* Tu nivel + incentivo — gradient por tier (diseño Claude Design) */}
         {data.rewards && (() => {
           const r = data.rewards
           const meta = TIER_META[r.tier]
           const progress = Math.min(r.reservationsThisMonth / meta.max, 1)
           return (
-            <div className="rounded-xl p-4 border border-[var(--br)]"
-                 style={{ background: `linear-gradient(135deg, ${meta.bg} 0%, #FFF 120%)` }}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-[22px]" aria-hidden>{meta.emoji}</span>
-                  <div>
-                    <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
-                      Tu nivel
-                    </p>
-                    <p className="font-display text-[20px] font-bold text-tx leading-none mt-0.5">
+            <div
+              className="rounded-xl p-[18px] overflow-hidden"
+              style={{ background: meta.gradient, color: meta.text, border: '1px solid rgba(0,0,0,0.06)' }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] opacity-65">
+                    Tu nivel
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[28px]" aria-hidden>{meta.emoji}</span>
+                    <span className="font-display text-[26px] font-black leading-none tracking-tight capitalize">
                       {r.tierLabel}
-                    </p>
+                    </span>
                   </div>
                 </div>
-                <p className="text-[12px] text-tx2 text-right leading-tight">
-                  <span className="font-bold text-tx">{r.reservationsThisMonth}</span>
-                  <br />
-                  {r.reservationsThisMonth === 1 ? 'reserva' : 'reservas'}
-                  <br />este mes
-                </p>
+                <div className="text-right">
+                  <p className="font-display text-[34px] font-black leading-none">
+                    {r.reservationsThisMonth}
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-[1px] opacity-65 mt-1 leading-tight">
+                    reservas<br/>este mes
+                  </p>
+                </div>
               </div>
 
               {/* Progress bar */}
-              <div className="mt-3.5 h-1.5 rounded-full bg-white/70 overflow-hidden">
+              <div className="mt-3.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.12)' }}>
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${progress * 100}%`, background: meta.bar }}
                 />
               </div>
 
-              {/* Incentivo */}
-              <p className="text-[13px] text-tx mt-3 leading-snug">
-                {r.incentive}
-              </p>
+              {/* Incentivo + próximo tier */}
+              <div className="flex items-center justify-between mt-2.5 gap-3">
+                <p className="text-[12.5px] font-bold leading-snug flex-1">
+                  {r.incentive}
+                </p>
+                {r.nextTierLabel && (
+                  <p className="text-[11px] font-bold uppercase tracking-[0.8px] opacity-60 whitespace-nowrap">
+                    {r.nextTierLabel === 'Plata' ? '🥈' : '🥇'} {r.nextTierLabel}
+                  </p>
+                )}
+              </div>
             </div>
           )
         })()}

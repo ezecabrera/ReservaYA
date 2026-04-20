@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import type { Venue } from '@/lib/shared'
 import { useGeolocation, distanceKm } from '@/lib/geolocation'
 import { SearchPill } from './SearchPill'
@@ -149,8 +149,10 @@ export function HomeClient({ venues, userFirstName }: Props) {
     filters.price.length + filters.ambience.length + filters.features.length +
     filters.neighborhoods.length + filters.promos.length
 
-  const hero = filtered[0]
-  const rest = filtered.slice(1)
+  // Featured: los primeros 4 de la lista filtrada van al carrusel destacado,
+  // con un tag rotativo por posición. Es el patrón del mockup de Claude Design.
+  const featured = filtered.slice(0, 4)
+  const rest = filtered.slice(4)
   const availableNow = filtered.filter((v) => mockSlots(v.id).length > 0).length
 
   return (
@@ -255,22 +257,15 @@ export function HomeClient({ venues, userFirstName }: Props) {
         </div>
       </div>
 
-      {/* Hero venue (primera pantalla) */}
-      {hero ? (
-        <div className="screen-x mt-3 mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
-              Destacado
-            </p>
-            {availableNow > 0 && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0F7A5A]">
-                <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse" />
-                {availableNow} disponibles ahora
-              </span>
-            )}
-          </div>
-          <VenueCardLab venue={hero} variant="hero" availableSlots={mockSlots(hero.id)} distanceKm={distTo(hero)} linkSuffix={qs} />
-        </div>
+      {/* Destacados — carrusel auto-scroll 5s, card centrada scale 1.03 */}
+      {featured.length > 0 ? (
+        <FeaturedCarousel
+          venues={featured}
+          availableNow={availableNow}
+          linkSuffix={qs}
+          slotsFor={(v) => mockSlots(v.id)}
+          distanceFor={(v) => distTo(v)}
+        />
       ) : (
         <div className="screen-x mt-3 mb-5 text-center py-8 bg-sf rounded-xl border border-[var(--br)]">
           <p className="text-[40px]">🔍</p>
@@ -289,7 +284,7 @@ export function HomeClient({ venues, userFirstName }: Props) {
       )}
 
       {/* Live reviews strip — social proof en movimiento, arriba de los controles */}
-      {hero && (
+      {featured.length > 0 && (
         <div className="mb-6">
           <div className="screen-x">
             <LiveReviewsStrip />
@@ -412,5 +407,137 @@ function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }
         </svg>
       </button>
     </span>
+  )
+}
+
+/**
+ * Carrusel "Destacados" — auto-scroll cada 5s, card centrada escalada 1.03,
+ * las laterales en 0.96 + opacity 0.7. Dots indicator abajo (activo 18px coral).
+ * Tag decorativo rotativo por posición.
+ */
+const FEATURED_TAGS: Array<{ label: string; tone: 'purple' | 'red' | 'amber' | 'blue' }> = [
+  { label: 'Evento especial', tone: 'purple' },
+  { label: '20% OFF hoy',     tone: 'red' },
+  { label: 'Destacado',       tone: 'amber' },
+  { label: 'Nuevo menú',      tone: 'blue' },
+]
+
+const TAG_BG: Record<'purple' | 'red' | 'amber' | 'blue', string> = {
+  purple: 'bg-c5l text-[#6B30CC]',
+  red:    'bg-c1l text-c1',
+  amber:  'bg-c3l text-[#B78200]',
+  blue:   'bg-c4l text-[#2F6AD9]',
+}
+
+function FeaturedCarousel({
+  venues,
+  availableNow,
+  linkSuffix,
+  slotsFor,
+  distanceFor,
+}: {
+  venues: Venue[]
+  availableNow: number
+  linkSuffix: string
+  slotsFor: (v: Venue) => string[]
+  distanceFor: (v: Venue) => number | undefined
+}) {
+  const [idx, setIdx] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Auto-advance cada 5s (sólo si hay > 1)
+  useEffect(() => {
+    if (venues.length < 2) return
+    const t = setInterval(() => setIdx((i) => (i + 1) % venues.length), 5000)
+    return () => clearInterval(t)
+  }, [venues.length])
+
+  // Scroll programático a la card activa, centrada
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const child = el.children[idx] as HTMLElement | undefined
+    if (!child) return
+    const left = child.offsetLeft - (el.clientWidth - child.clientWidth) / 2
+    el.scrollTo({ left, behavior: 'smooth' })
+  }, [idx])
+
+  return (
+    <section className="mt-3 mb-5">
+      <div className="screen-x flex items-center justify-between mb-2">
+        <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
+          Destacados
+        </p>
+        {availableNow > 0 && venues.length > 1 ? (
+          <div className="flex gap-1">
+            {venues.map((_, i) => (
+              <span
+                key={i}
+                aria-hidden
+                className="rounded-full transition-all duration-300"
+                style={{
+                  width: i === idx ? 18 : 5,
+                  height: 5,
+                  background: i === idx ? 'var(--c1)' : 'var(--sf2)',
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          availableNow > 0 && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0F7A5A]">
+              <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse" />
+              {availableNow} disponibles ahora
+            </span>
+          )
+        )}
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto no-scrollbar"
+        style={{
+          scrollSnapType: 'x mandatory',
+          scrollPaddingLeft: 24,
+          padding: '8px 24px 12px',
+        }}
+      >
+        {venues.map((v, i) => {
+          const active = i === idx
+          const tag = FEATURED_TAGS[i % FEATURED_TAGS.length]
+          return (
+            <div
+              key={v.id}
+              onClick={() => setIdx(i)}
+              className="flex-shrink-0 relative"
+              style={{
+                width: 'calc(100% - 48px)',
+                scrollSnapAlign: 'center',
+                transform: active ? 'scale(1.03)' : 'scale(0.96)',
+                opacity: active ? 1 : 0.7,
+                transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease',
+                transformOrigin: 'center center',
+              }}
+            >
+              <span
+                className={`absolute top-3 left-3 z-10 inline-flex items-center gap-1
+                            px-2.5 py-1 rounded-full text-[10px] font-bold
+                            shadow-sm backdrop-blur-sm ${TAG_BG[tag.tone]}`}
+                style={{ background: 'rgba(255,255,255,0.95)' }}
+              >
+                ★ {tag.label}
+              </span>
+              <VenueCardLab
+                venue={v}
+                variant="hero"
+                availableSlots={slotsFor(v)}
+                distanceKm={distanceFor(v)}
+                linkSuffix={linkSuffix}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </section>
   )
 }
