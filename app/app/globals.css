@@ -52,7 +52,7 @@
     --r-full: 99px;
 
     /* ── Tipografía ── */
-    --font-display: 'Poppins', system-ui, sans-serif;
+    --font-display: 'Fraunces', 'Georgia', serif;
     --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
 
     /* ── Transiciones ── */

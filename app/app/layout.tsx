@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next'
-import { Poppins, Plus_Jakarta_Sans } from 'next/font/google'
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { SplashScreen } from '@/components/ui/SplashScreen'
 
-const poppins = Poppins({
+const fraunces = Fraunces({
   subsets: ['latin'],
-  weight: ['500', '600', '700', '800', '900'],
+  weight: ['600', '700', '800', '900'],
   variable: '--font-display',
   display: 'swap',
 })
@@ -60,7 +60,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={`${poppins.variable} ${plusJakarta.variable}`}>
+    <html lang="es" className={`${fraunces.variable} ${plusJakarta.variable}`}>
       <body className="font-body bg-bg text-tx min-h-screen">
         <a href="#main" className="skip-link">Saltar al contenido</a>
         <SplashScreen />
