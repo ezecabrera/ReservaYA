@@ -68,6 +68,24 @@ export default async function VenueDetailPage({ params, searchParams }: Props) {
     ? (searchParams.tab as ValidTab)
     : 'reservar'
 
+  // Reviews reales (tabla 007) — degrada a [] si la migration no está aplicada
+  const { data: reviewsData, error: reviewsError } = await supabase
+    .from('reviews')
+    .select('id, score, comment, created_at, user:users (name)')
+    .eq('venue_id', params.venueId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  const reviews = !reviewsError && reviewsData
+    ? reviewsData.map((r) => ({
+        id: r.id,
+        score: r.score,
+        comment: r.comment,
+        created_at: r.created_at,
+        author: (r.user as unknown as { name?: string } | null)?.name ?? 'Anónimo',
+      }))
+    : []
+
   return (
     <div className="min-h-screen bg-bg">
       <VenueDetailClient
@@ -75,6 +93,7 @@ export default async function VenueDetailPage({ params, searchParams }: Props) {
         menu={menu}
         prefill={prefill}
         initialTab={initialTab}
+        reviews={reviews}
       />
     </div>
   )
