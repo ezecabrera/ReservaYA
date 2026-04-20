@@ -7,24 +7,33 @@ import { useEffect, useState } from 'react'
  * sessionStorage) para sentirse como un cold-start nativo sin ser molesto
  * en navegaciones internas.
  *
- * Animación: sprite sheet horizontal de 24 frames · 256×256 c/u · 900 ms
- * duration, run-once via `steps(24)` sobre background-position. Respeta
- * prefers-reduced-motion mostrando el poster estático + fade out corto.
+ * Secuencia:
+ *  1. Sprite 24 frames / 900ms (steps, run-once — queda en el último frame
+ *     vía animation-fill-mode: forwards)
+ *  2. Mientras el sprite termina, entra el texto "Un Toque" con fade-up
+ *     (delay casi al final del sprite, duración 600ms)
+ *  3. Hold de 2s mostrando el último frame + texto completo
+ *  4. Fade-out 400ms y unmount
+ *
+ * Respeta prefers-reduced-motion: sin animaciones, sólo crossfade.
  */
 
 const FRAMES = 24
 const FRAME_SIZE = 256
-const DURATION_MS = 900
-const FADE_MS = 280
-const TOTAL_MS = DURATION_MS + FADE_MS
+const SPRITE_MS = 900
+const TEXT_DELAY_MS = 750      // entra al final del sprite
+const TEXT_IN_MS = 500
+const HOLD_MS = 2000
+const FADE_MS = 400
+const TOTAL_MS = SPRITE_MS + HOLD_MS + FADE_MS
 const STORAGE_KEY = 'un-toque-splash-shown'
 
 export function SplashScreen() {
   const [show, setShow] = useState<boolean | null>(null)
+  const [textIn, setTextIn] = useState(false)
   const [fadingOut, setFadingOut] = useState(false)
 
   useEffect(() => {
-    // Primera vez por sesión?
     let already = false
     try { already = sessionStorage.getItem(STORAGE_KEY) === '1' } catch { /* storage bloqueado */ }
     if (already) { setShow(false); return }
@@ -32,10 +41,14 @@ export function SplashScreen() {
     setShow(true)
     try { sessionStorage.setItem(STORAGE_KEY, '1') } catch { /* noop */ }
 
-    // Mostrar el poster un rato, fade out, desmontar
-    const t1 = window.setTimeout(() => setFadingOut(true), DURATION_MS)
-    const t2 = window.setTimeout(() => setShow(false), TOTAL_MS)
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
+    const tText = window.setTimeout(() => setTextIn(true), TEXT_DELAY_MS)
+    const tFade = window.setTimeout(() => setFadingOut(true), SPRITE_MS + HOLD_MS)
+    const tEnd  = window.setTimeout(() => setShow(false),    TOTAL_MS)
+    return () => {
+      window.clearTimeout(tText)
+      window.clearTimeout(tFade)
+      window.clearTimeout(tEnd)
+    }
   }, [])
 
   if (show !== true) return null
@@ -43,7 +56,7 @@ export function SplashScreen() {
   return (
     <div
       aria-hidden
-      className={`fixed inset-0 z-[200] flex items-center justify-center
+      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center
                   bg-c1 transition-opacity
                   ${fadingOut ? 'opacity-0' : 'opacity-100'}`}
       style={{ transitionDuration: `${FADE_MS}ms` }}
@@ -56,10 +69,21 @@ export function SplashScreen() {
           backgroundImage: 'url(/sprites/un-toque/hand-sheet.png)',
           backgroundRepeat: 'no-repeat',
           backgroundSize: `${FRAME_SIZE * FRAMES}px ${FRAME_SIZE}px`,
-          animation: `splashPlay ${DURATION_MS}ms steps(${FRAMES}) forwards`,
+          animation: `splashPlay ${SPRITE_MS}ms steps(${FRAMES}) forwards`,
         }}
       />
-      <p className="absolute bottom-16 font-display text-white font-bold text-[22px] tracking-tight">
+
+      {/* Texto "Un Toque" — entra en fade-up cuando el sprite llega al final */}
+      <p
+        className="font-display text-white text-[44px] leading-none tracking-[-0.02em] mt-6"
+        style={{
+          fontWeight: 900,
+          opacity: textIn ? 1 : 0,
+          transform: textIn ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.96)',
+          transition: `opacity ${TEXT_IN_MS}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${TEXT_IN_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+          textShadow: '0 2px 12px rgba(0,0,0,0.15)',
+        }}
+      >
         Un Toque
       </p>
     </div>
