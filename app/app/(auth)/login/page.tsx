@@ -99,7 +99,11 @@ function LoginContent() {
 
     if (data.session) {
       await ensureProfile()
-      router.push(redirect)
+      // Post-signup: ir a onboarding (primer uso). Si el user salta, llega
+      // al home igual. Preservamos `redirect` vía query por si vino de un
+      // deep-link.
+      const qs = redirect && redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''
+      router.push(`/onboarding${qs}`)
       router.refresh()
     } else {
       setEmailSent(true)
