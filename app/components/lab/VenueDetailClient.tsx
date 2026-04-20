@@ -14,7 +14,7 @@ const TAB_META: { key: DetailTab; label: string }[] = [
   { key: 'menu',     label: 'Menú' },
   { key: 'resenas',  label: 'Reseñas' },
   { key: 'horarios', label: 'Horarios' },
-  { key: 'nosotros', label: 'Sobre' },
+  { key: 'nosotros', label: 'Sobre nosotros' },
 ]
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
