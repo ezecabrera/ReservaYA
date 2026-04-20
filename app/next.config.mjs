@@ -1,3 +1,16 @@
+import nextPwa from 'next-pwa'
+
+const withPWA = nextPwa({
+  dest: 'public',
+  // Disable en dev para que HMR funcione sin interferencia del SW
+  disable: process.env.NODE_ENV !== 'production',
+  register: true,
+  skipWaiting: true,
+  fallbacks: {
+    document: '/offline', // fallback cuando el user pierde red en navegación
+  },
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -15,4 +28,4 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default withPWA(nextConfig)
