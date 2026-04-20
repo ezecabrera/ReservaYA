@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { Venue } from '@/lib/shared'
 import { useFavorites } from '@/lib/favorites'
+import { getVenueHero } from '@/lib/venue-images'
 
 interface Props {
   venue: Venue
@@ -137,10 +138,8 @@ export function VenueCardLab({
                                               border border-[var(--br)] shadow-sm bg-white
                                               active:scale-[0.99] transition-transform duration-[180ms]">
         <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#1A1A2E] to-[#0F3460]">
-          {venue.image_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={getVenueHero(venue)} alt={venue.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
           {/* Disponibilidad top-right (arriba del heart no, a la izquierda del heart) */}
           {available && (
@@ -213,10 +212,8 @@ export function VenueCardLab({
                                               border border-[var(--br)] shadow-sm
                                               active:scale-[0.98] transition-transform duration-[180ms]">
         <div className="relative w-20 h-20 rounded-md overflow-hidden bg-sf2 flex-shrink-0">
-          {venue.image_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={getVenueHero(venue)} alt={venue.name} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0 py-0.5 pr-9">
           <div className="flex items-start justify-between gap-2">
@@ -254,10 +251,8 @@ export function VenueCardLab({
           className="block bg-white rounded-xl overflow-hidden border border-[var(--br)]
                      shadow-sm active:scale-[0.99] transition-transform duration-[180ms]">
       <div className="relative aspect-[4/3] overflow-hidden bg-sf2">
-        {venue.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={getVenueHero(venue)} alt={venue.name} className="w-full h-full object-cover" />
         <div className="absolute top-2 left-2">
           <span className="badge bg-white/95 text-tx text-[10px] font-bold backdrop-blur-sm">
             {cuisineEmoji(venue)} {cuisine}

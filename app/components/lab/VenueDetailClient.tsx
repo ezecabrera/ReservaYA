@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Venue, ServiceHours } from '@/lib/shared'
 import { useFavorites } from '@/lib/favorites'
+import { getVenueGallery } from '@/lib/venue-images'
 import { VenueMap } from './VenueMap'
 
 type DetailTab = 'reservar' | 'menu' | 'resenas' | 'horarios' | 'nosotros'
@@ -91,19 +92,13 @@ function neighborhood(address: string): string {
   return m ? m[1].trim() : ''
 }
 
-// Galería desde config_json.gallery_urls o fallback derivado del image_url
+// Galería del venue. Prioridad:
+//   1) config_json.gallery_urls (si admin cargó manualmente en el panel)
+//   2) helper gastronómico (LoremFlickr con tags de la cocina)
 function gallery(venue: Venue): string[] {
   const configGallery = (venue.config_json as { gallery_urls?: string[] } | null)?.gallery_urls
   if (configGallery && configGallery.length > 0) return configGallery
-  if (!venue.image_url) return []
-  const base = venue.image_url.match(/\/seed\/([^/]+)/)?.[1]
-  if (!base) return [venue.image_url]
-  return [
-    venue.image_url,
-    `https://picsum.photos/seed/${base}-interior/800/600`,
-    `https://picsum.photos/seed/${base}-plato/800/600`,
-    `https://picsum.photos/seed/${base}-ambiente/800/600`,
-  ]
+  return getVenueGallery(venue, 1200, 800)
 }
 
 // Reviews: por ahora sin data real (venue_reputation_view aún no conectado en lab).

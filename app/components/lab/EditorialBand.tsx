@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getGuideImage } from '@/lib/venue-images'
 
 interface Guide {
   slug: string
@@ -73,7 +74,7 @@ export function EditorialBand() {
             <div className="relative aspect-[4/3] overflow-hidden bg-sf2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`https://picsum.photos/seed/${g.imageSeed}/520/390`}
+                src={getGuideImage(g.imageSeed, 520, 390)}
                 alt={g.title}
                 className="w-full h-full object-cover"
               />
