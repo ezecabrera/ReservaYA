@@ -181,6 +181,17 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
   const zonesEnabled = (venue.config_json as { zones_enabled?: boolean } | null)?.zones_enabled
   const cancellationHours = (venue.config_json as { cancellation_grace_hours?: number } | null)?.cancellation_grace_hours ?? 2
   const reviewCount = DEMO_REVIEWS.length
+  const averageRating =
+    reviewCount === 0 ? 0 : DEMO_REVIEWS.reduce((s, r) => s + r.score, 0) / reviewCount
+
+  const priceTier: 1 | 2 | 3 | 4 = (() => {
+    const t = (venue.config_json as { price_tier?: number } | null)?.price_tier
+    if (t && t >= 1 && t <= 4) return t as 1 | 2 | 3 | 4
+    if (deposit >= 4000) return 4
+    if (deposit >= 2500) return 3
+    if (deposit >= 1500) return 2
+    return 1
+  })()
 
   return (
     <>
@@ -251,7 +262,7 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
 
       {/* Gallery hero */}
       <div className="relative" data-hero="true">
-        <div className="relative h-64 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460] overflow-hidden">
+        <div className="relative h-72 bg-gradient-to-br from-[#1A1A2E] to-[#0F3460] overflow-hidden">
           {pics.length > 0 && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -261,7 +272,8 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
               className="w-full h-full object-cover transition-opacity duration-300 cursor-zoom-in"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
+          {/* Gradiente más fuerte abajo para legibilidad del overlay de texto */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/35" />
 
           {/* Top actions */}
           <div className="absolute top-10 left-4 right-4 flex items-center justify-between">
@@ -304,21 +316,56 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
             </div>
           </div>
 
-          {/* Gallery dots */}
+          {/* Cuisine badge (top-left overlay) */}
+          <div className="absolute top-10 left-[72px] flex items-center gap-1.5 pointer-events-none">
+            <span className="badge bg-white/95 text-tx backdrop-blur-sm shadow-sm">
+              {cuisineLabel(venue)}
+            </span>
+          </div>
+
+          {/* Gallery dots (top-right, encima de los botones) */}
           {pics.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="absolute top-[76px] right-4 flex gap-1.5">
               {pics.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setGalleryIdx(i)}
                   className={`rounded-full transition-all ${
-                    i === galleryIdx ? 'w-6 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'
+                    i === galleryIdx ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'
                   }`}
                   aria-label={`Foto ${i + 1}`}
                 />
               ))}
             </div>
           )}
+
+          {/* Info overlay (abajo-izquierda): nombre + meta */}
+          <div className="absolute bottom-4 left-4 right-4 text-white">
+            <h1 className="font-display text-[30px] font-bold leading-tight tracking-tight
+                           drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]">
+              {venue.name}
+            </h1>
+            <div className="flex items-center gap-2 mt-1 text-[13.5px] font-semibold
+                            drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+              {reviewCount > 0 && (
+                <>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="text-c3">★</span>
+                    <span>{averageRating.toFixed(1)}</span>
+                    <span className="text-white/70">({reviewCount})</span>
+                  </span>
+                  <span className="text-white/60">·</span>
+                </>
+              )}
+              <span><PriceDisplay tier={priceTier} /></span>
+              {hood && (
+                <>
+                  <span className="text-white/60">·</span>
+                  <span>{hood}</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Thumbnails */}
@@ -343,42 +390,34 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
 
       {/* Contenido */}
       <div className="screen-x pt-5 space-y-5">
-        {/* Título + badges */}
-        <section>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="badge bg-sf text-tx2">
-              {cuisineEmoji(venue)} {cuisineLabel(venue)}
-            </span>
-            {hood && (
-              <span className="text-[12px] text-tx3 font-semibold">· {hood}</span>
-            )}
-          </div>
-          <h1 className="font-display text-[28px] font-bold text-tx tracking-tight leading-tight">
-            {venue.name}
-          </h1>
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className="badge bg-c2l text-[#0F7A5A]">Nuevo en Un Toque</span>
-            {deposit > 0 && (
-              <span className="badge bg-c3l text-[#B78200]">Seña ${deposit.toLocaleString('es-AR')}</span>
-            )}
-            {((venue.config_json as { dietary?: string[] } | null)?.dietary ?? []).map((d) => {
-              const labels: Record<string, string> = {
-                vegetarian: 'Vegetariano',
-                vegan: 'Vegano',
-                celiaco: 'Celíacos',
-                kosher: 'Kosher',
-                halal: 'Halal',
-              }
-              const label = labels[d]
-              if (!label) return null
-              return (
-                <span key={d} className="badge bg-c5l text-[#6B30CC]">
-                  {label}
-                </span>
-              )
-            })}
-          </div>
-        </section>
+        {/* Badges secundarios — título + cocina + barrio viven sobre el hero */}
+        {(() => {
+          const dietary = (venue.config_json as { dietary?: string[] } | null)?.dietary ?? []
+          const dietaryLabels: Record<string, string> = {
+            vegetarian: 'Vegetariano',
+            vegan: 'Vegano',
+            celiaco: 'Celíacos',
+            kosher: 'Kosher',
+            halal: 'Halal',
+          }
+          return (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="badge bg-c2l text-[#0F7A5A]">Nuevo en Un Toque</span>
+              {deposit > 0 && (
+                <span className="badge bg-c3l text-[#B78200]">Seña ${deposit.toLocaleString('es-AR')}</span>
+              )}
+              {dietary.map((d) => {
+                const label = dietaryLabels[d]
+                if (!label) return null
+                return (
+                  <span key={d} className="badge bg-c5l text-[#6B30CC]">
+                    {label}
+                  </span>
+                )
+              })}
+            </div>
+          )
+        })()}
 
       </div>
 
@@ -775,5 +814,14 @@ function Feature({ emoji, text }: { emoji: string; text: string }) {
       </span>
       {text}
     </div>
+  )
+}
+
+function PriceDisplay({ tier }: { tier: 1 | 2 | 3 | 4 }) {
+  return (
+    <span className="font-mono">
+      {'$'.repeat(tier)}
+      <span className="text-white/35">{'$'.repeat(4 - tier)}</span>
+    </span>
   )
 }
