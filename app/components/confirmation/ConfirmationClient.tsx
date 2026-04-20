@@ -269,9 +269,10 @@ export function ConfirmationClient({ data, status }: ConfirmationClientProps) {
               </div>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
-                  `¡Te invito a la salida! 🎉\n${data.venueName} el ${
-                    new Date(data.date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
-                  } a las ${data.timeSlot} hs.\nConfirmá tu lugar acá: ${groupUrl}`
+                  `🎉 Te invitaron a ${data.venueName}\n` +
+                  `📅 ${new Date(data.date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · ${data.timeSlot} hs\n\n` +
+                  `Confirmá tu asistencia y elegí tu pedido 👇\n` +
+                  `${groupUrl}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
