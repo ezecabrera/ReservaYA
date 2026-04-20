@@ -318,7 +318,7 @@ export default function PerfilPage() {
         </button>
 
         <p className="text-center text-tx3 text-[11px] pb-2">
-          ReservaYA · v1.0
+          Un Toque · v1.0
         </p>
 
       </div>

@@ -17,14 +17,14 @@ const plusJakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'ReservaYa · Lab',
+  title: 'Un Toque',
   description: 'Reservá tu mesa en segundos — restaurantes de Buenos Aires',
   manifest: '/manifest.json',
-  applicationName: 'ReservaYa',
+  applicationName: 'Un Toque',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ReservaYa',
+    title: 'Un Toque',
   },
   formatDetection: {
     telephone: false,

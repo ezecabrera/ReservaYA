@@ -179,7 +179,7 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
     const title = venue.name
     const text = venue.description
       ? `${venue.name} — ${venue.description}`
-      : `Mirá este restaurante en ReservaYa: ${venue.name}`
+      : `Mirá este restaurante en Un Toque: ${venue.name}`
 
     // Web Share API (iOS Safari, Android Chrome, Edge)
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
@@ -383,7 +383,7 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
             {venue.name}
           </h1>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className="badge bg-c2l text-[#0F7A5A]">Nuevo en ReservaYa</span>
+            <span className="badge bg-c2l text-[#0F7A5A]">Nuevo en Un Toque</span>
             {deposit > 0 && (
               <span className="badge bg-c3l text-[#B78200]">Seña ${deposit.toLocaleString('es-AR')}</span>
             )}
