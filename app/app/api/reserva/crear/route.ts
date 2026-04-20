@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServerClient } from '@supabase/ssr'
+import { rateLimit, clientKey } from '@/lib/rate-limit'
 
 /** Admin client para ops que no pasan la RLS del anon user
  *  (ej. update de table_locks cuando auth.is_staff_of() no existe). */
@@ -23,6 +24,16 @@ function adminClient() {
  * 5. Devuelve la reserva creada
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 creaciones de reserva por minuto por IP. Previene abuso
+  // masivo que genere reservas falsas a escala.
+  const rl = rateLimit({ key: clientKey(request, 'reserva-crear'), limit: 5, windowSec: 60 })
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: 'Demasiadas reservas en corto tiempo. Esperá un momento.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } },
+    )
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
