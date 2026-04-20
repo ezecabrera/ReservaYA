@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Venue, ServiceHours } from '@/lib/shared'
-import { ReservationWizard } from '@/components/reservation/ReservationWizard'
 import { useFavorites } from '@/lib/favorites'
 import { VenueMap } from './VenueMap'
 
@@ -120,7 +119,6 @@ function isOpenAt(shifts: ServiceHours[]): boolean {
 
 export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
-  const [showWizard, setShowWizard] = useState(false)
   const [showFullMenu, setShowFullMenu] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
   const [fullscreenGallery, setFullscreenGallery] = useState(false)
@@ -552,27 +550,30 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
               )
             })()}
 
-            {/* Hacé tu reserva */}
+            {/* Hacé tu reserva — CTA que lleva a /[venueId]/reservar */}
             <section id="reservar" className="pt-2">
-              <h2 className="font-display text-[22px] font-bold text-tx">Hacé tu reserva</h2>
+              <h2 className="font-display text-[22px] text-tx">Hacé tu reserva</h2>
               <p className="text-[13px] text-tx2 mt-1 mb-4">Seleccioná fecha, horario y mesa.</p>
 
-              {showWizard ? (
-                <ReservationWizard venue={venue} prefill={prefill} />
-              ) : (
-                <button
-                  onClick={() => setShowWizard(true)}
-                  className="w-full bg-c1 text-white font-bold text-[15px] py-4 rounded-full
-                             shadow-[0_8px_24px_rgba(255,71,87,0.28)]
-                             active:scale-[0.98] transition-transform duration-[180ms]
-                             inline-flex items-center justify-center gap-2"
-                >
-                  Empezar reserva
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              )}
+              <Link
+                href={{
+                  pathname: `/${venue.id}/reservar`,
+                  query: {
+                    ...(prefill?.date ? { date: prefill.date } : {}),
+                    ...(prefill?.time ? { time: prefill.time } : {}),
+                    ...(prefill?.partySize ? { party: String(prefill.partySize) } : {}),
+                  },
+                }}
+                className="w-full bg-c1 text-white font-bold text-[15px] py-4 rounded-full
+                           shadow-[0_8px_24px_rgba(255,71,87,0.28)]
+                           active:scale-[0.98] transition-transform duration-[180ms]
+                           inline-flex items-center justify-center gap-2"
+              >
+                Empezar reserva
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
 
               <p className="text-[11.5px] text-tx3 text-center mt-3">
                 Cancelá gratis hasta {cancellationHours}h antes · Reserva en ~30 segundos
@@ -892,10 +893,7 @@ function ReviewAggregateCard({
 }
 
 function PriceDisplay({ tier }: { tier: 1 | 2 | 3 | 4 }) {
-  return (
-    <span className="font-mono">
-      {'$'.repeat(tier)}
-      <span className="text-white/35">{'$'.repeat(4 - tier)}</span>
-    </span>
-  )
+  // Sólo los dólares del tier — no renderizar los "unused" porque sobre
+  // imágenes claras del hero la opacidad baja se ve como mancha.
+  return <span className="font-mono">{'$'.repeat(tier)}</span>
 }
