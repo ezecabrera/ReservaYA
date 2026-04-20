@@ -49,6 +49,20 @@ function formatDistance(km: number): string {
   return `${km.toFixed(1)} km`
 }
 
+/**
+ * Rating mock determinístico por venue.id hasta que tengamos la tabla
+ * `reviews` conectada. Genera 3.8–4.9 + count 35–250. Se reemplaza por
+ * venue_reputation_view en cuanto esté disponible.
+ */
+function mockVenueRating(id: string): { rating: number; count: number } {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0
+  const a = Math.abs(h)
+  const rating = 3.8 + (a % 12) / 10        // 3.8 – 4.9
+  const count = 35 + (a % 216)               // 35 – 250
+  return { rating, count }
+}
+
 function priceTierOf(v: Venue): 1 | 2 | 3 | 4 {
   const cfg = v.config_json as { price_tier?: number; deposit_amount?: number } | null
   if (cfg?.price_tier && cfg.price_tier >= 1 && cfg.price_tier <= 4) return cfg.price_tier as 1 | 2 | 3 | 4
@@ -111,6 +125,11 @@ export function VenueCardLab({
 
   // ── HERO ────────────────────────────────────────────────────────────────
   if (variant === 'hero') {
+    const { rating, count: reviewsCount } = mockVenueRating(venue.id)
+    const shortDesc = venue.description
+      ? venue.description.replace(/\s+/g, ' ').trim()
+      : null
+    const available = availableSlots && availableSlots.length > 0
     return (
       <div className="relative">
         <HeartButton venueId={venue.id} absolute />
@@ -122,24 +141,23 @@ export function VenueCardLab({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-          {/* Badges superiores */}
-          <div className="absolute top-3 left-3 flex gap-1.5">
-            <span className="badge bg-white/95 text-tx backdrop-blur-sm shadow-sm">
-              {cuisineEmoji(venue)} {cuisine}
-            </span>
-            {deposit && (
-              <span className="badge bg-c3l text-[#B78200] backdrop-blur-sm shadow-sm">
-                Seña
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+          {/* Disponibilidad top-right (arriba del heart no, a la izquierda del heart) */}
+          {available && (
+            <div className="absolute top-3 left-3">
+              <span className="inline-flex items-center gap-1.5 bg-c2l text-[#0F7A5A]
+                               rounded-full px-2.5 py-1 text-[11px] font-bold backdrop-blur-sm shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse" />
+                Disponible
               </span>
-            )}
-          </div>
-          {/* Bottom overlay */}
+            </div>
+          )}
+          {/* Bottom overlay: nombre + meta */}
           <div className="absolute bottom-3 left-3 right-3 text-white">
-            <h2 className="font-display text-[22px] font-bold leading-tight drop-shadow-md">
+            <h2 className="font-display text-[24px] font-bold leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
               {venue.name}
             </h2>
-            <p className="text-white/80 text-[12px] drop-shadow-md">
+            <p className="text-white/85 text-[13px] font-semibold mt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
               {hood && `${hood} · `}<PriceTier tier={tier} />
               {typeof distanceKm === 'number' && (
                 <span className="ml-1">· {formatDistance(distanceKm)}</span>
@@ -147,18 +165,40 @@ export function VenueCardLab({
             </p>
           </div>
         </div>
-        <div className="px-4 py-3 flex items-center justify-between">
-          <NewBadge />
-          {availableSlots && availableSlots.length > 0 ? (
-            <div className="inline-flex items-center gap-1.5 bg-c2l rounded-full px-2.5 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-c2 animate-pulse" />
-              <span className="text-[12px] text-[#0F7A5A] font-bold">
-                Reservable hoy · {availableSlots[0]}
-              </span>
-            </div>
-          ) : (
-            <span className="text-[12px] text-tx3">Ver disponibilidad →</span>
+        <div className="px-4 pt-3 pb-3.5 space-y-2">
+          {/* Rating row */}
+          <div className="flex items-center gap-1.5 text-[13px]">
+            <span className="text-c3">★</span>
+            <span className="font-bold text-tx">{rating.toFixed(1)}</span>
+            <span className="text-tx3">·</span>
+            <span className="text-tx3">{reviewsCount} reseñas</span>
+            {deposit && (
+              <>
+                <span className="text-tx3">·</span>
+                <span className="text-[#B78200] font-semibold">Seña</span>
+              </>
+            )}
+          </div>
+          {/* Descripción */}
+          {shortDesc && (
+            <p className="text-[13px] text-tx2 leading-snug line-clamp-2">
+              {shortDesc}
+            </p>
           )}
+          {/* CTA inline */}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[13px] text-c1 font-bold inline-flex items-center gap-1">
+              Ver mesas
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            {available && availableSlots && (
+              <span className="text-[11px] text-tx3">
+                Hoy · {availableSlots[0]}
+              </span>
+            )}
+          </div>
         </div>
         </Link>
       </div>

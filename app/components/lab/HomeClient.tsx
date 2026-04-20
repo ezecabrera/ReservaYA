@@ -163,7 +163,7 @@ export function HomeClient({ venues, userFirstName }: Props) {
               {userFirstName ? `Hola ${userFirstName}` : 'Un toque'}
             </h1>
             <p className="text-tx2 text-[14px] mt-1.5">
-              Reservá en un toque
+              Reservá en Un toque
             </p>
           </div>
           <button
@@ -255,7 +255,7 @@ export function HomeClient({ venues, userFirstName }: Props) {
         <div className="screen-x mt-3 mb-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
-              Destacado esta semana
+              Destacado
             </p>
             {availableNow > 0 && (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0F7A5A]">

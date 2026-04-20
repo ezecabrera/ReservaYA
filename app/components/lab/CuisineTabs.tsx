@@ -3,17 +3,16 @@
 interface Tab {
   key: string
   label: string
-  emoji: string
   count?: number
 }
 
 const TABS: Tab[] = [
-  { key: 'all',    label: 'Todos',  emoji: '🍽️' },
-  { key: 'pastas', label: 'Pastas', emoji: '🍝' },
-  { key: 'carnes', label: 'Carnes', emoji: '🥩' },
-  { key: 'pizza',  label: 'Pizza',  emoji: '🍕' },
-  { key: 'vegano', label: 'Vegano', emoji: '🥗' },
-  { key: 'sushi',  label: 'Sushi',  emoji: '🍣' },
+  { key: 'all',    label: 'Todos' },
+  { key: 'pastas', label: 'Pastas' },
+  { key: 'carnes', label: 'Parrilla' },
+  { key: 'pizza',  label: 'Pizza' },
+  { key: 'sushi',  label: 'Sushi' },
+  { key: 'vegano', label: 'Vegano' },
 ]
 
 interface Props {
@@ -34,16 +33,15 @@ export function CuisineTabs({ value, onChange, counts }: Props) {
           <button
             key={t.key}
             onClick={() => onChange(t.key)}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full
-                        border text-[13px] font-semibold transition-all duration-[180ms]
+            className={`flex-shrink-0 px-5 py-2 rounded-full
+                        border text-[14px] font-bold transition-all duration-[180ms]
                         ${active
                           ? 'bg-c1 text-white border-c1 shadow-[0_4px_12px_rgba(255,71,87,0.25)]'
-                          : 'bg-white text-tx2 border-[var(--br)] active:scale-95'}`}
+                          : 'bg-white text-tx border-[var(--br)] active:scale-95'}`}
           >
-            <span className="text-[14px]">{t.emoji}</span>
-            <span>{t.label}</span>
+            {t.label}
             {count !== undefined && (
-              <span className={`text-[10px] font-bold ${active ? 'text-white/80' : 'text-tx3'}`}>
+              <span className={`ml-1.5 text-[10px] font-bold ${active ? 'text-white/80' : 'text-tx3'}`}>
                 {count}
               </span>
             )}
