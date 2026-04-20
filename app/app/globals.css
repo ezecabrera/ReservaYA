@@ -133,6 +133,12 @@
   background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0) 100%);
 }
 
+/* ── Fade-in simple para crossfade de imágenes del hero del venue ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* ── Splash screen ── sprite animado de la mano del cliente */
 @keyframes splashPlay {
   from { background-position: 0 0; }

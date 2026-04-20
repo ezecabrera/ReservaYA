@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Venue, ServiceHours } from '@/lib/shared'
 import { useFavorites } from '@/lib/favorites'
@@ -119,6 +119,9 @@ function isOpenAt(shifts: ServiceHours[]): boolean {
 
 export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
+  // Para pausar el auto-scroll cuando el usuario interactúa manualmente con
+  // los dots o cuando el fullscreen gallery está abierto.
+  const manualPauseRef = useRef(false)
   const [showFullMenu, setShowFullMenu] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
   const [fullscreenGallery, setFullscreenGallery] = useState(false)
@@ -174,6 +177,24 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
     }
   }
   const pics = gallery(venue)
+
+  // Auto-scroll del hero cada 3s. Se pausa cuando:
+  //  - hay una sola foto
+  //  - el usuario abrió el fullscreen gallery
+  //  - el usuario clickeó un dot manualmente (manualPauseRef.current = true)
+  //  - prefers-reduced-motion: reduce
+  useEffect(() => {
+    if (pics.length < 2) return
+    if (fullscreenGallery) return
+    if (typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const interval = window.setInterval(() => {
+      if (manualPauseRef.current) return
+      setGalleryIdx((i) => (i + 1) % pics.length)
+    }, 3000)
+    return () => window.clearInterval(interval)
+  }, [pics.length, fullscreenGallery])
+
   const hood = neighborhood(venue.address)
   const deposit = (venue.config_json as { deposit_amount?: number } | null)?.deposit_amount ?? 0
   const zonesEnabled = (venue.config_json as { zones_enabled?: boolean } | null)?.zones_enabled
@@ -269,10 +290,14 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
               src={pics[galleryIdx]}
               alt={venue.name}
               onClick={() => setFullscreenGallery(true)}
-              className="w-full h-full object-cover cursor-zoom-in"
+              className="w-full h-full object-cover cursor-zoom-in
+                         transition-opacity duration-500"
+              key={galleryIdx}
+              style={{ animation: 'fadeIn 0.45s ease' }}
             />
           )}
-          <div className="absolute inset-0 hero-overlay" />
+          {/* hero-overlay es decorativo: no debe bloquear clicks al img */}
+          <div className="absolute inset-0 hero-overlay pointer-events-none" />
 
           {/* Back (left) */}
           <button
@@ -330,7 +355,11 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
               {pics.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => setGalleryIdx(i)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    manualPauseRef.current = true   // pausa auto-scroll
+                    setGalleryIdx(i)
+                  }}
                   aria-label={`Foto ${i + 1}`}
                   className="rounded-full transition-all duration-[250ms] border-0"
                   style={{
@@ -397,7 +426,7 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
             {pics.map((p, i) => (
               <button
                 key={i}
-                onClick={() => setGalleryIdx(i)}
+                onClick={() => { manualPauseRef.current = true; setGalleryIdx(i) }}
                 aria-label={`Ver foto ${i + 1}`}
                 aria-pressed={i === galleryIdx}
                 className={`relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0
