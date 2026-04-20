@@ -444,9 +444,12 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
 
       </div>
 
-      {/* ═══════ Tabs underline ═══════ */}
+      {/* ═══════ Tabs underline ═══════
+          bg-bg sólido (sin transparencia ni backdrop-blur): el blur sobre la
+          imagen oscura del hero generaba una "sombra" artefactual en los
+          bordes izquierdo y derecho al sticky-scroll. */}
       <div
-        className="sticky top-0 z-30 bg-bg/95 backdrop-blur-md
+        className="sticky top-0 z-30 bg-bg
                    border-b border-[var(--br)] -mx-[18px] px-[18px] mt-5"
       >
         <div className="flex gap-1 overflow-x-auto no-scrollbar" role="tablist">
