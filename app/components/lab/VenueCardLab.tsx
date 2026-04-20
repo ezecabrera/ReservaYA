@@ -105,10 +105,10 @@ function HeartButton({ venueId, absolute }: { venueId: string; absolute?: boolea
 }
 
 function PriceTier({ tier }: { tier: number }) {
+  // Sólo los dólares del tier — simple y legible sobre cualquier fondo.
   return (
     <span className="text-[12px] font-semibold text-tx3">
       {'$'.repeat(tier)}
-      <span className="text-tx3/30">{'$'.repeat(4 - tier)}</span>
     </span>
   )
 }
