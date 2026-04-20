@@ -1,17 +1,20 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 // Reviews hardcoded (datos demo). Se rotan para dar sensación de "en vivo".
+// venueId apunta a un venue real del seed (formato decXXXXX-...) para que
+// tocar la reseña navegue al detalle, landing en la tab Reseñas.
 const SEED_REVIEWS = [
-  { name: 'Martina', venue: 'Trattoria Sentori', text: 'Las pastas al ragú estaban espectaculares. Volvemos.', score: 5, minsAgo: 12 },
-  { name: 'Joaquín', venue: 'El Fogón del Sur', text: 'Ojo de bife en su punto. Atención impecable.', score: 5, minsAgo: 34 },
-  { name: 'Sofía', venue: 'Napoli Forno', text: 'La masa se deshace, 10 puntos. Pedí la margherita.', score: 5, minsAgo: 48 },
-  { name: 'Lucas', venue: 'Niko Sushi Bar', text: 'Combinado generoso, pescado súper fresco.', score: 4, minsAgo: 63 },
-  { name: 'Camila', venue: 'Verde de Mercado', text: 'Probé el buddha bowl y el ceviche de coliflor. Ambos 10.', score: 5, minsAgo: 71 },
-  { name: 'Valentina', venue: 'Asador Don Ramiro', text: 'La parrillada para 2 súper abundante. Volvemos con amigos.', score: 5, minsAgo: 95 },
-  { name: 'Tomás', venue: 'Piedra Viva', text: 'Pizza a la piedra fina, masa madre notable.', score: 4, minsAgo: 118 },
-  { name: 'Julieta', venue: 'Omakase Kintaro', text: 'Experiencia única, el chef súper atento.', score: 5, minsAgo: 142 },
+  { name: 'Martina', venueId: 'dec00001-0000-4000-a000-000000000000', venue: 'Trattoria Sentori', text: 'Las pastas al ragú estaban espectaculares. Volvemos.', score: 5, minsAgo: 12 },
+  { name: 'Joaquín', venueId: 'dec00005-0000-4000-a000-000000000000', venue: 'El Fogón del Sur', text: 'Ojo de bife en su punto. Atención impecable.', score: 5, minsAgo: 34 },
+  { name: 'Sofía',   venueId: 'dec00010-0000-4000-a000-000000000000', venue: 'Napoli Forno', text: 'La masa se deshace, 10 puntos. Pedí la margherita.', score: 5, minsAgo: 48 },
+  { name: 'Lucas',   venueId: 'dec00017-0000-4000-a000-000000000000', venue: 'Niko Sushi Bar', text: 'Combinado generoso, pescado súper fresco.', score: 4, minsAgo: 63 },
+  { name: 'Camila',  venueId: 'dec00013-0000-4000-a000-000000000000', venue: 'Verde de Mercado', text: 'Probé el buddha bowl y el ceviche de coliflor. Ambos 10.', score: 5, minsAgo: 71 },
+  { name: 'Valentina', venueId: 'dec00008-0000-4000-a000-000000000000', venue: 'Asador Don Ramiro', text: 'La parrillada para 2 súper abundante. Volvemos con amigos.', score: 5, minsAgo: 95 },
+  { name: 'Tomás',   venueId: 'dec00011-0000-4000-a000-000000000000', venue: 'Piedra Viva', text: 'Pizza a la piedra fina, masa madre notable.', score: 4, minsAgo: 118 },
+  { name: 'Julieta', venueId: 'dec00018-0000-4000-a000-000000000000', venue: 'Omakase Kintaro', text: 'Experiencia única, el chef súper atento.', score: 5, minsAgo: 142 },
 ]
 
 function formatTime(mins: number): string {
@@ -47,10 +50,14 @@ export function LiveReviewsStrip() {
 
       <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-[18px] px-[18px] snap-x">
         {reviews.map((r, i) => (
-          <article
+          <Link
             key={i}
+            href={`/${r.venueId}?tab=resenas`}
+            aria-label={`Ver reseñas de ${r.venue}`}
             className="flex-shrink-0 w-[270px] bg-white rounded-xl border border-[var(--br)]
-                       p-4 snap-start shadow-sm"
+                       p-4 snap-start shadow-sm active:scale-[0.98]
+                       transition-transform duration-[180ms] cursor-pointer
+                       hover:border-c1/20"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -75,7 +82,13 @@ export function LiveReviewsStrip() {
               </span>
               <span className="text-[10px] text-tx3">{formatTime(r.minsAgo)}</span>
             </div>
-          </article>
+            <div className="mt-2 text-[11px] text-c1 font-bold inline-flex items-center gap-1">
+              Ver restaurante
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </Link>
         ))}
       </div>
     </div>

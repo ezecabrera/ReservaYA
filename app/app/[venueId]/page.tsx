@@ -6,8 +6,11 @@ import type { Venue } from '@/lib/shared'
 
 interface Props {
   params: { venueId: string }
-  searchParams: { date?: string; time?: string; party?: string }
+  searchParams: { date?: string; time?: string; party?: string; tab?: string }
 }
+
+const VALID_TABS = ['reservar', 'menu', 'resenas', 'horarios', 'nosotros'] as const
+type ValidTab = typeof VALID_TABS[number]
 
 export default async function VenueDetailPage({ params, searchParams }: Props) {
   const supabase = await createClient()
@@ -59,9 +62,20 @@ export default async function VenueDetailPage({ params, searchParams }: Props) {
     partySize: party && party >= 1 && party <= 20 ? party : undefined,
   }
 
+  // Tab inicial vía query param (?tab=resenas lleva a esa tab directo —
+  // útil desde la LiveReviewsStrip del home)
+  const initialTab: ValidTab = VALID_TABS.includes(searchParams.tab as ValidTab)
+    ? (searchParams.tab as ValidTab)
+    : 'reservar'
+
   return (
     <div className="min-h-screen bg-bg">
-      <VenueDetailClient venue={venue as Venue} menu={menu} prefill={prefill} />
+      <VenueDetailClient
+        venue={venue as Venue}
+        menu={menu}
+        prefill={prefill}
+        initialTab={initialTab}
+      />
     </div>
   )
 }
