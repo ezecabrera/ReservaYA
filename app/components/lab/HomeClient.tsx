@@ -155,16 +155,15 @@ export function HomeClient({ venues, userFirstName }: Props) {
 
   return (
     <>
-      {/* Header — título + saludo + campana */}
+      {/* Header — título dinámico + tagline + campana */}
       <header className="screen-x pt-8 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="font-display text-[30px] font-bold text-tx tracking-tight leading-none">
-              Un toque
+              {userFirstName ? `Hola ${userFirstName}` : 'Un toque'}
             </h1>
             <p className="text-tx2 text-[14px] mt-1.5">
-              {userFirstName ? `Hola ${userFirstName}, ` : 'Hola, '}
-              ¿a dónde salís hoy?
+              Reservá en un toque
             </p>
           </div>
           <button
@@ -201,7 +200,7 @@ export function HomeClient({ venues, userFirstName }: Props) {
           </svg>
           <input
             type="text"
-            placeholder="¿a dónde?"
+            placeholder="¿a dónde salís hoy?"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent outline-none text-[15px] text-tx placeholder:text-tx3 py-1"
