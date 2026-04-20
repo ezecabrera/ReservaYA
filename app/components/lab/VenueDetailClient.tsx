@@ -93,11 +93,18 @@ function neighborhood(address: string): string {
 }
 
 // Galería del venue. Prioridad:
-//   1) config_json.gallery_urls (si admin cargó manualmente en el panel)
+//   1) config_json.gallery_urls si viene con URLs reales (no picsum seed)
 //   2) helper gastronómico (LoremFlickr con tags de la cocina)
+//
+// El seed script popula gallery_urls con picsum (imágenes random sin
+// relación con gastronomía). Las ignoramos a menos que admin las haya
+// reemplazado por URLs reales desde el panel.
 function gallery(venue: Venue): string[] {
   const configGallery = (venue.config_json as { gallery_urls?: string[] } | null)?.gallery_urls
-  if (configGallery && configGallery.length > 0) return configGallery
+  const isRealGallery = configGallery
+    && configGallery.length > 0
+    && !configGallery.every((u) => u.includes('picsum.photos'))
+  if (isRealGallery) return configGallery
   return getVenueGallery(venue, 1200, 800)
 }
 
