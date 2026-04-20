@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@/lib/supabase/server'
-import { BottomNav } from '@/components/ui/BottomNav'
 import { VenueDetailClient, type MenuPreview } from '@/components/lab/VenueDetailClient'
 import type { Venue } from '@/lib/shared'
 
@@ -61,9 +60,8 @@ export default async function VenueDetailPage({ params, searchParams }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-bg pb-28">
+    <div className="min-h-screen bg-bg">
       <VenueDetailClient venue={venue as Venue} menu={menu} prefill={prefill} />
-      <BottomNav />
     </div>
   )
 }
