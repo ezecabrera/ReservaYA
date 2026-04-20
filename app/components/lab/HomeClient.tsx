@@ -6,11 +6,9 @@ import { useGeolocation, distanceKm } from '@/lib/geolocation'
 import { SearchPill } from './SearchPill'
 import { FiltersSheet, type FilterState, EMPTY_FILTERS } from './FiltersSheet'
 import { CuisineTabs } from './CuisineTabs'
-import { ListMapToggle } from './ListMapToggle'
 import { VenueCardLab } from './VenueCardLab'
 import { LiveReviewsStrip } from './LiveReviewsStrip'
 import { EditorialBand } from './EditorialBand'
-import { MapPreview } from './MapPreview'
 import { NotificationsSheet, useUnreadCount } from './NotificationsSheet'
 
 interface Props {
@@ -73,8 +71,6 @@ export function HomeClient({ venues }: Props) {
   const [cuisine, setCuisine] = useState('all')
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [view, setView] = useState<'list' | 'map'>('list')
-  const [activeMapId, setActiveMapId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
   const eyebrow = eyebrowByHour()
@@ -210,7 +206,7 @@ export function HomeClient({ venues }: Props) {
           </div>
         </div>
 
-        {/* Filtros + Cerca mío + Lista/Mapa */}
+        {/* Filtros + Cerca mío */}
         <div className="mt-3 flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setFiltersOpen(true)}
@@ -256,8 +252,6 @@ export function HomeClient({ venues }: Props) {
             </svg>
             {geo.status === 'requesting' ? 'Obteniendo…' : geo.location ? 'Cerca mío' : 'Cerca mío'}
           </button>
-
-          <ListMapToggle value={view} onChange={setView} />
         </div>
 
         {geo.status === 'denied' && (
@@ -401,73 +395,59 @@ export function HomeClient({ venues }: Props) {
         </div>
       )}
 
-      {/* Mapa o Grid */}
-      {view === 'map' ? (
-        <div className="screen-x">
-          <MapPreview
-            venues={filtered.slice(0, 20)}
-            activeVenueId={activeMapId}
-            onActivate={setActiveMapId}
-          />
-          <p className="text-[11px] text-tx3 text-center mt-2">
-            Tap en un pin para ver el detalle · Integración con mapa real próximamente
+      <div className="screen-x space-y-5">
+        {/* Info header */}
+        <div className="flex items-center justify-between">
+          <p className="text-[13px] text-tx2">
+            <span className="font-bold text-tx">{filtered.length}</span> locales
+            {cuisine !== 'all' && (
+              <> · <span className="capitalize">{cuisine}</span></>
+            )}
+          </p>
+          <p className="text-[11px] text-tx3 font-semibold">
+            {filters.sort === 'relevance' && 'Recomendados'}
+            {filters.sort === 'available' && 'Disponibles ahora'}
+            {filters.sort === 'reputation' && 'Mejor reputación'}
+            {filters.sort === 'nearby' && 'Cerca mío'}
           </p>
         </div>
-      ) : (
-        <div className="screen-x space-y-5">
-          {/* Info header */}
-          <div className="flex items-center justify-between">
-            <p className="text-[13px] text-tx2">
-              <span className="font-bold text-tx">{filtered.length}</span> locales
-              {cuisine !== 'all' && (
-                <> · <span className="capitalize">{cuisine}</span></>
-              )}
-            </p>
-            <p className="text-[11px] text-tx3 font-semibold">
-              {filters.sort === 'relevance' && 'Recomendados'}
-              {filters.sort === 'available' && 'Disponibles ahora'}
-              {filters.sort === 'reputation' && 'Mejor reputación'}
-              {filters.sort === 'nearby' && 'Cerca mío'}
-            </p>
-          </div>
 
-          {/* Grid resto */}
-          {rest.length > 0 && (
-            <section>
-              <div className="flex items-end justify-between mb-3">
-                <h2 className="font-display text-[19px] font-bold text-tx">
-                  Más restaurantes
-                </h2>
-                <p className="text-[11px] text-tx3">{rest.length}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {rest.slice(0, 6).map((v) => (
-                  <VenueCardLab key={v.id} venue={v} variant="standard" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Banda editorial */}
-          <div className="pt-2">
-            <EditorialBand />
-          </div>
-
-          {/* Lista compacta resto */}
-          {rest.length > 6 && (
-            <section>
-              <h2 className="font-display text-[19px] font-bold text-tx mb-3">
-                Todos los locales
+        {/* Grid resto */}
+        {rest.length > 0 && (
+          <section>
+            <div className="flex items-end justify-between mb-3">
+              <h2 className="font-display text-[19px] font-bold text-tx">
+                Más restaurantes
               </h2>
-              <div className="space-y-2">
-                {rest.slice(6).map((v) => (
-                  <VenueCardLab key={v.id} venue={v} variant="compact" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
-                ))}
-              </div>
-            </section>
-          )}
+              <p className="text-[11px] text-tx3">{rest.length}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {rest.slice(0, 6).map((v) => (
+                <VenueCardLab key={v.id} venue={v} variant="standard" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Banda editorial */}
+        <div className="pt-2">
+          <EditorialBand />
         </div>
-      )}
+
+        {/* Lista compacta resto */}
+        {rest.length > 6 && (
+          <section>
+            <h2 className="font-display text-[19px] font-bold text-tx mb-3">
+              Todos los locales
+            </h2>
+            <div className="space-y-2">
+              {rest.slice(6).map((v) => (
+                <VenueCardLab key={v.id} venue={v} variant="compact" availableSlots={mockSlots(v.id)} distanceKm={distTo(v)} linkSuffix={qs} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
 
       {/* Bottom sheet de filtros */}
       <FiltersSheet
