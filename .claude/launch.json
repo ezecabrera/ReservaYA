@@ -8,12 +8,6 @@
       "port": 3000
     },
     {
-      "name": "app-lab (rediseño experimental)",
-      "runtimeExecutable": "corepack",
-      "runtimeArgs": ["pnpm", "--filter", "@reservaya/app-lab", "dev"],
-      "port": 3020
-    },
-    {
       "name": "panel (negocio)",
       "runtimeExecutable": "corepack",
       "runtimeArgs": ["pnpm", "--filter", "@reservaya/panel", "dev"],
