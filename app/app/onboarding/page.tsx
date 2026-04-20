@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -28,6 +28,15 @@ const OCCASIONS = [
 ]
 
 export default function OnboardingPage() {
+  // useSearchParams requiere Suspense boundary (Next 14 build-time CSR bailout)
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-bg" />}>
+      <OnboardingInner />
+    </Suspense>
+  )
+}
+
+function OnboardingInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') ?? '/'
