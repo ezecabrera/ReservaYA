@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+import { SplashScreen } from '@/components/ui/SplashScreen'
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -62,6 +63,7 @@ export default function RootLayout({
     <html lang="es" className={`${poppins.variable} ${plusJakarta.variable}`}>
       <body className="font-body bg-bg text-tx min-h-screen">
         <a href="#main" className="skip-link">Saltar al contenido</a>
+        <SplashScreen />
         <main id="main">{children}</main>
       </body>
     </html>

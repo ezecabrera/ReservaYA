@@ -119,6 +119,18 @@
   transform: translateY(0);
 }
 
+/* ── Splash screen ── sprite animado de la mano del cliente */
+@keyframes splashPlay {
+  from { background-position: 0 0; }
+  to   { background-position: -6144px 0; } /* 256 × 24 frames */
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-sprite {
+    animation: none !important;
+    background-position: 0 0 !important;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    Componentes reutilizables del design system
 ═══════════════════════════════════════════════════════════════════════════ */
