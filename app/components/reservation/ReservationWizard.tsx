@@ -6,7 +6,6 @@ import type { Venue, Table, MenuCategory, MenuItem } from '@/lib/shared'
 import { getAvailableDates, getAvailableTimeSlots, formatDateEs } from '@/lib/shared'
 import { createClient } from '@/lib/supabase/client'
 import { Toast, useToast } from '@/components/ui/Toast'
-import { TableCardSkeleton } from '@/components/ui/Skeleton'
 
 /**
  * Scroll suave a un elemento si NO está visible en viewport.
@@ -34,7 +33,7 @@ function scrollToRef(ref: React.RefObject<HTMLElement>, offset = 90) {
   smoothScrollToElement(ref.current, offset)
 }
 
-type WizardStep = 'datetime' | 'table' | 'menu' | 'summary'
+type WizardStep = 'datetime' | 'sector' | 'menu' | 'summary'
 
 interface OrderSelection {
   menu_item_id: string
@@ -47,30 +46,55 @@ interface WizardState {
   date: string | null
   timeSlot: string | null
   partySize: number
+  selectedSector: string | null
   selectedTable: Table | null
   lockId: string | null
   lockExpiresAt: string | null
   orderItems: OrderSelection[]
 }
 
+interface SectorDef {
+  name: string
+  prefix?: string
+}
+
+const SECTOR_EMOJIS: Record<string, string> = {
+  'Salón': '🏠',
+  'Terraza': '🌿',
+  'Patio': '🪴',
+  'Barra': '🍸',
+  'Privado': '🔒',
+  'Ventana': '🪟',
+  'Reservado': '🔒',
+}
+
 interface ReservationWizardProps {
   venue: Venue
   prefill?: { date?: string; time?: string; partySize?: number }
+  /** Sectores del venue cargados server-side. Usados para el paso de elección
+   *  de sector. Si viene vacío o con 1 solo item, se saltea el paso. */
+  sectors?: Array<{ name: string; prefix: string | null }>
 }
 
 const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8]
 
-export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
+export function ReservationWizard({ venue, prefill, sectors: initialSectors }: ReservationWizardProps) {
   const [step, setStep] = useState<WizardStep>('datetime')
   const [state, setState] = useState<WizardState>({
     date: prefill?.date ?? null,
     timeSlot: prefill?.time ?? null,
     partySize: prefill?.partySize ?? 2,
+    selectedSector: null,
     selectedTable: null, lockId: null, lockExpiresAt: null,
     orderItems: [],
   })
-  const [availableTables, setAvailableTables] = useState<Table[]>([])
-  const [loadingTables, setLoadingTables] = useState(false)
+  // Sectores del venue — pasados como prop desde server component (para evitar
+  // RLS en zones table).
+  const sectors: SectorDef[] = (initialSectors ?? []).map((z) => ({
+    name: z.name,
+    prefix: z.prefix ?? undefined,
+  }))
+  const hasMultipleSectors = sectors.length > 1
   const [lockTimer, setLockTimer] = useState<number | null>(null)
   const [creating, setCreating] = useState(false)
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
@@ -152,8 +176,8 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
       setLockTimer(remaining)
       if (remaining === 0) {
         setState(s => ({ ...s, selectedTable: null, lockId: null, lockExpiresAt: null }))
-        showToast('El tiempo de selección venció. Elegí la mesa de nuevo.', 'error')
-        setStep('table')
+        showToast('El tiempo de selección venció. Elegí tu reserva de nuevo.', 'error')
+        setStep('datetime')
       }
     }
     tick()
@@ -161,25 +185,6 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
     return () => clearInterval(interval)
   }, [state.lockExpiresAt, showToast])
 
-  const loadTables = useCallback(async () => {
-    if (!state.date || !state.timeSlot) return
-    setLoadingTables(true)
-    try {
-      const params = new URLSearchParams({
-        venue_id: venue.id,
-        date: state.date,
-        time_slot: state.timeSlot,
-        party_size: String(state.partySize),
-      })
-      const res = await fetch(`/api/tables/disponibles?${params}`)
-      const data = await res.json() as Table[]
-      setAvailableTables(data)
-    } catch {
-      showToast('Error al cargar las mesas', 'error')
-    } finally {
-      setLoadingTables(false)
-    }
-  }, [state.date, state.timeSlot, state.partySize, venue.id, showToast])
 
   // Tracking de step para disparar scroll-al-top SÓLO cuando el step cambia
   // de verdad. Sin este guard, cualquier re-render que cambie la referencia
@@ -189,7 +194,6 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
   const isFirstStepRun = useRef(true)
   const prevStep = useRef<WizardStep>(step)
   useEffect(() => {
-    if (step === 'table') loadTables()
     if (step === 'menu') {
       loadMenu()
       // POP-UP OMITIR MENÚ: al entrar al paso menu, abrir modal inmediatamente
@@ -202,7 +206,7 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
       return
     }
     // Sólo scrollear si el step realmente cambió (no si re-rendereó por
-    // cambio de deps de loadTables/loadMenu). Apuntamos al wrapper del
+    // cambio de deps de loadMenu). Apuntamos al wrapper del
     // wizard (#reservar) en lugar de a y=0, para que el user vea el inicio
     // del nuevo paso (con título + progress bar) en vez de saltar al hero
     // del venue allá arriba.
@@ -222,29 +226,63 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
         smoothScrollTo(0)
       }
     }
-  }, [step, loadTables, loadMenu])
+  }, [step, loadMenu])
 
-  async function handleSelectTable(table: Table) {
-    // Limpiar lock anterior si existe
+  /**
+   * Auto-asigna una mesa según sector preferido + capacidad, la lockea,
+   * y avanza al paso de pre-pedido. Si no hay disponibles en ese sector,
+   * cae al primer sector con cupo (no queremos trabar al usuario).
+   *
+   * - sectorName: el sector que pickeó el user (ej "Terraza"). null = cualquiera.
+   * - Avanza a 'menu' al lockear ok.
+   */
+  async function handleSectorPicked(sectorName: string | null) {
+    if (!state.date || !state.timeSlot) return
+    // Limpiar lock anterior
     if (state.lockId) {
       await fetch(`/api/table-lock?lock_id=${state.lockId}`, { method: 'DELETE' })
     }
     try {
-      const res = await fetch('/api/table-lock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table_id: table.id }),
+      const params = new URLSearchParams({
+        venue_id: venue.id,
+        date: state.date,
+        time_slot: state.timeSlot,
+        party_size: String(state.partySize),
       })
-      if (!res.ok) {
-        const err = await res.json() as { error: string }
-        showToast(err.error ?? 'Mesa no disponible', 'error')
-        await loadTables()
+      const res = await fetch(`/api/tables/disponibles?${params}`)
+      const all = (await res.json() as Table[]) ?? []
+      if (all.length === 0) {
+        showToast('No hay mesas disponibles en este horario. Probá otra hora.', 'error')
+        setStep('datetime')
         return
       }
-      const lock = await res.json() as { id: string; expires_at: string }
+      // Filtrar por sector usando el prefix del sector config (ej "Salón" →
+      // prefix "S" → tables con label tipo S1, S2, etc).
+      // Fallback: cualquier sector si no hay match.
+      const sectorDef = sectorName ? sectors.find((s) => s.name === sectorName) : null
+      const matchSector = sectorDef?.prefix
+        ? all.filter((t) => t.label.toUpperCase().startsWith(sectorDef.prefix!.toUpperCase()))
+        : all
+      const picked = matchSector[0] ?? all[0]
+
+      // Lockear silenciosamente
+      const lockRes = await fetch('/api/table-lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: picked.id }),
+      })
+      if (!lockRes.ok) {
+        const err = await lockRes.json() as { error: string }
+        showToast(err.error ?? 'No pudimos reservar la mesa. Intentá de nuevo.', 'error')
+        return
+      }
+      const lock = await lockRes.json() as { id: string; expires_at: string }
       setState(s => ({
-        ...s, selectedTable: table,
-        lockId: lock.id, lockExpiresAt: lock.expires_at,
+        ...s,
+        selectedSector: sectorName,
+        selectedTable: picked,
+        lockId: lock.id,
+        lockExpiresAt: lock.expires_at,
       }))
       setStep('menu')
     } catch {
@@ -307,19 +345,27 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
     }
   }
 
-  // Progreso 1/4 → 2/4 → 3/4 → 4/4
-  const stepNum = step === 'datetime' ? 1 : step === 'table' ? 2 : step === 'menu' ? 3 : 4
+  // Progreso dinámico: 3 pasos si el venue tiene 1 solo sector (se saltea
+  // la elección de sector), 4 si tiene varios.
+  const totalSteps = hasMultipleSectors ? 4 : 3
+  const stepNum = step === 'datetime' ? 1
+    : step === 'sector'  ? 2
+    : step === 'menu'    ? (hasMultipleSectors ? 3 : 2)
+    : /* summary */        (hasMultipleSectors ? 4 : 3)
+  const stepLabel = step === 'datetime' ? 'Cuándo'
+    : step === 'sector' ? 'Dónde'
+    : step === 'menu' ? 'Menú' : 'Confirmar'
   const progressBar = (
     <div className="mb-5">
       <div className="flex items-center gap-1 mb-2">
-        {[1, 2, 3, 4].map((n) => (
-          <div key={n}
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div key={i}
                className={`h-1 flex-1 rounded-full transition-colors duration-300
-                          ${n <= stepNum ? 'bg-c1' : 'bg-sf2'}`} />
+                          ${i + 1 <= stepNum ? 'bg-c1' : 'bg-sf2'}`} />
         ))}
       </div>
       <p className="text-[11px] font-bold text-tx3 uppercase tracking-wider">
-        Paso {stepNum} de 4 · {step === 'datetime' ? 'Cuándo' : step === 'table' ? 'Mesa' : step === 'menu' ? 'Menú' : 'Confirmar'}
+        Paso {stepNum} de {totalSteps} · {stepLabel}
       </p>
     </div>
   )
@@ -489,26 +535,42 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
           }}
         >
           <button
-            onClick={() => setStep('table')}
+            onClick={() => {
+              // Si hay múltiples sectores, ir al paso de elección.
+              // Si hay 1 (o 0) sector, saltear y auto-asignar mesa directamente.
+              if (hasMultipleSectors) {
+                setStep('sector')
+              } else {
+                handleSectorPicked(null)
+              }
+            }}
             disabled={!ctaActive}
             className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {ctaActive ? 'Ver mesas disponibles →' : 'Elegí fecha, horario y personas'}
+            {ctaActive
+              ? hasMultipleSectors ? 'Elegí dónde sentarte →' : 'Continuar →'
+              : 'Elegí fecha, horario y personas'}
           </button>
         </div>
       </div>
     )
   }
 
-  // ─── STEP: SELECCIÓN DE MESA ───────────────────────────────────────────────
-  if (step === 'table') {
+  // ─── STEP: ELECCIÓN DE SECTOR ──────────────────────────────────────────────
+  // Reemplaza el antiguo grid de mesas: el usuario elige DÓNDE quiere sentarse
+  // (salón/terraza/patio/etc) y la mesa se asigna automáticamente por
+  // capacidad + disponibilidad en ese sector. Si pickea "cualquier lugar"
+  // agarra la primera mesa libre.
+  if (step === 'sector') {
     return (
       <div className="space-y-5">
         {progressBar}
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismiss} />}
 
+        {/* Resumen con back */}
         <div className="flex items-center gap-3">
           <button onClick={() => setStep('datetime')}
+            aria-label="Volver al paso anterior"
             className="w-9 h-9 rounded-full bg-sf flex items-center justify-center
                        border border-[var(--br)] active:scale-95 transition-transform">
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
@@ -520,55 +582,53 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
             <p className="font-semibold text-[14px] text-tx">
               {state.date ? formatDateEs(state.date) : ''} · {state.timeSlot} hs
             </p>
-            <p className="text-tx3 text-[12px]">{state.partySize} persona{state.partySize !== 1 ? 's' : ''}</p>
+            <p className="text-tx3 text-[12px]">
+              {state.partySize} persona{state.partySize !== 1 ? 's' : ''}
+            </p>
           </div>
         </div>
 
-        <p className="text-[13px] font-bold text-tx2 uppercase tracking-wider">
-          Elegí tu mesa
+        <div>
+          <h2 className="font-display text-[22px] text-tx leading-tight">
+            ¿Dónde querés sentarte?
+          </h2>
+          <p className="text-tx2 text-[13px] mt-1">
+            Elegí tu sector favorito. La mesa se asigna automáticamente.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {sectors.map((sec) => {
+            const emoji = SECTOR_EMOJIS[sec.name] ?? '🪑'
+            return (
+              <button
+                key={sec.name}
+                onClick={() => handleSectorPicked(sec.name)}
+                className="flex flex-col items-center justify-center gap-2
+                           rounded-xl border-2 border-c2/20 bg-c2l/40
+                           py-6 active:scale-[0.97] hover:border-c2/40
+                           transition-all duration-[180ms]"
+              >
+                <span className="text-[32px]" aria-hidden>{emoji}</span>
+                <span className="font-bold text-[15px] text-tx">{sec.name}</span>
+              </button>
+            )
+          })}
+          <button
+            onClick={() => handleSectorPicked(null)}
+            className="col-span-2 flex items-center justify-center gap-2
+                       rounded-xl border border-[var(--br)] bg-white
+                       py-4 active:scale-[0.98] transition-transform
+                       text-tx2 text-[13.5px] font-semibold"
+          >
+            <span aria-hidden>✨</span>
+            Cualquier lugar — dame lo mejor
+          </button>
+        </div>
+
+        <p className="text-[11.5px] text-tx3 text-center">
+          Si el sector que elegís no tiene disponibilidad, te asignamos otro cercano.
         </p>
-
-        <div className="grid grid-cols-3 gap-3">
-          {loadingTables
-            ? Array.from({ length: 6 }).map((_, i) => <TableCardSkeleton key={i} />)
-            : availableTables.length === 0
-              ? (
-                <div className="col-span-3 text-center py-8">
-                  <p className="text-tx2 text-[14px] font-semibold">
-                    No hay mesas disponibles para este horario.
-                  </p>
-                  <button onClick={() => setStep('datetime')}
-                    className="text-c4 text-[13px] mt-2 font-semibold">
-                    Cambiar horario →
-                  </button>
-                </div>
-              )
-              : availableTables.map((table) => (
-                <button
-                  key={table.id}
-                  onClick={() => handleSelectTable(table)}
-                  className="flex flex-col items-center justify-center gap-1.5
-                             rounded-xl border-2 border-c2/30 bg-c2l
-                             active:scale-95 transition-transform duration-[180ms]"
-                  style={{ aspectRatio: '1' }}
-                >
-                  <span className="font-display text-[18px] font-bold text-[#14A874]">
-                    {table.label}
-                  </span>
-                  <span className="text-[11px] font-semibold text-[#14A874]">
-                    {table.capacity} 👤
-                  </span>
-                </button>
-              ))
-          }
-        </div>
-
-        <div className="flex items-center gap-2 text-[12px] text-tx3">
-          <span className="w-3 h-3 rounded-full bg-c2l border-2 border-c2/30 inline-block" />
-          Disponible
-          <span className="w-3 h-3 rounded-full bg-sf2 border-2 border-[var(--br)] inline-block ml-2" />
-          No disponible
-        </div>
       </div>
     )
   }
@@ -629,7 +689,8 @@ export function ReservationWizard({ venue, prefill }: ReservationWizardProps) {
         )}
 
         <div className="flex items-center gap-3">
-          <button onClick={() => setStep('table')}
+          <button onClick={() => setStep(hasMultipleSectors ? 'sector' : 'datetime')}
+            aria-label="Volver al paso anterior"
             className="w-9 h-9 rounded-full bg-sf flex items-center justify-center
                        border border-[var(--br)] active:scale-95 transition-transform">
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24">

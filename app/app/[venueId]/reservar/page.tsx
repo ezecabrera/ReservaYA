@@ -28,6 +28,16 @@ export default async function ReservarPage({ params, searchParams }: Props) {
 
   if (error || !venue) notFound()
 
+  // Fetch de zones (sectores) — usa el mismo supabase client (anon tiene
+  // lectura pública a zones). Si falla o devuelve vacío, el wizard salta
+  // el paso de sector sin romperse.
+  const { data: zonesData } = await supabase
+    .from('zones')
+    .select('name, prefix')
+    .eq('venue_id', params.venueId)
+    .order('created_at')
+  const zones: { name: string; prefix: string | null }[] = zonesData ?? []
+
   // Prefill desde SearchPill del home
   const party = searchParams.party ? parseInt(searchParams.party, 10) : undefined
   const prefill = {
@@ -51,7 +61,7 @@ export default async function ReservarPage({ params, searchParams }: Props) {
       </header>
 
       <div className="screen-x pt-3">
-        <ReservationWizard venue={venue as Venue} prefill={prefill} />
+        <ReservationWizard venue={venue as Venue} prefill={prefill} sectors={zones} />
       </div>
     </div>
   )
