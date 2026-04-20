@@ -299,6 +299,21 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
           {/* hero-overlay es decorativo: no debe bloquear clicks al img */}
           <div className="absolute inset-0 hero-overlay pointer-events-none" />
 
+          {/* "Nuevo en Un Toque" pill flotante — marca venues recién sumados
+              a la plataforma. Position: debajo del back button, no interfiere
+              con title block. */}
+          <span
+            className="absolute z-20 inline-flex items-center gap-1.5
+                       bg-c2 text-white px-2.5 py-1 rounded-full
+                       text-[10px] font-extrabold uppercase tracking-[0.06em]
+                       shadow-[0_2px_8px_rgba(46,216,168,0.35)]
+                       pointer-events-none"
+            style={{ top: 108, left: 16 }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            Nuevo en Un Toque
+          </span>
+
           {/* Back (left) */}
           <button
             onClick={() => { if (typeof window !== 'undefined') window.history.back() }}
@@ -440,38 +455,9 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
         )}
       </div>
 
-      {/* Contenido */}
-      <div className="screen-x pt-5 space-y-5">
-        {/* Badges secundarios — título + cocina + barrio viven sobre el hero */}
-        {(() => {
-          const dietary = (venue.config_json as { dietary?: string[] } | null)?.dietary ?? []
-          const dietaryLabels: Record<string, string> = {
-            vegetarian: 'Vegetariano',
-            vegan: 'Vegano',
-            celiaco: 'Celíacos',
-            kosher: 'Kosher',
-            halal: 'Halal',
-          }
-          return (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="badge bg-c2l text-[#0F7A5A]">Nuevo en Un Toque</span>
-              {deposit > 0 && (
-                <span className="badge bg-c3l text-[#B78200]">Seña ${deposit.toLocaleString('es-AR')}</span>
-              )}
-              {dietary.map((d) => {
-                const label = dietaryLabels[d]
-                if (!label) return null
-                return (
-                  <span key={d} className="badge bg-c5l text-[#6B30CC]">
-                    {label}
-                  </span>
-                )
-              })}
-            </div>
-          )
-        })()}
-
-      </div>
+      {/* Separador mínimo sin strip de badges — la info vive en el hero
+          (categorías + dietary pills en el overlay) y en los cards de
+          Dirección/Horarios + texto legal del CTA. */}
 
       {/* ═══════ Tabs underline ═══════
           bg-bg sólido (sin transparencia ni backdrop-blur): el blur sobre la
@@ -608,6 +594,9 @@ export function VenueDetailClient({ venue, menu = [], prefill }: Props) {
               </Link>
 
               <p className="text-[11.5px] text-tx3 text-center mt-3">
+                {deposit > 0 && (
+                  <>Seña ${deposit.toLocaleString('es-AR')} · </>
+                )}
                 Cancelá gratis hasta {cancellationHours}h antes · Reserva en ~30 segundos
               </p>
             </section>
