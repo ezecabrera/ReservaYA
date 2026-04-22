@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  ReservaYa — Seed de desarrollo
+--  Un Toque — Seed de desarrollo
 --  Crea un venue de prueba, zonas, mesas y un staff user.
 --  Ejecutar DESPUÉS de las migraciones, solo en desarrollo.
 -- ═══════════════════════════════════════════════════════════════════════════

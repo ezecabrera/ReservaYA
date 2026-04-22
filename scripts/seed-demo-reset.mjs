@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════════════
-//  ReservaYa — Reset seed demo
+//  Un Toque — Reset seed demo
 //  Borra SOLO datos ficticios:
 //    - venues con UUID que empieza con "dec0..."
-//    - staff_users y usuarios auth con email @demo.reservaya.test
-//    - cuenta tester test@reservaya.test
+//    - staff_users y usuarios auth con email @demo.untoque.test
+//    - cuenta tester test@untoque.test
 //    - usuarios cliente en public.users asociados
 //  No toca La Cantina (00000000-0000-0000-0000-000000000001) ni datos reales.
 //

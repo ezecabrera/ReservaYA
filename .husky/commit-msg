@@ -1,0 +1,15 @@
+# Valida que el mensaje del commit cumpla Conventional Commits.
+# Formato: `<type>(<scope>): <subject>`
+#   type:   feat | fix | docs | style | refactor | perf | test | build | ci | chore | revert
+#   scope:  app | panel | shared | native | supabase | docs | deps | ci | config (opcional)
+# Ejemplo: feat(panel): agregar tab de fotos en /dashboard/venue
+#
+# Fallback a corepack pnpm si pnpm no está en PATH (Git Bash sin pnpm global).
+
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm exec commitlint --edit "$1"
+elif command -v corepack >/dev/null 2>&1; then
+  corepack pnpm exec commitlint --edit "$1"
+else
+  echo "⚠ pnpm no disponible — saltando commitlint (CI lo validará)"
+fi

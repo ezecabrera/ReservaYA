@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  Datos ficticios para entorno de testing — ReservaYa
+//  Datos ficticios para entorno de testing — Un Toque
 //  Restaurantes variados SOLO dentro de las cocinas que hoy filtra la app
 //  (ver chips en app/app/page.tsx: Pastas, Carnes, Pizza, Vegano, Sushi).
 //
@@ -8,11 +8,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const DEMO_VENUE_UUID_PREFIX = 'dec0'
-export const DEMO_EMAIL_DOMAIN = 'demo.reservaya.test'
+export const DEMO_EMAIL_DOMAIN = 'demo.untoque.test'
 export const DEMO_PASSWORD = 'Demo1234!'
 
 // Cuenta especial de prueba para entrar rápido a la PWA cliente
-export const TESTER_EMAIL = 'test@reservaya.test'
+export const TESTER_EMAIL = 'test@untoque.test'
 export const TESTER_PASSWORD = 'Test1234!'
 export const TESTER_NAME = 'Tester ReservaYA'
 

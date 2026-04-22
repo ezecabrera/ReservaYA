@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  ReservaYa — Row Level Security (RLS)
+--  Un Toque — Row Level Security (RLS)
 --  Multi-tenancy por venue_id: cada negocio solo ve sus datos.
 --  Roles: cliente (auth via phone OTP), staff (auth via email/password),
 --         servicio (service_role key — sin restricciones, solo server-side).

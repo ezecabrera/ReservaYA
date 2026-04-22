@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════════════
-//  ReservaYa — Seed demo
+//  Un Toque — Seed demo
 //  Crea 20 restaurantes ficticios + cuentas staff + 10 clientes + tester.
 //  Idempotente: se puede correr varias veces sin duplicar datos.
 //
@@ -273,7 +273,7 @@ async function main() {
   const md = []
   md.push('# Credenciales — entorno de testing\n')
   md.push(`Generado: ${credsJson.generated_at}\n`)
-  md.push('> Todas las cuentas son ficticias. Dominio `@demo.reservaya.test` no enruta.\n')
+  md.push('> Todas las cuentas son ficticias. Dominio `@demo.untoque.test` no enruta.\n')
   md.push('\n## 🎯 Cuenta tester (login rápido en la PWA)\n')
   md.push(`- **Email:** \`${TESTER_EMAIL}\``)
   md.push(`- **Password:** \`${TESTER_PASSWORD}\``)
@@ -297,7 +297,7 @@ async function main() {
 
   md.push('\n## 🔁 Cómo resetear\n')
   md.push('```bash\npnpm seed:demo:reset\n```\n')
-  md.push('Esto borra todos los datos con UUID `dec0...` y cuentas `@demo.reservaya.test` + la cuenta tester. No toca La Cantina ni datos productivos.\n')
+  md.push('Esto borra todos los datos con UUID `dec0...` y cuentas `@demo.untoque.test` + la cuenta tester. No toca La Cantina ni datos productivos.\n')
 
   writeFileSync(resolve(__dirname, 'demo-credentials.md'), md.join('\n'))
 

@@ -1,0 +1,11 @@
+# Pre-commit: type-check rápido del shared package (~2 seg).
+# Los apps tardan 20-30 seg y harían el commit muy lento. Para esos, lo valida CI.
+# Fallback a corepack pnpm si pnpm no está en PATH (Git Bash sin pnpm global).
+
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm --filter @untoque/shared type-check
+elif command -v corepack >/dev/null 2>&1; then
+  corepack pnpm --filter @untoque/shared type-check
+else
+  echo "⚠ pnpm no disponible — saltando type-check (CI lo validará)"
+fi

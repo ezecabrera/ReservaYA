@@ -1,4 +1,4 @@
 packages:
-  - "app"
-  - "panel"
-  - "shared"
+  - "apps/*"
+  - "packages/*"
+  - "native/*"

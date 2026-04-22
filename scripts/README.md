@@ -8,10 +8,10 @@ Genera un entorno de prueba con:
 - Para cada negocio: zonas, mesas, menú coherente con la cocina, imagen placeholder y configuración de reservas.
 - **20 cuentas staff `owner`** (una por negocio) para entrar al panel.
 - **10 usuarios cliente** para probar la PWA.
-- **1 cuenta tester destacada** (`test@reservaya.test` / `Test1234!`) lista para login.
+- **1 cuenta tester destacada** (`test@untoque.test` / `Test1234!`) lista para login.
 - `venue_subscriptions` en `trial` de 365 días (así los venues aparecen en la home).
 
-Todos los UUIDs de venues empiezan con `dec0...` y los emails usan el dominio `@demo.reservaya.test`, para distinguirlos de datos reales.
+Todos los UUIDs de venues empiezan con `dec0...` y los emails usan el dominio `@demo.untoque.test`, para distinguirlos de datos reales.
 
 ## Requisitos
 
@@ -49,8 +49,8 @@ pnpm seed:demo:reset
 
 Borra sólo:
 - Venues con UUID `dec0...` (cascada: zones, tables, menu_categories, menu_items, staff_users, venue_subscriptions)
-- Cuentas auth con email `@demo.reservaya.test`
-- Cuenta tester `test@reservaya.test`
+- Cuentas auth con email `@demo.untoque.test`
+- Cuenta tester `test@untoque.test`
 - Filas en `public.users` asociadas
 
 **No toca** La Cantina (venue `00000000-0000-0000-0000-000000000001`) ni datos productivos.
