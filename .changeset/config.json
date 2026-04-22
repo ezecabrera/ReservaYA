@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "un-toque/monorepo" }
+  ],
+  "commit": false,
+  "fixed": [],
+  "linked": [["@untoque/app", "@untoque/panel", "@untoque/native-client", "@untoque/native-business"]],
+  "access": "restricted",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

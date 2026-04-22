@@ -41,9 +41,40 @@ supabase/.branches/
 .claude/settings.local.json.backup
 
 # next-pwa: service worker generado en build time, no versionar
-app/public/sw.js
-app/public/sw.js.map
-app/public/workbox-*.js
-app/public/workbox-*.js.map
-app/public/worker-*.js
-app/public/worker-*.js.map
+apps/app/public/sw.js
+apps/app/public/sw.js.map
+apps/app/public/workbox-*.js
+apps/app/public/workbox-*.js.map
+apps/app/public/worker-*.js
+apps/app/public/worker-*.js.map
+
+# ══════════════════════════════════════════════════════════════════════════
+# CAPACITOR — apps nativas
+# Las carpetas android/ y ios/ son GENERADAS por `cap add`. Cada dev las
+# regenera localmente con `cap sync`. No versionamos el código nativo.
+# ══════════════════════════════════════════════════════════════════════════
+
+# Proyectos Android generados
+native/*/android/
+native/*/ios/
+
+# Keystores — NUNCA commitear (si se pierde, no se puede actualizar la app)
+native/*/*.keystore
+native/*/*.jks
+native/*/keystore.properties
+
+# Builds
+native/*/www/
+native/*/*.apk
+native/*/*.aab
+native/*/*.ipa
+native/*/build/
+native/*/.gradle/
+native/*/local.properties
+
+# iOS CocoaPods
+native/*/ios/App/Pods/
+native/*/ios/App/Podfile.lock
+
+.vercel
+.vercel-app-backup

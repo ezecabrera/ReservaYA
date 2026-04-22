@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════════════
-//  ReservaYa — Upgrade metadata de venues demo
+//  Un Toque — Upgrade metadata de venues demo
 //  Enriquece config_json de los 20 venues demo con:
 //    features[], ambience[], dietary[], price_tier, neighborhood,
 //    gallery_urls[]

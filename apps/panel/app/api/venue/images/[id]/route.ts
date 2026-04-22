@@ -1,0 +1,79 @@
+import { NextResponse, type NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server-admin'
+
+async function requireOwnerManager(userId: string) {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('staff_users')
+    .select('venue_id, role')
+    .eq('id', userId)
+    .single()
+  if (!data || !['owner', 'manager'].includes(data.role)) return null
+  return { venueId: data.venue_id as string }
+}
+
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
+  const staff = await requireOwnerManager(user.id)
+  if (!staff) return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
+
+  const body = await req.json().catch(() => null) as {
+    caption?: string | null
+    sortOrder?: number
+  } | null
+
+  const patch: Record<string, unknown> = {}
+  if ('caption' in (body ?? {})) patch.caption = body?.caption ?? null
+  if (typeof body?.sortOrder === 'number') patch.sort_order = body.sortOrder
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('venue_images')
+    .update(patch)
+    .eq('id', params.id)
+    .eq('venue_id', staff.venueId)
+    .select('*')
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
+  const staff = await requireOwnerManager(user.id)
+  if (!staff) return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
+
+  const admin = createAdminClient()
+
+  // Buscar la imagen para obtener el storage_path
+  const { data: image } = await admin
+    .from('venue_images')
+    .select('storage_path')
+    .eq('id', params.id)
+    .eq('venue_id', staff.venueId)
+    .single()
+
+  // Borrar el row
+  const { error } = await admin
+    .from('venue_images')
+    .delete()
+    .eq('id', params.id)
+    .eq('venue_id', staff.venueId)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Best-effort: borrar también del Storage (no crítico si falla)
+  if (image?.storage_path) {
+    await admin.storage.from('venue-content').remove([image.storage_path]).catch(() => {})
+  }
+
+  return NextResponse.json({ ok: true })
+}

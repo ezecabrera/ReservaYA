@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  ReservaYa — Estado de ocupación manual de mesas
+--  Un Toque — Estado de ocupación manual de mesas
 --  El staff del panel marca presenciales con is_occupied = true.
 --  El check-in de reservas digitales también lo pone en true.
 --  Liberar mesa lo pone en false.

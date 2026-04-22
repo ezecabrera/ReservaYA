@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  ReservaYa — Schema inicial
+--  Un Toque — Schema inicial
 --  Ejecutar en orden. Usa uuid-ossp y pgcrypto (disponibles en Supabase).
 -- ═══════════════════════════════════════════════════════════════════════════
 

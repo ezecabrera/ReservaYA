@@ -1,0 +1,82 @@
+name: Release
+
+# Dispara al pushear un tag v*.*.* (ej: v0.2.0).
+# - Crea un GitHub Release con las notas del CHANGELOG
+# - (Futuro) Compila APK / IPA y los sube al release
+# - (Futuro) Dispara deploy a Vercel production
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  github-release:
+    name: Crear GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # para crear el release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extraer notas del CHANGELOG
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # Extrae la sección de la versión actual del CHANGELOG.md
+          NOTES=$(awk -v ver="## $VERSION" '
+            $0 ~ ver {flag=1; next}
+            flag && /^## [0-9]/ {exit}
+            flag {print}
+          ' docs/CHANGELOG.md)
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Crear release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.notes }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # Build mobile (futuro) — descomentar cuando tengas JDK + keystore configurados
+  # Requiere secrets de GitHub:
+  #   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+  # ═══════════════════════════════════════════════════════════════════════
+  #
+  # build-android-client:
+  #   name: Build Android (cliente)
+  #   needs: github-release
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: pnpm/action-setup@v4
+  #       with: { version: 9.12.0 }
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: '20', cache: 'pnpm' }
+  #     - uses: actions/setup-java@v4
+  #       with: { java-version: '17', distribution: 'temurin' }
+  #     - run: pnpm install --frozen-lockfile
+  #     - run: pnpm --filter @untoque/native-client cap sync android
+  #     - name: Decode keystore
+  #       run: |
+  #         echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > native/client/android/app/release.keystore
+  #     - name: Build release AAB
+  #       run: cd native/client/android && ./gradlew bundleRelease
+  #       env:
+  #         KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  #         KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+  #         KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+  #     - uses: actions/upload-release-asset@v1
+  #       with:
+  #         upload_url: ${{ needs.github-release.outputs.upload_url }}
+  #         asset_path: native/client/android/app/build/outputs/bundle/release/app-release.aab
+  #         asset_name: un-toque-client-${{ github.ref_name }}.aab
+  #         asset_content_type: application/octet-stream
