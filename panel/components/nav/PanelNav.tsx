@@ -2,132 +2,78 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Avatar, Ic, ThemeSwitch } from '@/components/ui/brand'
+
+/* ============================================================
+   Sidebar nuevo (handoff Claude Design 2026-04-24)
+   Logo pastel lilac + lista simple + turno staff + theme toggle.
+   Bottom nav mobile para <lg.
+   ============================================================ */
 
 const ITEMS = [
-  {
-    href: '/dashboard',
-    label: 'Mesas',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-        <rect x="3" y="3" width="7" height="7" rx="1.5"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-        <rect x="14" y="3" width="7" height="7" rx="1.5"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-        <rect x="3" y="14" width="7" height="7" rx="1.5"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-        <rect x="14" y="14" width="7" height="7" rx="1.5"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dashboard/reservas',
-    label: 'Reservas',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-        <rect x="3" y="4" width="18" height="18" rx="2"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-        <path d="M16 2v4M8 2v4M3 10h18"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
-          strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dashboard/menu',
-    label: 'Menú',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
-          strokeWidth="2" strokeLinecap="round" />
-        <rect x="9" y="3" width="6" height="4" rx="1"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-        <path d="M9 12h6M9 16h4"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
-          strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    href: '/check-in',
-    label: 'Check-in',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-        <path d="M9 11l3 3L22 4" stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dashboard/analytics',
-    label: 'Stats',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-        <path d="M18 20V10M12 20V4M6 20v-6"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dashboard/billing',
-    label: 'Plan',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-        <path d="M12 6v6l4 2"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'}
-          strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dashboard/config',
-    label: 'Config',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="3"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
-          stroke={active ? 'var(--c1)' : 'rgba(255,255,255,0.25)'} strokeWidth="2" />
-      </svg>
-    ),
-  },
+  { href: '/dashboard',           label: 'Dashboard', icon: Ic.dash },
+  { href: '/dashboard/mesas',     label: 'Mesas',     icon: Ic.tables },
+  { href: '/dashboard/reservas',  label: 'Reservas',  icon: Ic.reserva },
+  { href: '/dashboard/menu',      label: 'Menú',      icon: Ic.book },
+  { href: '/dashboard/crm',       label: 'CRM',       icon: Ic.crm },
+  { href: '/dashboard/campaigns', label: 'Campañas',  icon: Ic.camp },
+  { href: '/dashboard/analytics', label: 'Stats',     icon: Ic.stats },
+  { href: '/dashboard/handoff',   label: 'Handoff',   icon: Ic.chat },
+  { href: '/dashboard/billing',   label: 'Plan',      icon: Ic.plan },
+  { href: '/dashboard/config',    label: 'Config',    icon: Ic.settings },
+  { href: '/dashboard/ayuda',     label: 'Ayuda',     icon: Ic.help },
+] as const
+
+type NavItem = (typeof ITEMS)[number]
+
+const STAFF_DEMO: Array<{ name: string; role: string }> = [
+  { name: 'Lucía M.', role: 'Encargada' },
+  { name: 'Camila W.', role: 'Mozo' },
+  { name: 'Javier P.', role: 'Runner' },
 ]
 
 export function PanelNav() {
   const pathname = usePathname()
+  return (
+    <>
+      <BottomNav pathname={pathname} />
+      <SidebarNav pathname={pathname} />
+    </>
+  )
+}
 
+function BottomNav({ pathname }: { pathname: string }) {
+  const MOBILE = [
+    '/dashboard',
+    '/dashboard/mesas',
+    '/dashboard/crm',
+    '/dashboard/analytics',
+    '/dashboard/config',
+  ]
+  const items = ITEMS.filter((i) => MOBILE.includes(i.href as string))
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t"
       style={{
-        background: '#1A1A2E',
-        paddingBottom: 'max(18px, env(safe-area-inset-bottom))',
+        background: 'var(--bg-2)',
+        borderColor: 'var(--line)',
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
       }}
+      aria-label="Navegación principal"
     >
       <div className="flex items-center justify-around pt-2 px-2">
-        {ITEMS.map((item) => {
-          const active = item.href === '/dashboard'
-            ? pathname === '/dashboard'
-            : pathname === item.href || pathname.startsWith(item.href + '/')
+        {items.map((item) => {
+          const active = isActive(pathname, item.href)
+          const Icon = item.icon
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-1 min-w-[60px] py-1
-                         transition-transform duration-[180ms] active:scale-90"
+              className="flex flex-col items-center gap-1 min-w-[60px] py-1 transition-transform duration-[180ms] active:scale-90"
+              style={{ color: active ? 'var(--text)' : 'var(--text-3)' }}
             >
-              {item.icon(active)}
-              <span
-                className="text-[10px] font-semibold"
-                style={{ color: active ? 'var(--c1)' : 'rgba(255,255,255,0.25)' }}
-              >
+              <Icon style={{ color: 'currentColor' }} />
+              <span className="caps" style={{ color: 'currentColor', fontSize: 9 }}>
                 {item.label}
               </span>
             </Link>
@@ -136,4 +82,91 @@ export function PanelNav() {
       </div>
     </nav>
   )
+}
+
+function SidebarNav({ pathname }: { pathname: string }) {
+  return (
+    <aside
+      className="hidden lg:flex fixed top-0 left-0 bottom-0 z-40 w-[220px] flex-col border-r"
+      style={{ background: 'var(--bg-2)', borderColor: 'var(--line)' }}
+      aria-label="Navegación principal"
+    >
+      <div className="flex items-center gap-2" style={{ padding: '20px 22px' }}>
+        <div
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 8,
+            background: 'var(--p-lilac)',
+            display: 'grid',
+            placeItems: 'center',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 900,
+            fontStyle: 'italic',
+            color: '#1A1B1F',
+            fontSize: 16,
+            letterSpacing: '-0.04em',
+          }}
+          aria-hidden
+        >
+          u
+        </div>
+        <div className="fr-900" style={{ fontSize: 20, color: 'var(--text)' }}>
+          UnToque
+        </div>
+      </div>
+
+      <nav style={{ flex: 1, padding: '4px 12px', overflowY: 'auto' }}>
+        {ITEMS.map((item) => (
+          <SidebarLink key={item.href} item={item} active={isActive(pathname, item.href)} />
+        ))}
+      </nav>
+
+      <div style={{ padding: '16px 16px 20px', borderTop: '1px solid var(--line)' }}>
+        <div className="caps" style={{ marginBottom: 10 }}>
+          Turno
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+          {STAFF_DEMO.map((s) => (
+            <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Avatar name={s.name} size={22} />
+              <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{s.name}</span>
+            </div>
+          ))}
+        </div>
+        <ThemeSwitch />
+      </div>
+    </aside>
+  )
+}
+
+function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon
+  return (
+    <Link
+      href={item.href}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '10px 12px',
+        margin: '2px 0',
+        color: active ? 'var(--text)' : 'var(--text-2)',
+        background: active ? 'var(--surface-2)' : 'transparent',
+        borderRadius: 'calc(var(--r) * 0.5)',
+        fontSize: 14,
+        fontWeight: active ? 600 : 500,
+        textDecoration: 'none',
+        transition: 'background 120ms, color 120ms',
+      }}
+    >
+      <Icon style={{ color: active ? 'var(--text)' : 'var(--text-3)' }} />
+      <span>{item.label}</span>
+    </Link>
+  )
+}
+
+function isActive(pathname: string, href: string) {
+  if (href === '/dashboard') return pathname === '/dashboard'
+  return pathname === href || pathname.startsWith(href + '/')
 }

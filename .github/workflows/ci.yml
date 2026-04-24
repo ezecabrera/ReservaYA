@@ -1,7 +1,7 @@
 name: CI
 
 # Se ejecuta en cada push a main y en cada PR. Garantiza que el merge a
-# main no rompe type-check ni lint. Si agregamos tests después, se suman acá.
+# main no rompe type-check, tests ni lint en ningún package.
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    name: Type-check + Lint
+    name: Type-check + Tests + Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -47,9 +47,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type-check (app cliente)
+      # ─── Type-check 3/3 packages ────────────────────────────────
+      - name: Type-check (shared)
+        run: pnpm --filter @reservaya/shared type-check
+
+      - name: Type-check (panel)
+        run: pnpm --filter @reservaya/panel type-check
+
+      - name: Type-check (app)
         run: pnpm --filter @reservaya/app type-check
 
-      - name: Lint (app cliente)
+      # ─── Tests ──────────────────────────────────────────────────
+      - name: Tests (panel)
+        run: pnpm --filter @reservaya/panel test
+
+      # ─── Lint (warnings no bloquean) ─────────────────────────────
+      - name: Lint (panel)
+        run: pnpm --filter @reservaya/panel lint
+        continue-on-error: true
+
+      - name: Lint (app)
         run: pnpm --filter @reservaya/app lint
-        continue-on-error: true    # lint warnings no deben bloquear merge mientras estabilizamos
+        continue-on-error: true
