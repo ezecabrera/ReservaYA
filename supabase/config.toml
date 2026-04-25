@@ -54,7 +54,7 @@ enable_confirmations = false
 enable_signup = true
 enable_confirmations = true
 # Twilio o Vonage para OTP en producción
-# template = "Tu código de ReservaYa es: {{ .Code }}"
+# template = "Tu código de UnToque es: {{ .Code }}"
 
 [auth.external.github]
 enabled = false
