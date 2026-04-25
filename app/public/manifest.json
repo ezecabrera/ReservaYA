@@ -1,7 +1,7 @@
 {
-  "name": "Un Toque",
+  "name": "Un Toque — Reservá tu mesa",
   "short_name": "Un Toque",
-  "description": "Reservá tu mesa en segundos — restaurantes de Buenos Aires",
+  "description": "Reservá mesa en restaurantes, bares y cafés de Argentina en segundos. Sin apps que pesan, sin esperas, sin comisiones ocultas.",
   "start_url": "/",
   "scope": "/",
   "id": "/",
@@ -12,7 +12,7 @@
   "orientation": "portrait",
   "lang": "es-AR",
   "dir": "ltr",
-  "categories": ["food", "lifestyle", "travel"],
+  "categories": ["food", "lifestyle", "travel", "social"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -44,20 +44,67 @@
       "type": "image/png"
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Buscador de restaurantes en Buenos Aires"
+    },
+    {
+      "src": "/screenshots/mobile-2.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Detalle de un restaurante con fotos y horarios"
+    },
+    {
+      "src": "/screenshots/mobile-3.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Confirmación de reserva con QR de check-in"
+    },
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vista escritorio del buscador"
+    }
+  ],
   "shortcuts": [
+    {
+      "name": "Reservar mesa",
+      "short_name": "Reservar",
+      "url": "/reservar",
+      "description": "Buscar y reservar en un toque",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
     {
       "name": "Mis reservas",
       "short_name": "Reservas",
       "url": "/mis-reservas",
-      "description": "Ver mis reservas activas"
+      "description": "Ver mis reservas activas",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Favoritos",
       "short_name": "Favoritos",
       "url": "/favoritos",
-      "description": "Los restaurantes que guardé"
+      "description": "Los restaurantes que guardé",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "share_target": {
+    "action": "/compartir",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

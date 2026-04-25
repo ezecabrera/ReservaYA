@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { SplashScreen } from '@/components/ui/SplashScreen'
 import { OfflineBanner } from '@/components/ui/OfflineBanner'
@@ -67,6 +69,8 @@ export default function RootLayout({
         <SplashScreen />
         <OfflineBanner />
         <main id="main">{children}</main>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

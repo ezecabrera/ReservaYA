@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#1A1B21"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#A13143"/>
+  <g font-family="Fraunces, 'Times New Roman', serif" fill="#F4F2EE">
+    <text x="80" y="180" font-size="56" font-weight="900" letter-spacing="-2">UnToque</text>
+    <text x="80" y="300" font-size="80" font-weight="800" fill="#4F8A5F">Sin comisión</text>
+    <text x="80" y="380" font-size="80" font-weight="800" fill="#4F8A5F">por cubierto.</text>
+  </g>
+  <g transform="translate(80,440)">
+    <rect width="380" height="80" rx="40" fill="#A13143"/>
+    <text x="190" y="52" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="28" font-weight="800" fill="#FFFFFF" text-anchor="middle">ARS 30.000 / mes flat</text>
+  </g>
+  <g font-family="'Plus Jakarta Sans', system-ui, sans-serif" fill="#A8A4A0">
+    <text x="80" y="570" font-size="22" font-weight="500">Cancelás cuando quieras  ·  Migración 1-click desde TheFork, Maxirest, Fudo</text>
+  </g>
+  <g transform="translate(900,100)" opacity="0.9">
+    <circle cx="100" cy="100" r="100" fill="#E4CDED"/>
+    <text x="100" y="150" font-family="Fraunces, serif" font-size="150" font-weight="800" fill="#A13143" text-anchor="middle" font-style="italic">u</text>
+  </g>
+  <!-- Convert to PNG: npx svgo og-landing.svg && sharp resize 1200x630 og-landing.png -->
+</svg>

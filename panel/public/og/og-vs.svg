@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1A1B21"/>
+      <stop offset="0.5" stop-color="#2A1A1F"/>
+      <stop offset="1" stop-color="#1A1B21"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#A13143"/>
+  <line x1="600" y1="60" x2="600" y2="570" stroke="#3A3030" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <g font-family="Fraunces, 'Times New Roman', serif">
+    <text x="300" y="200" font-size="80" font-weight="900" fill="#F4F2EE" text-anchor="middle">UnToque</text>
+    <text x="300" y="270" font-size="32" font-weight="600" fill="#4F8A5F" text-anchor="middle" font-style="italic">tarifa flat</text>
+  </g>
+  <g font-family="Fraunces, 'Times New Roman', serif">
+    <text x="900" y="200" font-size="80" font-weight="900" fill="#A8A4A0" text-anchor="middle">[competidor]</text>
+    <text x="900" y="270" font-size="32" font-weight="600" fill="#A13143" text-anchor="middle" font-style="italic">comisión / cubierto</text>
+  </g>
+
+  <g font-family="'Plus Jakarta Sans', system-ui, sans-serif" fill="#F4F2EE">
+    <text x="600" y="380" font-size="40" font-weight="800" text-anchor="middle">Comparativa honesta.</text>
+    <text x="600" y="430" font-size="26" font-weight="500" fill="#A8A4A0" text-anchor="middle">Precios, features y trade-offs reales — sin marketing.</text>
+  </g>
+
+  <g transform="translate(450,500)">
+    <rect width="300" height="64" rx="32" fill="#A13143"/>
+    <text x="150" y="42" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="22" font-weight="800" fill="#FFFFFF" text-anchor="middle">Ver comparativa</text>
+  </g>
+  <!-- Convert to PNG: npx svgo og-vs.svg && sharp resize 1200x630 og-vs.png -->
+</svg>

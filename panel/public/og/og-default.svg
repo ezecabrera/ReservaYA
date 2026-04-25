@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1A1B21"/>
+      <stop offset="1" stop-color="#2A1A1F"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#A13143"/>
+      <stop offset="1" stop-color="#4F8A5F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="6" fill="url(#accent)"/>
+  <g font-family="Fraunces, 'Times New Roman', serif" fill="#F4F2EE">
+    <text x="80" y="200" font-size="64" font-weight="900" letter-spacing="-2">UnToque</text>
+    <text x="80" y="290" font-size="44" font-weight="500" font-style="italic" fill="#E4CDED">El panel que pone el toque.</text>
+  </g>
+  <g font-family="'Plus Jakarta Sans', system-ui, sans-serif" fill="#A8A4A0">
+    <text x="80" y="360" font-size="26" font-weight="500">Reservas, mesas, CRM y pagos para restaurantes argentinos.</text>
+    <text x="80" y="395" font-size="26" font-weight="500">Sin comisión por cubierto.</text>
+  </g>
+  <g transform="translate(80,470)">
+    <rect width="220" height="56" rx="28" fill="#A13143"/>
+    <text x="110" y="36" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">deuntoque.com</text>
+  </g>
+  <g transform="translate(900,80)" opacity="0.9">
+    <circle cx="120" cy="120" r="120" fill="#E4CDED"/>
+    <text x="120" y="180" font-family="Fraunces, serif" font-size="180" font-weight="800" fill="#A13143" text-anchor="middle" font-style="italic">u</text>
+  </g>
+  <text x="80" y="590" font-family="'JetBrains Mono', monospace" font-size="16" fill="#6E6A66">deuntoque.com  ·  hola@deuntoque.com</text>
+  <!-- Convert to PNG: npx svgo og-default.svg -o og-default.min.svg && npx sharp-cli -i og-default.svg -o og-default.png resize 1200 630 -->
+</svg>
