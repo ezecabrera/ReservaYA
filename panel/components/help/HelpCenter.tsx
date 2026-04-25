@@ -127,7 +127,7 @@ const SECTIONS: FaqSection[] = [
       },
       {
         q: '¿Dónde veo el comprobante de mi suscripción?',
-        a: 'Mercado Pago → Mis suscripciones → UnToque. El recibo se manda al email registrado en MP. Si necesitás factura A, escribinos a soporte@untoque.com.ar.',
+        a: 'Mercado Pago → Mis suscripciones → UnToque. El recibo se manda al email registrado en MP. Si necesitás factura A, escribinos a soporte@deuntoque.com.',
         tags: ['factura', 'mp'],
       },
     ],
@@ -144,7 +144,7 @@ const SECTIONS: FaqSection[] = [
       },
       {
         q: '¿Qué hago si el panel no carga?',
-        a: '1) Hard refresh (Ctrl+Shift+R) 2) Verificá status.untoque.com.ar 3) Si seguís sin acceso, escribinos por WhatsApp al +54 9 11 5555-0000.',
+        a: '1) Hard refresh (Ctrl+Shift+R) 2) Verificá status.deuntoque.com 3) Si seguís sin acceso, escribinos por WhatsApp al +54 9 11 5555-0000.',
         tags: ['outage'],
       },
       {
@@ -280,7 +280,7 @@ export function HelpCenter() {
             </span>
           </a>
           <a
-            href="mailto:soporte@untoque.com.ar"
+            href="mailto:soporte@deuntoque.com"
             className="fr-900"
             style={quickActionStyle('p-sky')}
           >
@@ -291,7 +291,7 @@ export function HelpCenter() {
             </span>
           </a>
           <a
-            href="https://status.untoque.com.ar"
+            href="https://status.deuntoque.com"
             target="_blank"
             rel="noopener noreferrer"
             className="fr-900"
