@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'UnToque · Panel para restaurantes argentinos',
     description:
-      '$0 comisión por cubierto vs €2.50 TheFork. CRM nativo, WhatsApp segmentado, modo grupo. ARS 30.000/mes flat.',
+      'Sin comisión por cubierto. Tus datos son tuyos. CRM nativo, WhatsApp segmentado, modo grupo. ARS 30.000/mes flat.',
     type: 'website',
     url: 'https://deuntoque.com/landing',
     siteName: 'UnToque',
@@ -276,18 +276,7 @@ export default function LandingPage() {
               >
                 $0
               </span>
-              <span style={{ color: 'var(--text-2)' }}>comisión por cubierto vs</span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                  fontWeight: 600,
-                  textDecoration: 'line-through',
-                  color: 'var(--text-3)',
-                }}
-              >
-                €2.50
-              </span>
-              <span style={{ color: 'var(--text-2)' }}>de TheFork</span>
+              <span style={{ color: 'var(--text-2)' }}>comisión por cubierto · ARS 30.000 fijos al mes</span>
             </div>
 
             {/* CTAs */}
@@ -308,7 +297,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <p style={{ marginTop: 16, fontSize: 12, color: 'var(--text-3, #6D6C68)' }}>
-              Sin tarjeta. Migramos tus datos desde TheFork, Maxirest, Fudo o Excel sin costo.
+              Sin tarjeta. Te migramos los datos de tu sistema actual sin costo.
             </p>
           </div>
 
@@ -596,7 +585,7 @@ export default function LandingPage() {
             {
               pastel: 'p-lilac',
               title: 'Sin comisión',
-              body: 'TheFork te cobra €2.50 por cubierto. Nosotros cero. Pagás un mensual fijo y listo.',
+              body: 'Las plataformas tradicionales cobran por cubierto. Nosotros, cero. Pagás un mensual fijo y listo.',
             },
             {
               pastel: 'p-mint',
@@ -701,9 +690,9 @@ export default function LandingPage() {
           }}
         >
           {[
-            { name: 'TheFork', tag: 'desde €2.50/cubierto' },
-            { name: 'Maxirest', tag: 'punto de venta' },
-            { name: 'Fudo', tag: 'gestión gastro' },
+            { name: 'TheFork®', tag: 'reservas online' },
+            { name: 'Maxirest®', tag: 'punto de venta' },
+            { name: 'Fudo®', tag: 'gestión gastro' },
             { name: 'Excel / Sheets', tag: 'CSV genérico' },
           ].map((src) => (
             <div
@@ -737,6 +726,20 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+
+        <p
+          style={{
+            fontSize: 11,
+            color: 'var(--text-3, #6D6C68)',
+            marginBottom: 28,
+            maxWidth: 720,
+            lineHeight: 1.55,
+          }}
+        >
+          TheFork®, Maxirest® y Fudo® son marcas registradas de sus respectivos titulares. UnToque no
+          está afiliado ni asociado con esas plataformas. Mencionamos los nombres únicamente para
+          indicar formatos de exportación de datos compatibles con nuestro importador.
+        </p>
 
         {/* Toolkit bullets */}
         <div

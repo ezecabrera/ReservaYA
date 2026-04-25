@@ -377,6 +377,35 @@ export default function ComparativeLayout({
         </div>
       </section>
 
+      {/* Trademark disclaimer */}
+      <section
+        style={{
+          padding: '24px 28px 8px',
+          maxWidth: 880,
+          margin: '0 auto',
+        }}
+      >
+        <p
+          style={{
+            fontSize: 11,
+            color: 'var(--text-3, #6D6C68)',
+            lineHeight: 1.6,
+            fontStyle: 'italic',
+          }}
+        >
+          {brand} es una marca registrada de su titular. UnToque no está afiliado ni asociado con
+          {' '}{brand}. Esta comparativa se basa en información pública disponible al 25 de abril de
+          2026. Si detectás algún dato desactualizado o impreciso, escribinos a{' '}
+          <a
+            href="mailto:hola@deuntoque.com"
+            style={{ color: 'var(--text-2)', textDecoration: 'underline' }}
+          >
+            hola@deuntoque.com
+          </a>{' '}
+          y corregimos en 24 horas.
+        </p>
+      </section>
+
       <LegalFooter />
     </div>
   )
