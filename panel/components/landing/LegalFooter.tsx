@@ -101,15 +101,24 @@ export default function LegalFooter() {
           }}
         >
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
-            <Link href="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>
+            <a
+              href="https://deuntoque.com/terms"
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
               Términos
-            </Link>
-            <Link href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>
+            </a>
+            <a
+              href="https://deuntoque.com/privacy"
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
               Privacidad
-            </Link>
-            <Link href="/cookies" style={{ color: 'inherit', textDecoration: 'none' }}>
+            </a>
+            <a
+              href="https://deuntoque.com/cookies"
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
               Cookies
-            </Link>
+            </a>
             <a
               href="mailto:hola@deuntoque.com"
               style={{ color: 'inherit', textDecoration: 'none' }}
