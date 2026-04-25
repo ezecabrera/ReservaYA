@@ -70,7 +70,7 @@ export default function PrivacyPage() {
           <li><strong>Oponerte</strong> a comunicaciones de marketing — opt-out en la app o respondé "BAJA" al WhatsApp.</li>
         </ul>
         <p>
-          Contacto de privacidad: <a href="mailto:privacidad@deuntoque.com">privacidad@deuntoque.com</a>
+          Contacto de privacidad: <a href="mailto:soporte@deuntoque.com">soporte@deuntoque.com</a>
         </p>
         <p>
           Agencia de Acceso a la Información Pública (autoridad de control):{' '}

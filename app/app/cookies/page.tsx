@@ -66,7 +66,7 @@ export default function CookiesPage() {
       <section>
         <h2>5. Contacto</h2>
         <p>
-          <a href="mailto:privacidad@deuntoque.com">privacidad@deuntoque.com</a>
+          <a href="mailto:soporte@deuntoque.com">soporte@deuntoque.com</a>
         </p>
       </section>
     </LegalShell>

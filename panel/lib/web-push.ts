@@ -4,7 +4,7 @@
  * notifications a subscribers de un venue. Requiere 3 env vars:
  *   NEXT_PUBLIC_VAPID_PUBLIC_KEY  (cliente + server)
  *   VAPID_PRIVATE_KEY             (solo server)
- *   VAPID_SUBJECT                 (solo server, ej. mailto:admin@deuntoque.com)
+ *   VAPID_SUBJECT                 (solo server, ej. mailto:no-reply@deuntoque.com)
  *
  * Uso:
  *   import { sendPushToVenue } from '@/lib/web-push'
@@ -20,7 +20,7 @@ function ensureVapid() {
   if (vapidInitialized) return true
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   const privateKey = process.env.VAPID_PRIVATE_KEY
-  const subject = process.env.VAPID_SUBJECT ?? 'mailto:admin@deuntoque.com'
+  const subject = process.env.VAPID_SUBJECT ?? 'mailto:no-reply@deuntoque.com'
 
   if (!publicKey || !privateKey) {
     console.warn('[web-push] VAPID keys no configuradas — push no se enviará')
