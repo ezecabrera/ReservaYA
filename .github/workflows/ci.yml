@@ -49,23 +49,23 @@ jobs:
 
       # ─── Type-check 3/3 packages ────────────────────────────────
       - name: Type-check (shared)
-        run: pnpm --filter @reservaya/shared type-check
+        run: pnpm --filter @untoque/shared type-check
 
       - name: Type-check (panel)
-        run: pnpm --filter @reservaya/panel type-check
+        run: pnpm --filter @untoque/panel type-check
 
       - name: Type-check (app)
-        run: pnpm --filter @reservaya/app type-check
+        run: pnpm --filter @untoque/app type-check
 
       # ─── Tests ──────────────────────────────────────────────────
       - name: Tests (panel)
-        run: pnpm --filter @reservaya/panel test
+        run: pnpm --filter @untoque/panel test
 
       # ─── Lint (warnings no bloquean) ─────────────────────────────
       - name: Lint (panel)
-        run: pnpm --filter @reservaya/panel lint
+        run: pnpm --filter @untoque/panel lint
         continue-on-error: true
 
       - name: Lint (app)
-        run: pnpm --filter @reservaya/app lint
+        run: pnpm --filter @untoque/app lint
         continue-on-error: true

@@ -1,11 +1,11 @@
 {
-  "name": "reservaya",
+  "name": "untoque",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
-    "dev:app": "turbo run dev --filter=@reservaya/app",
-    "dev:panel": "turbo run dev --filter=@reservaya/panel",
+    "dev:app": "turbo run dev --filter=@untoque/app",
+    "dev:panel": "turbo run dev --filter=@untoque/panel",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
