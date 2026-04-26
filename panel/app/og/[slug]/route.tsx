@@ -16,9 +16,9 @@
 
 import { ImageResponse } from 'next/og'
 
+// `contentType` no es export válido en route handlers (es para metadata/og.tsx).
+// ImageResponse ya setea Content-Type: image/png automáticamente en sus headers.
 export const runtime = 'edge'
-export const contentType = 'image/png'
-
 export const dynamicParams = false
 
 export function generateStaticParams() {
