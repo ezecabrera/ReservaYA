@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Venue, ServiceHours } from '@/lib/shared'
+import type { VenueImage } from '@/lib/shared/types/venue-image'
 import { useFavorites } from '@/lib/favorites'
 import { getVenueGallery } from '@/lib/venue-images'
+import { thumbUrl } from '@/lib/venue-image-url'
 import { VenueMap } from './VenueMap'
 
 type DetailTab = 'reservar' | 'menu' | 'resenas' | 'horarios' | 'nosotros'
@@ -70,6 +72,8 @@ interface RealReview {
   comment: string | null
   created_at: string
   author: string
+  /** Respuesta pública del venue (descargo). Migración 015. */
+  response?: { body: string; created_at: string } | null
 }
 
 interface Props {
@@ -80,6 +84,11 @@ interface Props {
   initialTab?: DetailTab
   /** Reviews reales desde la tabla `reviews` (migration 007). [] si no hay */
   reviews?: RealReview[]
+  /**
+   * Imágenes reales subidas por el venue (tabla `venue_images`).
+   * Si hay cover/gallery, se priorizan sobre LoremFlickr y `config_json.gallery_urls`.
+   */
+  realImages?: { cover: VenueImage | null; gallery: VenueImage[] }
 }
 
 function cuisineLabel(v: Venue): string {
@@ -105,13 +114,28 @@ function neighborhood(address: string): string {
 }
 
 // Galería del venue. Prioridad:
-//   1) config_json.gallery_urls si viene con URLs reales (no picsum seed)
-//   2) helper gastronómico (LoremFlickr con tags de la cocina)
+//   1) Imágenes reales desde `venue_images` (cover + gallery), si vienen vía prop
+//   2) config_json.gallery_urls si viene con URLs reales (no picsum seed)
+//   3) helper gastronómico (LoremFlickr con tags de la cocina)
 //
 // El seed script popula gallery_urls con picsum (imágenes random sin
 // relación con gastronomía). Las ignoramos a menos que admin las haya
 // reemplazado por URLs reales desde el panel.
-function gallery(venue: Venue): string[] {
+function gallery(
+  venue: Venue,
+  realImages?: { cover: VenueImage | null; gallery: VenueImage[] },
+): string[] {
+  // Tier 1: imágenes reales del bucket `venue-photos`
+  if (realImages) {
+    const real: string[] = []
+    if (realImages.cover) {
+      real.push(thumbUrl(realImages.cover.url, { width: 1200, quality: 80 }))
+    }
+    for (const img of realImages.gallery) {
+      real.push(thumbUrl(img.url, { width: 1200, quality: 80 }))
+    }
+    if (real.length > 0) return real
+  }
   const configGallery = (venue.config_json as { gallery_urls?: string[] } | null)?.gallery_urls
   const isRealGallery = configGallery
     && configGallery.length > 0
@@ -146,7 +170,7 @@ function isOpenAt(shifts: ServiceHours[]): boolean {
   return shifts.some((s) => s.opens_at <= hhmm && hhmm <= s.closes_at)
 }
 
-export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'reservar', reviews = [] }: Props) {
+export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'reservar', reviews = [], realImages }: Props) {
   const [galleryIdx, setGalleryIdx] = useState(0)
   // Para pausar el auto-scroll cuando el usuario interactúa manualmente con
   // los dots o cuando el fullscreen gallery está abierto.
@@ -205,7 +229,7 @@ export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'res
       setTimeout(() => setShareMsg(null), 2500)
     }
   }
-  const pics = gallery(venue)
+  const pics = gallery(venue, realImages)
 
   // Auto-scroll del hero cada 3s. Se pausa cuando:
   //  - hay una sola foto
@@ -733,6 +757,26 @@ export function VenueDetailClient({ venue, menu = [], prefill, initialTab = 'res
                       </div>
                       {r.comment && (
                         <p className="text-[13px] text-tx2 leading-[1.5]">{r.comment}</p>
+                      )}
+
+                      {r.response && (
+                        <div
+                          className="mt-3 rounded-lg p-3"
+                          style={{
+                            background: 'var(--sf2)',
+                            borderLeft: '3px solid var(--c5)',
+                          }}
+                        >
+                          <p
+                            className="text-[10px] font-bold uppercase mb-1"
+                            style={{ letterSpacing: '0.1em', color: 'var(--c5)' }}
+                          >
+                            Respuesta del restaurante · {formatAgo(r.response.created_at)}
+                          </p>
+                          <p className="text-[12px] text-tx2 leading-[1.55]">
+                            {r.response.body}
+                          </p>
+                        </div>
                       )}
                     </li>
                   ))}
