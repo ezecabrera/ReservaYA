@@ -279,7 +279,7 @@ function StepHeader({ step }: { step: Step }) {
       >
         Paso {step} de 5
       </p>
-      <h2
+      <h1
         className="fr-900"
         style={{
           fontSize: 'clamp(28px, 4vw, 36px)',
@@ -290,7 +290,7 @@ function StepHeader({ step }: { step: Step }) {
         }}
       >
         {meta.title}
-      </h2>
+      </h1>
       <p
         style={{
           fontSize: 14,
@@ -309,18 +309,22 @@ function StepHeader({ step }: { step: Step }) {
 function Field({
   label,
   hint,
+  htmlFor,
   children,
 }: {
   label: string
   hint?: string
+  htmlFor?: string
   children: React.ReactNode
 }) {
   return (
     <div style={{ display: 'grid', gap: 6 }}>
       <label
+        htmlFor={htmlFor}
         className="caps"
         style={{
           color: 'var(--text-3, #6D6C68)',
+          fontSize: 12,
         }}
       >
         {label}
@@ -655,33 +659,43 @@ export default function OnboardingPage() {
         {/* ── PASO 1: Cuenta ── */}
         {step === 1 && (
           <div style={{ display: 'grid', gap: 14 }}>
-            <Field label="Tu nombre">
+            <Field label="Tu nombre" htmlFor="onb-name">
               <input
+                id="onb-name"
+                name="staffName"
                 value={s.staffName}
                 onChange={(e) => update({ staffName: e.target.value })}
                 placeholder="Ej: Martín García"
                 style={inputStyle}
                 autoComplete="name"
+                required
               />
             </Field>
-            <Field label="Email">
+            <Field label="Email" htmlFor="onb-email">
               <input
+                id="onb-email"
+                name="email"
                 type="email"
                 value={s.email}
                 onChange={(e) => update({ email: e.target.value })}
                 placeholder="tu@email.com"
                 style={inputStyle}
                 autoComplete="email"
+                required
               />
             </Field>
-            <Field label="Contraseña" hint="Mínimo 6 caracteres.">
+            <Field label="Contraseña" hint="Mínimo 6 caracteres." htmlFor="onb-password">
               <input
+                id="onb-password"
+                name="password"
                 type="password"
                 value={s.password}
                 onChange={(e) => update({ password: e.target.value })}
                 placeholder="••••••••"
                 style={inputStyle}
                 autoComplete="new-password"
+                required
+                minLength={6}
               />
             </Field>
             <div style={{ marginTop: 12 }}>

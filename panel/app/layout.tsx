@@ -28,9 +28,36 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'UnToque — Panel',
-  description: 'Panel de gestión operativa para restaurantes',
-  robots: 'noindex, nofollow',
+  metadataBase: new URL('https://panel.deuntoque.com'),
+  title: {
+    default: 'UnToque — Panel para restaurantes argentinos',
+    template: '%s · UnToque',
+  },
+  description:
+    'Panel de gestión operativa para restaurantes argentinos. Reservas, mesas, CRM, campañas WhatsApp. Sin comisión por cubierto. ARS 30.000/mes flat.',
+  applicationName: 'UnToque',
+  authors: [{ name: 'UnToque', url: 'https://panel.deuntoque.com' }],
+  creator: 'UnToque',
+  publisher: 'UnToque',
+  referrer: 'origin-when-cross-origin',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  // Cada page sobreescribe robots si necesita. Default: indexable público.
+  // Las páginas internas (dashboard) marcan noindex en su propio metadata.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
 }
 
 export const viewport: Viewport = {

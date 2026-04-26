@@ -15,7 +15,12 @@
 
 import type { Metadata } from 'next'
 
-export const SITE_URL = 'https://deuntoque.com'
+/**
+ * Host del panel — donde vive este Next.js project.
+ * Las páginas legales /terms /privacy /cookies viven en otro dominio
+ * (deuntoque.com root) y se referencian con URL absoluta desde el footer.
+ */
+export const SITE_URL = 'https://panel.deuntoque.com'
 export const SITE_NAME = 'UnToque'
 export const SITE_TAGLINE = 'El panel que pone el toque'
 export const DEFAULT_OG = '/og/og-default.svg'

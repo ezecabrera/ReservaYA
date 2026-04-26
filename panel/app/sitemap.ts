@@ -21,6 +21,8 @@ interface Entry {
   priority: number
 }
 
+// Solo paths que viven en panel.deuntoque.com.
+// /terms /privacy /cookies viven en deuntoque.com (otro proyecto) y NO van acá.
 const ENTRIES: Entry[] = [
   { path: '/', changeFrequency: 'weekly', priority: 1.0 },
   { path: '/landing', changeFrequency: 'weekly', priority: 1.0 },
@@ -31,10 +33,6 @@ const ENTRIES: Entry[] = [
   { path: '/vs-fudo', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/login', changeFrequency: 'yearly', priority: 0.5 },
   { path: '/onboarding', changeFrequency: 'monthly', priority: 0.6 },
-  { path: '/ayuda', changeFrequency: 'weekly', priority: 0.7 },
-  { path: '/terms', changeFrequency: 'yearly', priority: 0.3 },
-  { path: '/privacy', changeFrequency: 'yearly', priority: 0.3 },
-  { path: '/cookies', changeFrequency: 'yearly', priority: 0.3 },
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {

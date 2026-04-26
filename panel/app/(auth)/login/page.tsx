@@ -138,25 +138,31 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label className="field-label">Email</label>
+            <label htmlFor="login-email" className="field-label">Email</label>
             <input
+              id="login-email"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@restaurante.com"
               required
+              autoComplete="email"
               className="field-input"
             />
           </div>
 
           <div>
-            <label className="field-label">Contraseña</label>
+            <label htmlFor="login-password" className="field-label">Contraseña</label>
             <input
+              id="login-password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
+              autoComplete="current-password"
               className="field-input"
             />
           </div>
