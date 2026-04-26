@@ -10,6 +10,20 @@ export const metadata: Metadata = {
     title: 'Programa Piloto UnToque',
     description: '50% off los primeros 3 meses + onboarding 1-on-1 con el founder.',
     type: 'website',
+    images: [
+      {
+        url: 'https://panel.deuntoque.com/og/pilot',
+        width: 1200,
+        height: 630,
+        alt: 'Programa Piloto UnToque · 50% off 3 meses',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Programa Piloto UnToque',
+    description: '50% off los primeros 3 meses · primeros 10 restaurantes.',
+    images: ['https://panel.deuntoque.com/og/pilot'],
   },
 }
 
@@ -23,16 +37,21 @@ export default function PilotPage() {
         fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
       }}
     >
-      {/* ─── Nav ─── */}
-      <nav
+      {/* ─── Header / Nav ─── */}
+      <header
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          padding: '14px 28px',
           background: 'rgba(17, 19, 21, 0.85)',
           backdropFilter: 'blur(12px)',
           borderBottom: '1px solid var(--line, #23252A)',
+        }}
+      >
+      <nav
+        aria-label="Navegación principal"
+        style={{
+          padding: '14px 28px',
           display: 'flex',
           alignItems: 'center',
           gap: 16,
@@ -78,13 +97,16 @@ export default function PilotPage() {
           Agendar demo
         </Link>
       </nav>
+      </header>
 
+      <main>
       {/* ─── Hero ─── */}
-      <section style={{ padding: '64px 28px 56px', maxWidth: 1080, margin: '0 auto' }}>
+      <section aria-labelledby="pilot-hero" style={{ padding: '64px 28px 56px', maxWidth: 1080, margin: '0 auto' }}>
         <p className="caps" style={{ marginBottom: 14 }}>
           Cupos limitados · 10 restaurantes
         </p>
         <h1
+          id="pilot-hero"
           className="fr-900"
           style={{
             fontSize: 'clamp(40px, 6vw, 80px)',
@@ -174,7 +196,7 @@ export default function PilotPage() {
               body: 'Mi WhatsApp personal. Si algo no funciona, respondo yo. Sin tickets, sin niveles de soporte, sin esperar a un mail. Mientras seas piloto, pegás un toque y resuelvo.',
             },
           ].map((f) => (
-            <div
+            <article
               key={f.title}
               className="pastel-tile"
               style={{
@@ -184,13 +206,13 @@ export default function PilotPage() {
                 color: '#1A1B1F',
               }}
             >
-              <div className="fr-900-italic" style={{ fontSize: 22, marginBottom: 12 }}>
+              <h3 className="fr-900-italic" style={{ fontSize: 22, margin: '0 0 12px' }}>
                 {f.title}
-              </div>
-              <div style={{ fontSize: 13, lineHeight: 1.55, color: 'rgba(26,27,31,0.78)' }}>
+              </h3>
+              <p style={{ fontSize: 13, lineHeight: 1.55, color: 'rgba(26,27,31,0.78)', margin: 0 }}>
                 {f.body}
-              </div>
-            </div>
+              </p>
+            </article>
           ))}
         </div>
       </section>
@@ -321,6 +343,7 @@ export default function PilotPage() {
         </p>
         <PilotForm />
       </section>
+      </main>
 
       {/* ─── Footer ─── */}
       <footer

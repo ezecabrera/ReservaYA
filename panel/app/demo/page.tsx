@@ -14,6 +14,20 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'es_AR',
     url: 'https://deuntoque.com/demo',
+    images: [
+      {
+        url: 'https://panel.deuntoque.com/og/demo',
+        width: 1200,
+        height: 630,
+        alt: 'Agendá una demo de 15 minutos · UnToque',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Agendá una demo · UnToque',
+    description: 'Demo de 15min en vivo. Migración real, sin venta de humo.',
+    images: ['https://panel.deuntoque.com/og/demo'],
   },
 }
 
@@ -45,15 +59,20 @@ export default function DemoPage() {
         fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
       }}
     >
-      {/* Nav (sólido) */}
-      <nav
+      {/* Header / Nav (sólido) */}
+      <header
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          padding: '14px 28px',
           background: 'var(--bg, #111315)',
           borderBottom: '1px solid var(--line, #23252A)',
+        }}
+      >
+      <nav
+        aria-label="Navegación principal"
+        style={{
+          padding: '14px 28px',
           display: 'flex',
           alignItems: 'center',
           gap: 16,
@@ -100,9 +119,12 @@ export default function DemoPage() {
           Probá gratis
         </Link>
       </nav>
+      </header>
 
+      <main>
       {/* Hero */}
       <section
+        aria-labelledby="demo-hero"
         style={{
           padding: 'clamp(56px, 8vw, 96px) 28px clamp(40px, 6vw, 64px)',
           maxWidth: 1080,
@@ -113,6 +135,7 @@ export default function DemoPage() {
           15 minutos · en vivo
         </p>
         <h1
+          id="demo-hero"
           className="fr-900"
           style={{
             fontSize: 'clamp(40px, 6vw, 80px)',
@@ -307,7 +330,7 @@ export default function DemoPage() {
           }}
         >
           {REASONS.map((r, i) => (
-            <div
+            <article
               key={r.title}
               className="pastel-tile"
               style={{
@@ -331,13 +354,13 @@ export default function DemoPage() {
               >
                 0{i + 1}
               </span>
-              <div className="fr-900-italic" style={{ fontSize: 24 }}>
+              <h3 className="fr-900-italic" style={{ fontSize: 24, margin: 0 }}>
                 {r.title}
-              </div>
-              <div style={{ fontSize: 14, lineHeight: 1.55, color: 'rgba(26,27,31,0.78)' }}>
+              </h3>
+              <p style={{ fontSize: 14, lineHeight: 1.55, color: 'rgba(26,27,31,0.78)', margin: 0 }}>
                 {r.body}
-              </div>
-            </div>
+              </p>
+            </article>
           ))}
         </div>
       </section>
@@ -383,6 +406,7 @@ export default function DemoPage() {
           Probá gratis 30 días →
         </Link>
       </section>
+      </main>
 
       <LegalFooter />
     </div>

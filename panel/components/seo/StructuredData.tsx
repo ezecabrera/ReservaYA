@@ -32,7 +32,7 @@ const ORGANIZATION_SCHEMA = {
   url: SITE_URL,
   logo: {
     '@type': 'ImageObject',
-    url: `${SITE_URL}/og/og-default.svg`,
+    url: `${SITE_URL}/og/default`,
     width: 1200,
     height: 630,
   },

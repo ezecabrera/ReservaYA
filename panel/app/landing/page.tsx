@@ -5,7 +5,7 @@ import LegalFooter from '@/components/landing/LegalFooter'
 export const metadata: Metadata = {
   title: 'UnToque · Panel para restaurantes que ponen el toque',
   description:
-    'Reservas, mesas, cobros y campañas WhatsApp. Sin comisión por cubierto. ARS 30.000/mes flat. Trial 30 días sin tarjeta. Pensado para restaurantes argentinos.',
+    'Reservas, mesas, cobros y campañas WhatsApp para restaurantes argentinos. Sin comisión por cubierto. ARS 30.000/mes flat. 30 días gratis sin tarjeta.',
   metadataBase: new URL('https://deuntoque.com'),
   alternates: { canonical: 'https://deuntoque.com/landing' },
   openGraph: {
@@ -16,11 +16,20 @@ export const metadata: Metadata = {
     url: 'https://deuntoque.com/landing',
     siteName: 'UnToque',
     locale: 'es_AR',
+    images: [
+      {
+        url: 'https://panel.deuntoque.com/og/landing',
+        width: 1200,
+        height: 630,
+        alt: 'UnToque · Sin comisión por cubierto',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'UnToque · Panel para restaurantes',
     description: '$0 comisión por cubierto. ARS 30.000/mes flat. 30 días gratis sin tarjeta.',
+    images: ['https://panel.deuntoque.com/og/landing'],
   },
 }
 
@@ -124,15 +133,20 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA_JSONLD) }}
       />
 
-      {/* ─── Nav (sólido, sin blur) ─── */}
-      <nav
+      {/* ─── Header / Nav (sólido, sin blur) ─── */}
+      <header
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          padding: 'clamp(10px, 2vw, 14px) clamp(14px, 3vw, 28px)',
           background: 'var(--bg, #111315)',
           borderBottom: '1px solid var(--line, #23252A)',
+        }}
+      >
+      <nav
+        aria-label="Navegación principal"
+        style={{
+          padding: 'clamp(10px, 2vw, 14px) clamp(14px, 3vw, 28px)',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
@@ -218,9 +232,12 @@ export default function LandingPage() {
           .nav-link-hide-sm { display: none !important; }
         }
       `}</style>
+      </header>
 
+      <main>
       {/* ─── Hero ─── */}
       <section
+        aria-labelledby="hero-heading"
         style={{
           padding: 'clamp(48px, 8vw, 96px) 28px clamp(56px, 8vw, 96px)',
           maxWidth: 1180,
@@ -242,6 +259,7 @@ export default function LandingPage() {
               Para restaurantes argentinos · 2026
             </p>
             <h1
+              id="hero-heading"
               className="fr-900"
               style={{
                 fontSize: 'clamp(40px, 7vw, 88px)',
@@ -640,7 +658,7 @@ export default function LandingPage() {
               body: 'Export CSV/JSON cuando quieras. No los vendemos. No te bloqueamos al cancelar.',
             },
           ].map((f, i) => (
-            <div
+            <article
               key={f.title + i}
               className="pastel-tile"
               style={{
@@ -650,15 +668,15 @@ export default function LandingPage() {
                 color: '#1A1B1F',
               }}
             >
-              <div className="fr-900-italic" style={{ fontSize: 22, marginBottom: 12 }}>
+              <h3 className="fr-900-italic" style={{ fontSize: 22, marginBottom: 12, margin: '0 0 12px' }}>
                 {f.title}
-              </div>
-              <div
-                style={{ fontSize: 13, lineHeight: 1.55, color: 'rgba(26,27,31,0.78)' }}
+              </h3>
+              <p
+                style={{ fontSize: 13, lineHeight: 1.55, color: 'rgba(26,27,31,0.78)', margin: 0 }}
               >
                 {f.body}
-              </div>
-            </div>
+              </p>
+            </article>
           ))}
         </div>
       </section>
@@ -753,9 +771,9 @@ export default function LandingPage() {
             lineHeight: 1.55,
           }}
         >
-          TheFork®, Maxirest® y Fudo® son marcas registradas de sus respectivos titulares. UnToque no
-          está afiliado ni asociado con esas plataformas. Mencionamos los nombres únicamente para
-          indicar formatos de exportación de datos compatibles con nuestro importador.
+          TheFork®, Maxirest® y Fudo® son marcas registradas de sus respectivos titulares. Esta
+          plataforma no está afiliada ni asociada con esas marcas. Mencionamos los nombres únicamente
+          para indicar formatos de exportación de datos compatibles con nuestro importador.
         </p>
 
         {/* Toolkit bullets */}
@@ -772,7 +790,7 @@ export default function LandingPage() {
             { n: '03', t: 'Mesas + clientes + reservas', d: 'Migra los 3 sets en una sola corrida.' },
             { n: '04', t: 'Soporte humano', d: 'Te ayudamos por WhatsApp si te trabás. Sin costo.' },
           ].map((b) => (
-            <div
+            <article
               key={b.n}
               className="card"
               style={{
@@ -790,16 +808,17 @@ export default function LandingPage() {
               >
                 {b.n}
               </span>
-              <div
+              <h3
                 className="fr-900"
                 style={{
                   fontSize: 18,
                   letterSpacing: '-0.02em',
                   color: 'var(--text)',
+                  margin: 0,
                 }}
               >
                 {b.t}
-              </div>
+              </h3>
               <p
                 style={{
                   color: 'var(--text-2, #A9A8A2)',
@@ -810,7 +829,7 @@ export default function LandingPage() {
               >
                 {b.d}
               </p>
-            </div>
+            </article>
           ))}
         </div>
 
@@ -864,8 +883,8 @@ export default function LandingPage() {
 
         <div style={{ display: 'grid', gap: 8 }}>
           {FAQS.map((f, i) => (
+            <article key={f.q}>
             <details
-              key={f.q}
               style={{
                 background: 'var(--surface, #1C1E21)',
                 border: '1px solid var(--line, #23252A)',
@@ -899,6 +918,7 @@ export default function LandingPage() {
                 {f.a}
               </p>
             </details>
+            </article>
           ))}
         </div>
       </section>
@@ -957,6 +977,7 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+      </main>
 
       <LegalFooter />
     </div>

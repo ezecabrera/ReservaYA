@@ -7,7 +7,7 @@ import ComparativeLayout, {
 export const metadata: Metadata = {
   title: 'UnToque vs Fudo · Comparativa 2026',
   description:
-    'Comparación honesta entre UnToque y Fudo. CRM nativo, WhatsApp segmentado, modo grupo, rating bidireccional. Sin comisión por cubierto. ARS 30.000/mes flat.',
+    'UnToque vs Fudo: CRM nativo, WhatsApp segmentado, modo grupo y rating bidireccional. Sin comisión por cubierto. ARS 30.000/mes flat.',
   metadataBase: new URL('https://deuntoque.com'),
   alternates: { canonical: 'https://deuntoque.com/vs-fudo' },
   openGraph: {
@@ -17,6 +17,20 @@ export const metadata: Metadata = {
     type: 'article',
     locale: 'es_AR',
     url: 'https://deuntoque.com/vs-fudo',
+    images: [
+      {
+        url: 'https://panel.deuntoque.com/og/vs',
+        width: 1200,
+        height: 630,
+        alt: 'UnToque vs Fudo · La comparación honesta',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'UnToque vs Fudo · 2026',
+    description: 'Reservas + CRM + WhatsApp vs gestión gastro. Comparación feature × feature.',
+    images: ['https://panel.deuntoque.com/og/vs'],
   },
 }
 

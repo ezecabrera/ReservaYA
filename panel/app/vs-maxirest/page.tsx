@@ -7,7 +7,7 @@ import ComparativeLayout, {
 export const metadata: Metadata = {
   title: 'UnToque vs Maxirest · Comparativa 2026',
   description:
-    'Comparación honesta entre UnToque y Maxirest. CRM nativo, WhatsApp segmentado, rating bidireccional y panel realtime. Sin comisión por cubierto. ARS 30.000/mes.',
+    'UnToque vs Maxirest: CRM nativo, WhatsApp segmentado, rating bidireccional y panel realtime. Sin comisión por cubierto. ARS 30.000/mes flat.',
   metadataBase: new URL('https://deuntoque.com'),
   alternates: { canonical: 'https://deuntoque.com/vs-maxirest' },
   openGraph: {
@@ -17,6 +17,20 @@ export const metadata: Metadata = {
     type: 'article',
     locale: 'es_AR',
     url: 'https://deuntoque.com/vs-maxirest',
+    images: [
+      {
+        url: 'https://panel.deuntoque.com/og/vs',
+        width: 1200,
+        height: 630,
+        alt: 'UnToque vs Maxirest · La comparación honesta',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'UnToque vs Maxirest · 2026',
+    description: 'Reservas + CRM + WhatsApp vs POS clásico. Comparación feature × feature.',
+    images: ['https://panel.deuntoque.com/og/vs'],
   },
 }
 

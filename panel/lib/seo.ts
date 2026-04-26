@@ -9,7 +9,7 @@
  *     title: 'Demo en vivo',
  *     description: '15 minutos. Sin compromiso.',
  *     path: '/demo',
- *     ogImage: '/og/og-demo.svg',
+ *     og: 'demo',
  *   })
  */
 
@@ -23,7 +23,23 @@ import type { Metadata } from 'next'
 export const SITE_URL = 'https://panel.deuntoque.com'
 export const SITE_NAME = 'UnToque'
 export const SITE_TAGLINE = 'El panel que pone el toque'
-export const DEFAULT_OG = '/og/og-default.svg'
+
+/**
+ * OG slugs supported by the dynamic /og/[slug] endpoint.
+ * Each slug renders a 1200×630 PNG via next/og at build time
+ * (Facebook/Twitter crawlers reject SVG og:images).
+ */
+export type OgSlug = 'default' | 'landing' | 'demo' | 'pilot' | 'vs'
+
+export const DEFAULT_OG_SLUG: OgSlug = 'default'
+
+/** Build the canonical /og/<slug> path served by the dynamic endpoint. */
+export function ogPath(slug: OgSlug): string {
+  return `/og/${slug}`
+}
+
+/** Legacy alias kept for compatibility — points at the dynamic default endpoint. */
+export const DEFAULT_OG = ogPath(DEFAULT_OG_SLUG)
 
 export type ThemeContext = 'panel' | 'app'
 
@@ -34,7 +50,15 @@ export interface BuildMetadataInput {
   description: string
   /** Path absoluto sin host, ej "/demo" o "/" */
   path: string
-  /** OG image absoluto desde /public, ej "/og/og-demo.svg" */
+  /**
+   * OG image slug — referencia al endpoint dinámico /og/<slug>.
+   * Default: 'default'. Aceptamos override absoluto via `ogImage` para casos legacy.
+   */
+  og?: OgSlug
+  /**
+   * Override absoluto de OG image (escape hatch). Preferí `og: '<slug>'`.
+   * Se mantiene para compat con llamadas legacy.
+   */
   ogImage?: string
   /** Theme context — panel = oscuro, app = claro */
   themeContext?: ThemeContext
@@ -67,7 +91,8 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
     title,
     description,
     path,
-    ogImage = DEFAULT_OG,
+    og,
+    ogImage,
     themeContext = 'panel',
     noindex,
     locale = 'es_AR',
@@ -84,7 +109,24 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
 
   const fullTitle = title ? `${title} · ${SITE_NAME}` : `${SITE_NAME} — ${SITE_TAGLINE}`
   const url = `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`
-  const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${SITE_URL}${ogImage}`
+
+  // OG image resolution: prefer typed `og` slug → dynamic endpoint.
+  // Fallback: legacy `ogImage` absolute, mapping any /og/og-<slug>.svg to the
+  // new endpoint so existing call sites keep working without code changes.
+  const resolvedOgPath = (() => {
+    if (og) return ogPath(og)
+    if (!ogImage) return ogPath(DEFAULT_OG_SLUG)
+    if (ogImage.startsWith('http')) return ogImage
+    const legacyMatch = ogImage.match(/\/og\/og-([a-z]+)\.svg$/)
+    if (legacyMatch) {
+      const slug = legacyMatch[1] as OgSlug
+      return ogPath(slug)
+    }
+    return ogImage
+  })()
+  const ogImageUrl = resolvedOgPath.startsWith('http')
+    ? resolvedOgPath
+    : `${SITE_URL}${resolvedOgPath}`
 
   return {
     metadataBase: new URL(SITE_URL),

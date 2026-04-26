@@ -7,7 +7,7 @@ import ComparativeLayout, {
 export const metadata: Metadata = {
   title: 'UnToque vs TheFork · Comparativa 2026',
   description:
-    'Comparación honesta entre UnToque y TheFork. $0 comisión por cubierto vs €2.50, CRM nativo, soporte humano AR, datos exportables. Pricing flat ARS 30.000/mes.',
+    'UnToque vs TheFork: $0 comisión por cubierto vs €2.50, CRM nativo, soporte humano AR. Pricing flat ARS 30.000/mes. Comparativa feature × feature.',
   metadataBase: new URL('https://deuntoque.com'),
   alternates: { canonical: 'https://deuntoque.com/vs-thefork' },
   openGraph: {
@@ -17,6 +17,20 @@ export const metadata: Metadata = {
     type: 'article',
     locale: 'es_AR',
     url: 'https://deuntoque.com/vs-thefork',
+    images: [
+      {
+        url: 'https://panel.deuntoque.com/og/vs',
+        width: 1200,
+        height: 630,
+        alt: 'UnToque vs TheFork · La comparación honesta',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'UnToque vs TheFork · 2026',
+    description: '$0 vs €2.50 por cubierto. Mirá la comparación feature × feature.',
+    images: ['https://panel.deuntoque.com/og/vs'],
   },
 }
 
