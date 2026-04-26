@@ -147,77 +147,133 @@ export default function DemoPage() {
         </p>
       </section>
 
-      {/* Cal.com embed + fallback */}
+      {/* Booking card (placeholder hasta tener Cal.com activo) */}
       <section
         style={{
-          padding: '0 28px',
-          maxWidth: 1080,
+          padding: '0 clamp(20px, 4vw, 28px)',
+          maxWidth: 720,
           margin: '0 auto',
         }}
       >
         <div
           className="card"
           style={{
-            padding: 0,
-            overflow: 'hidden',
+            padding: 'clamp(28px, 5vw, 40px)',
             display: 'grid',
-            minHeight: 580,
-          }}
-        >
-          {/* Embed iframe (Cal.com placeholder) */}
-          <iframe
-            src="https://cal.com/untoque/15min"
-            title="Agendar demo UnToque"
-            loading="lazy"
-            style={{
-              width: '100%',
-              minHeight: 580,
-              border: 0,
-              background: 'var(--surface, #1C1E21)',
-            }}
-          />
-        </div>
-
-        {/* Fallback */}
-        <div
-          style={{
-            marginTop: 16,
-            padding: '14px 18px',
-            borderRadius: 12,
+            gap: 24,
             background: 'var(--surface-2, #23252A)',
-            border: '1px dashed var(--line-3, #3B3E45)',
-            display: 'flex',
-            gap: 12,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
           }}
         >
-          <p
+          <div style={{ display: 'grid', gap: 8 }}>
+            <p className="caps" style={{ color: 'var(--p-mint-2, #A8C2BF)' }}>
+              Reservá tu turno
+            </p>
+            <h2
+              className="fr-900"
+              style={{
+                fontSize: 'clamp(24px, 3vw, 32px)',
+                margin: 0,
+                lineHeight: 1.15,
+              }}
+            >
+              Te respondemos{' '}
+              <span className="fr-900-italic" style={{ color: 'var(--p-mint, #CFDDDB)' }}>
+                en menos de 2 horas
+              </span>
+              .
+            </h2>
+            <p
+              style={{
+                fontSize: 14,
+                color: 'var(--text-2, #A9A8A2)',
+                margin: 0,
+                lineHeight: 1.6,
+              }}
+            >
+              Mandanos un mensaje con tu nombre, restaurante y mejor horario. Coordinamos por
+              WhatsApp y te mandamos el link de Google Meet.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gap: 10 }}>
+            <a
+              href="https://wa.me/5491155550000?text=Hola%2C%20quiero%20agendar%20una%20demo%20de%20UnToque"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary"
+              style={{
+                height: 52,
+                padding: '0 24px',
+                borderRadius: 14,
+                fontSize: 15,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.5-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2 3.1 4.9 4.4.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.6-.3z" />
+                <path d="M20.5 3.5C18.3 1.2 15.3 0 12.1 0 5.5 0 .1 5.4.1 12c0 2.1.5 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.6 1.4 5.5 1.4h.1c6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.4-8.4zM12.1 21.7c-1.7 0-3.4-.5-4.9-1.4l-.4-.2-3.7 1 1-3.6-.2-.4c-1-1.5-1.5-3.2-1.5-5 0-5.4 4.4-9.8 9.8-9.8 2.6 0 5.1 1 6.9 2.9 1.8 1.8 2.9 4.3 2.9 6.9-.1 5.4-4.5 9.6-9.9 9.6z" />
+              </svg>
+              Escribir por WhatsApp
+            </a>
+            <a
+              href="mailto:hola@deuntoque.com?subject=Quiero%20agendar%20demo%20UnToque&body=Hola%2C%0A%0AMe%20gustar%C3%ADa%20agendar%20una%20demo%20de%20UnToque.%0A%0ARestaurante%3A%20%0AUbicaci%C3%B3n%3A%20%0AMesas%3A%20%0AMejor%20horario%20para%20llamar%3A%20%0A%0AGracias."
+              className="btn"
+              style={{
+                height: 48,
+                padding: '0 24px',
+                borderRadius: 14,
+                fontSize: 14,
+                background: 'var(--surface-3, #2C2D34)',
+                color: 'var(--text)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              Mandar email a hola@deuntoque.com
+            </a>
+          </div>
+
+          <div
             style={{
-              margin: 0,
-              fontSize: 13,
-              color: 'var(--text-2, #A9A8A2)',
+              padding: '12px 14px',
+              borderRadius: 10,
+              background: 'var(--bg, #111315)',
+              border: '1px solid var(--line-2, #2E3036)',
+              fontSize: 12,
+              color: 'var(--text-3, #6D6C68)',
               lineHeight: 1.5,
             }}
           >
-            <strong style={{ color: 'var(--text)' }}>¿No carga el calendario?</strong>{' '}
-            Pronto · escribinos a{' '}
-            <a
-              href="mailto:hola@deuntoque.com"
-              style={{ color: 'var(--p-lilac, #E4CDED)', textDecoration: 'underline' }}
-            >
-              hola@deuntoque.com
-            </a>{' '}
-            y coordinamos por WhatsApp.
-          </p>
-          <a
-            href="mailto:hola@deuntoque.com?subject=Quiero%20agendar%20demo%20UnToque"
-            className="btn"
-            style={{ height: 36, padding: '0 14px', borderRadius: 999, fontSize: 13 }}
-          >
-            Escribirnos →
-          </a>
+            <strong style={{ color: 'var(--text-2)' }}>Próximamente:</strong> reserva
+            self-service con Cal.com y Google Calendar integrado. Mientras tanto te coordinamos
+            uno por uno — más personal, igual de rápido.
+          </div>
         </div>
       </section>
 
