@@ -5,9 +5,10 @@
 /* ============================================================
    UnToque v2 — Cosy + Editorial
    Claude Design handoff — integrado 2026-04-24
+   Fonts cargadas por next/font en app/layout.tsx (variables
+   --font-display, --font-body, --font-mono). NO importar
+   Google Fonts via @import — duplicaría carga y rompe el bundle.
    ============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,500;1,9..144,700;1,9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ---------- Tokens ---------- */
 :root, [data-theme="dark"] {
