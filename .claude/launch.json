@@ -1,16 +1,17 @@
 {
   "version": "0.0.1",
+  "autoPort": true,
   "configurations": [
     {
       "name": "app (PWA cliente)",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": ["pnpm", "--filter", "@reservaya/app", "dev"],
+      "runtimeArgs": ["pnpm", "--filter", "@untoque/app", "dev"],
       "port": 3000
     },
     {
       "name": "panel (negocio)",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": ["pnpm", "--filter", "@reservaya/panel", "dev"],
+      "runtimeArgs": ["pnpm", "--filter", "@untoque/panel", "dev"],
       "port": 3001
     }
   ]

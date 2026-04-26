@@ -130,13 +130,14 @@ export default function LandingPage() {
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          padding: '14px 28px',
+          padding: 'clamp(10px, 2vw, 14px) clamp(14px, 3vw, 28px)',
           background: 'var(--bg, #111315)',
           borderBottom: '1px solid var(--line, #23252A)',
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
+          gap: 12,
         }}
+        className="landing-nav"
       >
         <Link
           href="/landing"
@@ -146,6 +147,7 @@ export default function LandingPage() {
             gap: 8,
             textDecoration: 'none',
             color: 'inherit',
+            minWidth: 0,
           }}
         >
           <span
@@ -161,6 +163,7 @@ export default function LandingPage() {
               fontWeight: 900,
               fontStyle: 'italic',
               fontSize: 16,
+              flexShrink: 0,
             }}
             aria-hidden
           >
@@ -173,6 +176,7 @@ export default function LandingPage() {
         <div style={{ flex: 1 }} />
         <Link
           href="/demo"
+          className="nav-link-hide-sm"
           style={{
             fontSize: 13,
             color: 'var(--text-2, #A9A8A2)',
@@ -184,6 +188,7 @@ export default function LandingPage() {
         </Link>
         <Link
           href="/login"
+          className="nav-link-hide-sm"
           style={{
             fontSize: 13,
             color: 'var(--text-2, #A9A8A2)',
@@ -196,11 +201,23 @@ export default function LandingPage() {
         <Link
           href="/onboarding"
           className="btn btn-primary"
-          style={{ height: 36, padding: '0 16px', borderRadius: 999, fontSize: 13 }}
+          style={{
+            height: 36,
+            padding: '0 14px',
+            borderRadius: 999,
+            fontSize: 13,
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
         >
           Probá gratis
         </Link>
       </nav>
+      <style>{`
+        @media (max-width: 480px) {
+          .nav-link-hide-sm { display: none !important; }
+        }
+      `}</style>
 
       {/* ─── Hero ─── */}
       <section

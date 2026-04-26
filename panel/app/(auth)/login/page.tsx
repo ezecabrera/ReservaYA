@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -9,101 +9,202 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [dateTime, setDateTime] = useState<{ date: string; time: string } | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  // Render fecha/hora solo en client para evitar hydration mismatch
+  useEffect(() => {
+    const update = () => {
+      const now = new Date()
+      setDateTime({
+        date: now.toLocaleDateString('es-AR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        }),
+        time: now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+      })
+    }
+    update()
+    const id = setInterval(update, 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError('Email o contraseña incorrectos.')
       setLoading(false)
       return
     }
-
     router.push('/dashboard')
     router.refresh()
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5"
-      style={{ background: 'linear-gradient(145deg, #1A1A2E 0%, #16213E 60%, #0F3460 100%)' }}>
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="font-display text-[32px] font-black text-white tracking-tight">
-            ReservaYa
-          </h1>
-          <p className="text-white/55 text-[14px] mt-1">Panel del negocio</p>
+    <div
+      className="min-h-screen"
+      style={{
+        background: 'var(--bg)',
+        color: 'var(--text)',
+        fontFamily: 'var(--font-body)',
+        padding: 40,
+        display: 'flex',
+        gap: 20,
+        flexWrap: 'wrap',
+      }}
+    >
+      {/* Left — brand + welcome */}
+      <div style={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 30 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 10,
+              background: 'var(--p-lilac)',
+              color: '#1A1B1F',
+              display: 'grid',
+              placeItems: 'center',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 900,
+              fontStyle: 'italic',
+              fontSize: 18,
+              letterSpacing: '-0.04em',
+            }}
+          >
+            u
+          </div>
+          <div className="fr-900" style={{ fontSize: 28 }}>
+            UnToque
+          </div>
         </div>
 
-        {/* Card de login */}
-        <div className="bg-white rounded-xl p-6 shadow-lg">
-          <h2 className="font-display text-[22px] font-bold text-tx mb-5">
-            Ingresar
-          </h2>
+        <div
+          className="caps"
+          suppressHydrationWarning
+          style={{ marginBottom: 16, minHeight: 14 }}
+        >
+          {dateTime ? `${dateTime.date} · ${dateTime.time}` : ' '}
+        </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-[13px] font-semibold text-tx2 mb-1.5">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@restaurante.com"
-                required
-                className="w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf
-                           px-4 py-3 text-[14px] text-tx outline-none
-                           focus:border-c4 focus:ring-2 focus:ring-c4/20
-                           transition-all duration-[180ms]"
-              />
-            </div>
+        <h1
+          className="fr-900"
+          style={{ margin: 0, fontSize: 'clamp(40px, 5vw, 72px)', maxWidth: 520 }}
+        >
+          Bienvenido,{' '}
+          <span className="fr-900-italic" style={{ color: 'var(--p-lilac)' }}>
+            hola
+          </span>
+          .
+        </h1>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--text-2)',
+            marginTop: 12,
+            maxWidth: 480,
+            lineHeight: 1.55,
+          }}
+        >
+          Panel del negocio. Ingresá con tu email para ver mesas, reservas y campañas.
+        </p>
+      </div>
 
-            <div>
-              <label className="block text-[13px] font-semibold text-tx2 mb-1.5">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full rounded-md border border-[rgba(0,0,0,0.1)] bg-sf
-                           px-4 py-3 text-[14px] text-tx outline-none
-                           focus:border-c4 focus:ring-2 focus:ring-c4/20
-                           transition-all duration-[180ms]"
-              />
-            </div>
+      {/* Right — login card */}
+      <div
+        style={{
+          width: 460,
+          maxWidth: '100%',
+          background: 'var(--bg-2)',
+          border: '1px solid var(--line)',
+          borderRadius: 'var(--r)',
+          padding: '40px 36px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
+      >
+        <div className="caps" style={{ marginBottom: 10 }}>
+          Ingresá al panel
+        </div>
+        <h2 className="fr-900" style={{ margin: '0 0 26px', fontSize: 28 }}>
+          Tu cuenta
+        </h2>
 
-            {error && (
-              <p className="text-[13px] text-[#D63646] bg-c1l rounded-md px-3 py-2">
-                {error}
-              </p>
-            )}
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="field-label">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@restaurante.com"
+              required
+              className="field-input"
+            />
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary mt-2 disabled:opacity-60"
+          <div>
+            <label className="field-label">Contraseña</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              className="field-input"
+            />
+          </div>
+
+          {error && (
+            <div
+              style={{
+                padding: '10px 14px',
+                background: 'var(--wine-bg)',
+                border: '1px solid var(--wine)',
+                borderRadius: 'var(--r-sm)',
+                color: 'var(--wine-soft)',
+                fontSize: 12,
+              }}
             >
-              {loading ? 'Ingresando...' : 'Ingresar'}
-            </button>
-          </form>
-        </div>
+              {error}
+            </div>
+          )}
 
-        <p className="text-center text-white/40 text-[13px] mt-6">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary"
+            style={{
+              height: 48,
+              justifyContent: 'center',
+              borderRadius: 'var(--r-pill)',
+              fontSize: 14,
+              marginTop: 4,
+            }}
+          >
+            {loading ? 'Ingresando…' : 'Ingresar →'}
+          </button>
+        </form>
+
+        <p
+          style={{
+            textAlign: 'center',
+            color: 'var(--text-3)',
+            fontSize: 12,
+            marginTop: 18,
+          }}
+        >
           ¿Tu restaurante aún no está?{' '}
-          <a href="/onboarding" className="text-c1 font-semibold">
+          <a
+            href="/onboarding"
+            style={{ color: 'var(--text)', fontWeight: 600, textDecoration: 'none' }}
+          >
             Registralo gratis →
           </a>
         </p>
