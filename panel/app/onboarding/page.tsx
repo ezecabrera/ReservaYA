@@ -11,22 +11,17 @@ interface ZoneRow  { name: string; prefix: string; tables: TableRow[] }
 interface Turn     { opens_at: string; closes_at: string }
 
 interface WizardState {
-  // Step 1
   email: string
   password: string
   staffName: string
-  // Step 2
   venueName: string
   venueAddress: string
   venuePhone: string
   venueDesc: string
-  // Step 3
   days: number[]
   lunch: Turn | null
   dinner: Turn | null
-  // Step 4
   zones: ZoneRow[]
-  // Step 5
   depositAmount: number
   cutOffMinutes: number
 }
@@ -52,42 +47,345 @@ const INITIAL: WizardState = {
 
 type Step = 1 | 2 | 3 | 4 | 5
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const STEP_LABELS: Record<Step, { title: string; sub: string; emoji?: string }> = {
+  1: { title: 'Creá tu cuenta', sub: 'Con esto accedés al panel de tu restaurante.' },
+  2: { title: 'Tu restaurante', sub: 'Esta info aparece en la app para los clientes.' },
+  3: { title: 'Días y turnos', sub: '¿Cuándo atiende tu restaurante?' },
+  4: { title: 'Mesas y zonas', sub: 'Configurá el layout. Después podés ajustarlo en el plano visual.' },
+  5: { title: 'Seña y reservas', sub: 'El monto que paga el cliente para confirmar.' },
+}
 
-function StepHeader({ step, title, sub }: { step: Step; title: string; sub: string }) {
+// ── Estilos centralizados (tokens del design system, 100% opacos) ────────────
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  height: 48,
+  padding: '0 14px',
+  background: 'var(--surface-3, #2C2D34)',
+  border: '1px solid var(--line-2, #2E3036)',
+  borderRadius: 12,
+  color: 'var(--text, #F4F2EE)',
+  fontSize: 14,
+  fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
+  outline: 'none',
+  transition: 'border-color 200ms ease, box-shadow 200ms ease',
+}
+
+const textareaStyle: React.CSSProperties = {
+  ...inputStyle,
+  height: 'auto',
+  padding: '12px 14px',
+  resize: 'none' as const,
+  fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
+  lineHeight: 1.5,
+}
+
+// ── Iconos SVG (no emojis) ───────────────────────────────────────────────────
+
+const IconUsers = ({ size = 14 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+)
+
+const IconCheck = ({ size = 12 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="3"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+
+const IconTrash = ({ size = 14 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+)
+
+const IconArrowRight = ({ size = 14 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+)
+
+const IconArrowLeft = ({ size = 14 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </svg>
+)
+
+const IconPlus = ({ size = 14 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+)
+
+// ── Sub-componentes ──────────────────────────────────────────────────────────
+
+function Brand() {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        {([1,2,3,4,5] as Step[]).map(s => (
-          <div key={s}
-            className={`h-1 flex-1 rounded-full transition-all duration-300
-                        ${s <= step ? 'bg-c1' : 'bg-white/15'}`}
-          />
-        ))}
-      </div>
-      <p className="text-white/40 text-[12px] font-bold uppercase tracking-wider mb-1">
-        Paso {step} de 5
-      </p>
-      <h2 className="font-display text-[22px] font-bold text-white">{title}</h2>
-      <p className="text-white/50 text-[13px] mt-0.5">{sub}</p>
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 10,
+      }}
+    >
+      <span
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          background: 'var(--p-lilac, #E4CDED)',
+          color: '#1A1B1F',
+          display: 'inline-grid',
+          placeItems: 'center',
+          fontFamily: 'var(--font-display, "Fraunces", serif)',
+          fontWeight: 900,
+          fontStyle: 'italic',
+          fontSize: 18,
+        }}
+        aria-hidden
+      >
+        u
+      </span>
+      <span
+        className="fr-900"
+        style={{
+          fontSize: 22,
+          letterSpacing: '-0.02em',
+          color: 'var(--text)',
+        }}
+      >
+        UnToque
+      </span>
     </div>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function StepProgress({ step }: { step: Step }) {
   return (
-    <div>
-      <label className="block text-[11px] font-bold text-white/40 uppercase tracking-wider mb-1.5">
+    <div
+      role="progressbar"
+      aria-valuenow={step}
+      aria-valuemin={1}
+      aria-valuemax={5}
+      aria-label={`Paso ${step} de 5`}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gap: 6,
+        marginBottom: 28,
+      }}
+    >
+      {([1, 2, 3, 4, 5] as Step[]).map((s) => {
+        const isDone = s < step
+        const isActive = s === step
+        return (
+          <div
+            key={s}
+            style={{
+              height: 4,
+              borderRadius: 99,
+              background: isDone
+                ? 'var(--wine, #A13143)'
+                : isActive
+                  ? 'var(--p-lilac, #E4CDED)'
+                  : 'var(--line, #23252A)',
+              transition: 'background-color 280ms ease',
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function StepHeader({ step }: { step: Step }) {
+  const meta = STEP_LABELS[step]
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <p
+        className="caps"
+        style={{
+          color: 'var(--text-3, #6D6C68)',
+          marginBottom: 8,
+        }}
+      >
+        Paso {step} de 5
+      </p>
+      <h2
+        className="fr-900"
+        style={{
+          fontSize: 'clamp(28px, 4vw, 36px)',
+          letterSpacing: '-0.02em',
+          color: 'var(--text)',
+          margin: 0,
+          lineHeight: 1.1,
+        }}
+      >
+        {meta.title}
+      </h2>
+      <p
+        style={{
+          fontSize: 14,
+          color: 'var(--text-2, #A9A8A2)',
+          marginTop: 8,
+          lineHeight: 1.6,
+          maxWidth: 60 + 'ch',
+        }}
+      >
+        {meta.sub}
+      </p>
+    </div>
+  )
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div style={{ display: 'grid', gap: 6 }}>
+      <label
+        className="caps"
+        style={{
+          color: 'var(--text-3, #6D6C68)',
+        }}
+      >
         {label}
       </label>
       {children}
+      {hint && (
+        <p
+          style={{
+            fontSize: 11,
+            color: 'var(--text-3, #6D6C68)',
+            margin: 0,
+            lineHeight: 1.55,
+          }}
+        >
+          {hint}
+        </p>
+      )}
     </div>
   )
 }
 
-const inputCls = `w-full rounded-xl bg-white/10 border border-white/15 px-4 py-3.5
-                  text-[14px] text-white placeholder-white/30 outline-none
-                  focus:border-c1/50 focus:ring-2 focus:ring-c1/20 transition-all`
+function Toggle({
+  on,
+  onChange,
+  ariaLabel,
+}: {
+  on: boolean
+  onChange: () => void
+  ariaLabel: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={ariaLabel}
+      onClick={onChange}
+      style={{
+        width: 48,
+        height: 28,
+        borderRadius: 99,
+        background: on ? 'var(--wine, #A13143)' : 'var(--surface-3, #2C2D34)',
+        border: `1px solid ${on ? 'var(--wine, #A13143)' : 'var(--line-2, #2E3036)'}`,
+        position: 'relative',
+        cursor: 'pointer',
+        transition: 'background-color 200ms ease',
+        flexShrink: 0,
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 2,
+          left: on ? 22 : 2,
+          width: 22,
+          height: 22,
+          borderRadius: 99,
+          background: '#F5E9EB',
+          transition: 'left 200ms ease',
+        }}
+      />
+    </button>
+  )
+}
 
 // ── Componente principal ─────────────────────────────────────────────────────
 
@@ -101,16 +399,22 @@ export default function OnboardingPage() {
   const supabase = createClient()
 
   function update(patch: Partial<WizardState>) {
-    setS(prev => ({ ...prev, ...patch }))
+    setS((prev) => ({ ...prev, ...patch }))
   }
 
   // ── Paso 1: Crear cuenta ─────────────────────────────────────────────────
   async function handleStep1() {
-    if (!s.email || !s.password || !s.staffName) { setError('Completá todos los campos'); return }
-    if (s.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return }
-    setLoading(true); setError(null)
+    if (!s.email || !s.password || !s.staffName) {
+      setError('Completá todos los campos.')
+      return
+    }
+    if (s.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.')
+      return
+    }
+    setLoading(true)
+    setError(null)
 
-    // Intentar sign-up primero
     const { error: signUpError } = await supabase.auth.signUp({
       email: s.email,
       password: s.password,
@@ -122,8 +426,6 @@ export default function OnboardingPage() {
       return
     }
 
-    // Iniciar sesión inmediatamente (por si email confirmation está desactivado
-    // o si la cuenta ya existía)
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: s.email,
       password: s.password,
@@ -140,12 +442,13 @@ export default function OnboardingPage() {
 
   // ── Paso 5: Enviar todo ───────────────────────────────────────────────────
   async function handleFinish() {
-    if (s.zones.every(z => z.tables.length === 0)) {
-      setError('Agregá al menos una mesa'); return
+    if (s.zones.every((z) => z.tables.length === 0)) {
+      setError('Agregá al menos una mesa.')
+      return
     }
-    setLoading(true); setError(null)
+    setLoading(true)
+    setError(null)
     try {
-      // Obtener el token vigente (puede haber refrescado desde el paso 1)
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       const token = currentSession?.access_token ?? accessToken
 
@@ -168,16 +471,19 @@ export default function OnboardingPage() {
           deposit: { amount: s.depositAmount, cutOffMinutes: s.cutOffMinutes },
         }),
       })
-      const data = await res.json() as { ok?: boolean; error?: string }
-      if (!data.ok) { setError(data.error ?? 'Error al guardar'); setLoading(false); return }
+      const data = (await res.json()) as { ok?: boolean; error?: string }
+      if (!data.ok) {
+        setError(data.error ?? 'Error al guardar.')
+        setLoading(false)
+        return
+      }
       router.replace('/dashboard')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error de conexión')
+      setError(err instanceof Error ? err.message : 'Error de conexión.')
       setLoading(false)
     }
   }
 
-  // ── Helpers de mesas ─────────────────────────────────────────────────────
   function addTable(zoneIdx: number) {
     const zone = s.zones[zoneIdx]
     const next = zone.tables.length + 1
@@ -185,7 +491,7 @@ export default function OnboardingPage() {
     const newZones = s.zones.map((z, i) =>
       i === zoneIdx
         ? { ...z, tables: [...z.tables, { label, capacity: 2 }] }
-        : z
+        : z,
     )
     update({ zones: newZones })
   }
@@ -194,7 +500,7 @@ export default function OnboardingPage() {
     const newZones = s.zones.map((z, i) =>
       i === zoneIdx
         ? { ...z, tables: z.tables.filter((_, ti) => ti !== tableIdx) }
-        : z
+        : z,
     )
     update({ zones: newZones })
   }
@@ -202,382 +508,719 @@ export default function OnboardingPage() {
   function updateTable(zoneIdx: number, tableIdx: number, patch: Partial<TableRow>) {
     const newZones = s.zones.map((z, i) =>
       i === zoneIdx
-        ? { ...z, tables: z.tables.map((t, ti) => ti === tableIdx ? { ...t, ...patch } : t) }
-        : z
+        ? { ...z, tables: z.tables.map((t, ti) => (ti === tableIdx ? { ...t, ...patch } : t)) }
+        : z,
     )
     update({ zones: newZones })
   }
 
   function addZone() {
-    const prefixes = ['S','T','V','P','B','G']
-    const used = s.zones.map(z => z.prefix)
-    const prefix = prefixes.find(p => !used.includes(p)) ?? String.fromCharCode(65 + s.zones.length)
+    const prefixes = ['S', 'T', 'V', 'P', 'B', 'G']
+    const used = s.zones.map((z) => z.prefix)
+    const prefix = prefixes.find((p) => !used.includes(p)) ?? String.fromCharCode(65 + s.zones.length)
     update({ zones: [...s.zones, { name: `Zona ${s.zones.length + 1}`, prefix, tables: [] }] })
   }
 
   function toggleDay(day: number) {
-    const days = s.days.includes(day) ? s.days.filter(d => d !== day) : [...s.days, day]
+    const days = s.days.includes(day) ? s.days.filter((d) => d !== day) : [...s.days, day]
     update({ days })
   }
 
-  // ── Renders por paso ─────────────────────────────────────────────────────
+  // ── Botones primarios y secundarios ──────────────────────────────────────
 
-  const btnNext = (onClick: () => void, label = 'Continuar →', disabled = false) => (
+  const PrimaryButton = ({
+    onClick,
+    label = 'Continuar',
+    disabled = false,
+    final = false,
+  }: {
+    onClick: () => void
+    label?: string
+    disabled?: boolean
+    final?: boolean
+  }) => (
     <button
+      type="button"
       onClick={onClick}
       disabled={loading || disabled}
-      className="w-full py-4 rounded-xl bg-c1 text-white font-bold text-[15px]
-                 shadow-[0_4px_20px_rgba(255,71,87,0.3)] disabled:opacity-50
-                 active:scale-[0.97] transition-all duration-[180ms] mt-2"
+      className="btn btn-wine"
+      style={{
+        width: '100%',
+        height: 52,
+        borderRadius: 14,
+        fontSize: 15,
+        fontWeight: 700,
+        cursor: loading || disabled ? 'not-allowed' : 'pointer',
+        gap: 8,
+      }}
     >
-      {loading ? 'Un momento…' : label}
+      {loading ? 'Un momento…' : (
+        <>
+          {label}
+          {!final && <IconArrowRight size={14} />}
+        </>
+      )}
     </button>
   )
 
-  const btnBack = () => (
+  const SecondaryButton = ({ onClick, label = 'Volver' }: { onClick: () => void; label?: string }) => (
     <button
-      onClick={() => { setStep(s => (s - 1) as Step); setError(null) }}
-      className="w-full py-3 rounded-xl bg-white/5 text-white/50 text-[14px] font-semibold
-                 active:scale-[0.97] transition-transform"
+      type="button"
+      onClick={onClick}
+      className="btn"
+      style={{
+        width: '100%',
+        height: 44,
+        borderRadius: 14,
+        fontSize: 14,
+        background: 'var(--surface-2, #22232A)',
+        color: 'var(--text-2, #A9A8A2)',
+        cursor: 'pointer',
+        gap: 8,
+      }}
     >
-      ← Volver
+      <IconArrowLeft size={14} />
+      {label}
     </button>
   )
 
   return (
-    <div className="min-h-screen pb-10 px-5"
-      style={{ background: 'linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%)' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg, #111315)',
+        color: 'var(--text, #F4F2EE)',
+        fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
+        paddingBottom: 64,
+      }}
+    >
+      {/* Top brand bar */}
+      <header
+        style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid var(--line, #23252A)',
+          background: 'var(--bg, #111315)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Brand />
+        <a
+          href="/login"
+          style={{
+            fontSize: 13,
+            color: 'var(--text-2, #A9A8A2)',
+            textDecoration: 'none',
+            padding: '8px 14px',
+            borderRadius: 99,
+          }}
+        >
+          ¿Ya tenés cuenta? <strong style={{ color: 'var(--text)' }}>Iniciar sesión</strong>
+        </a>
+      </header>
 
-      <div className="max-w-md mx-auto pt-14 space-y-4">
-
-        {/* Logo / marca */}
-        {step === 1 && (
-          <div className="text-center mb-8">
-            <h1 className="font-display text-[32px] font-bold text-white tracking-tight">
-              Reserva<span className="text-c1">YA</span>
-            </h1>
-            <p className="text-white/45 text-[14px] mt-1">Panel para restaurantes</p>
-          </div>
-        )}
+      <main
+        style={{
+          maxWidth: 560,
+          margin: '0 auto',
+          padding: '40px 24px 0',
+        }}
+      >
+        <StepProgress step={step} />
+        <StepHeader step={step} />
 
         {error && (
-          <div className="bg-c1/15 border border-c1/30 rounded-xl px-4 py-3 text-c1 text-[13px] font-semibold">
+          <div
+            role="alert"
+            style={{
+              background: 'var(--wine-bg, #3A2128)',
+              border: '1px solid var(--wine, #A13143)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              color: 'var(--wine-soft, #C36878)',
+              fontSize: 13,
+              fontWeight: 600,
+              marginBottom: 16,
+              lineHeight: 1.5,
+            }}
+          >
             {error}
           </div>
         )}
 
         {/* ── PASO 1: Cuenta ── */}
         {step === 1 && (
-          <>
-            <StepHeader step={1}
-              title="Creá tu cuenta"
-              sub="Con esto accedés al panel de tu restaurante" />
-            <div className="space-y-3">
-              <Field label="Tu nombre">
-                <input value={s.staffName} onChange={e => update({ staffName: e.target.value })}
-                  placeholder="Ej: Martín García" className={inputCls} />
-              </Field>
-              <Field label="Email">
-                <input type="email" value={s.email} onChange={e => update({ email: e.target.value })}
-                  placeholder="tu@email.com" className={inputCls} autoComplete="email" />
-              </Field>
-              <Field label="Contraseña">
-                <input type="password" value={s.password} onChange={e => update({ password: e.target.value })}
-                  placeholder="Mínimo 6 caracteres" className={inputCls} autoComplete="new-password" />
-              </Field>
+          <div style={{ display: 'grid', gap: 14 }}>
+            <Field label="Tu nombre">
+              <input
+                value={s.staffName}
+                onChange={(e) => update({ staffName: e.target.value })}
+                placeholder="Ej: Martín García"
+                style={inputStyle}
+                autoComplete="name"
+              />
+            </Field>
+            <Field label="Email">
+              <input
+                type="email"
+                value={s.email}
+                onChange={(e) => update({ email: e.target.value })}
+                placeholder="tu@email.com"
+                style={inputStyle}
+                autoComplete="email"
+              />
+            </Field>
+            <Field label="Contraseña" hint="Mínimo 6 caracteres.">
+              <input
+                type="password"
+                value={s.password}
+                onChange={(e) => update({ password: e.target.value })}
+                placeholder="••••••••"
+                style={inputStyle}
+                autoComplete="new-password"
+              />
+            </Field>
+            <div style={{ marginTop: 12 }}>
+              <PrimaryButton onClick={handleStep1} label="Crear cuenta" />
             </div>
-            {btnNext(handleStep1)}
-            <p className="text-center text-white/30 text-[12px]">
-              ¿Ya tenés cuenta?{' '}
-              <a href="/login" className="text-c1 font-semibold">Iniciá sesión</a>
-            </p>
-          </>
+          </div>
         )}
 
         {/* ── PASO 2: Restaurante ── */}
         {step === 2 && (
-          <>
-            <StepHeader step={2}
-              title="Tu restaurante"
-              sub="Esta info aparece en la app para los clientes" />
-            <div className="space-y-3">
-              <Field label="Nombre del restaurante">
-                <input value={s.venueName} onChange={e => update({ venueName: e.target.value })}
-                  placeholder="Ej: La Cantina" className={inputCls} />
-              </Field>
-              <Field label="Dirección">
-                <input value={s.venueAddress} onChange={e => update({ venueAddress: e.target.value })}
-                  placeholder="Av. Corrientes 1234, CABA" className={inputCls} />
-              </Field>
-              <Field label="Teléfono (opcional)">
-                <input type="tel" value={s.venuePhone} onChange={e => update({ venuePhone: e.target.value })}
-                  placeholder="+54 11 4567-8901" className={inputCls} />
-              </Field>
-              <Field label="Descripción breve (opcional)">
-                <textarea value={s.venueDesc} onChange={e => update({ venueDesc: e.target.value })}
-                  placeholder="Qué tipo de cocina, ambiente, especialidad…"
-                  rows={2} className={`${inputCls} resize-none`} />
-              </Field>
+          <div style={{ display: 'grid', gap: 14 }}>
+            <Field label="Nombre del restaurante">
+              <input
+                value={s.venueName}
+                onChange={(e) => update({ venueName: e.target.value })}
+                placeholder="Ej: La Cantina"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Dirección">
+              <input
+                value={s.venueAddress}
+                onChange={(e) => update({ venueAddress: e.target.value })}
+                placeholder="Av. Corrientes 1234, CABA"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Teléfono · opcional">
+              <input
+                type="tel"
+                value={s.venuePhone}
+                onChange={(e) => update({ venuePhone: e.target.value })}
+                placeholder="+54 11 4567-8901"
+                style={inputStyle}
+                autoComplete="tel"
+              />
+            </Field>
+            <Field label="Descripción breve · opcional" hint="Cocina, ambiente, especialidad. Aparece en la ficha pública.">
+              <textarea
+                value={s.venueDesc}
+                onChange={(e) => update({ venueDesc: e.target.value })}
+                placeholder="Cocina italiana de barrio, mesas chicas, vino por copa…"
+                rows={3}
+                style={textareaStyle}
+              />
+            </Field>
+            <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+              <PrimaryButton
+                onClick={() => {
+                  if (!s.venueName || !s.venueAddress) {
+                    setError('Nombre y dirección son obligatorios.')
+                    return
+                  }
+                  setError(null)
+                  setStep(3)
+                }}
+              />
+              <SecondaryButton onClick={() => { setStep(1); setError(null) }} />
             </div>
-            <div className="space-y-2 pt-1">
-              {btnNext(() => {
-                if (!s.venueName || !s.venueAddress) { setError('Nombre y dirección son obligatorios'); return }
-                setError(null); setStep(3)
-              })}
-              {btnBack()}
-            </div>
-          </>
+          </div>
         )}
 
         {/* ── PASO 3: Horarios ── */}
         {step === 3 && (
-          <>
-            <StepHeader step={3}
-              title="Días y turnos"
-              sub="¿Cuándo atiende tu restaurante?" />
-
+          <div style={{ display: 'grid', gap: 18 }}>
             {/* Días */}
             <Field label="Días que abrís">
-              <div className="flex gap-2 flex-wrap mt-1">
-                {DAYS_ES.map((d, i) => (
-                  <button key={i} onClick={() => toggleDay(i)}
-                    className={`w-10 h-10 rounded-full font-bold text-[13px] border-2 transition-all
-                                ${s.days.includes(i)
-                                  ? 'bg-c1 border-c1 text-white'
-                                  : 'bg-white/5 border-white/15 text-white/40'
-                                }`}>
-                    {d}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {DAYS_ES.map((d, i) => {
+                  const active = s.days.includes(i)
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => toggleDay(i)}
+                      aria-pressed={active}
+                      aria-label={`${active ? 'Desactivar' : 'Activar'} ${d}`}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 99,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        border: `1px solid ${active ? 'var(--wine, #A13143)' : 'var(--line-2, #2E3036)'}`,
+                        background: active ? 'var(--wine, #A13143)' : 'var(--surface-2, #22232A)',
+                        color: active ? '#F5E9EB' : 'var(--text-3, #6D6C68)',
+                        cursor: 'pointer',
+                        transition: 'background-color 200ms ease, border-color 200ms ease',
+                        fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
+                      }}
+                    >
+                      {d}
+                    </button>
+                  )
+                })}
               </div>
             </Field>
 
             {/* Almuerzo */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-white font-semibold text-[14px]">Almuerzo</span>
-                <button
-                  onClick={() => update({ lunch: s.lunch ? null : { opens_at: '12:00', closes_at: '15:30' } })}
-                  className={`w-11 h-6 rounded-full transition-all duration-200 relative
-                              ${s.lunch ? 'bg-c1' : 'bg-white/15'}`}
+            <div className="card" style={{ padding: 16, display: 'grid', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span
+                  className="fr-900"
+                  style={{ fontSize: 16, color: 'var(--text)' }}
                 >
-                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200
-                                    ${s.lunch ? 'left-[22px]' : 'left-0.5'}`} />
-                </button>
+                  Almuerzo
+                </span>
+                <Toggle
+                  on={!!s.lunch}
+                  ariaLabel="Activar turno de almuerzo"
+                  onChange={() =>
+                    update({ lunch: s.lunch ? null : { opens_at: '12:00', closes_at: '15:30' } })
+                  }
+                />
               </div>
               {s.lunch && (
-                <div className="grid grid-cols-2 gap-3">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <Field label="Apertura">
-                    <input type="time" value={s.lunch.opens_at}
-                      onChange={e => update({ lunch: { ...s.lunch!, opens_at: e.target.value } })}
-                      className={inputCls} style={{ colorScheme: 'dark' }} />
+                    <input
+                      type="time"
+                      value={s.lunch.opens_at}
+                      onChange={(e) =>
+                        update({ lunch: { ...s.lunch!, opens_at: e.target.value } })
+                      }
+                      style={{ ...inputStyle, colorScheme: 'dark' }}
+                    />
                   </Field>
                   <Field label="Cierre">
-                    <input type="time" value={s.lunch.closes_at}
-                      onChange={e => update({ lunch: { ...s.lunch!, closes_at: e.target.value } })}
-                      className={inputCls} style={{ colorScheme: 'dark' }} />
+                    <input
+                      type="time"
+                      value={s.lunch.closes_at}
+                      onChange={(e) =>
+                        update({ lunch: { ...s.lunch!, closes_at: e.target.value } })
+                      }
+                      style={{ ...inputStyle, colorScheme: 'dark' }}
+                    />
                   </Field>
                 </div>
               )}
             </div>
 
             {/* Cena */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-white font-semibold text-[14px]">Cena</span>
-                <button
-                  onClick={() => update({ dinner: s.dinner ? null : { opens_at: '20:00', closes_at: '23:30' } })}
-                  className={`w-11 h-6 rounded-full transition-all duration-200 relative
-                              ${s.dinner ? 'bg-c1' : 'bg-white/15'}`}
+            <div className="card" style={{ padding: 16, display: 'grid', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span
+                  className="fr-900"
+                  style={{ fontSize: 16, color: 'var(--text)' }}
                 >
-                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200
-                                    ${s.dinner ? 'left-[22px]' : 'left-0.5'}`} />
-                </button>
+                  Cena
+                </span>
+                <Toggle
+                  on={!!s.dinner}
+                  ariaLabel="Activar turno de cena"
+                  onChange={() =>
+                    update({ dinner: s.dinner ? null : { opens_at: '20:00', closes_at: '23:30' } })
+                  }
+                />
               </div>
               {s.dinner && (
-                <div className="grid grid-cols-2 gap-3">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <Field label="Apertura">
-                    <input type="time" value={s.dinner.opens_at}
-                      onChange={e => update({ dinner: { ...s.dinner!, opens_at: e.target.value } })}
-                      className={inputCls} style={{ colorScheme: 'dark' }} />
+                    <input
+                      type="time"
+                      value={s.dinner.opens_at}
+                      onChange={(e) =>
+                        update({ dinner: { ...s.dinner!, opens_at: e.target.value } })
+                      }
+                      style={{ ...inputStyle, colorScheme: 'dark' }}
+                    />
                   </Field>
                   <Field label="Cierre">
-                    <input type="time" value={s.dinner.closes_at}
-                      onChange={e => update({ dinner: { ...s.dinner!, closes_at: e.target.value } })}
-                      className={inputCls} style={{ colorScheme: 'dark' }} />
+                    <input
+                      type="time"
+                      value={s.dinner.closes_at}
+                      onChange={(e) =>
+                        update({ dinner: { ...s.dinner!, closes_at: e.target.value } })
+                      }
+                      style={{ ...inputStyle, colorScheme: 'dark' }}
+                    />
                   </Field>
                 </div>
               )}
             </div>
 
-            <div className="space-y-2">
-              {btnNext(() => {
-                if (!s.lunch && !s.dinner) { setError('Activá al menos un turno'); return }
-                if (s.days.length === 0) { setError('Seleccioná al menos un día'); return }
-                setError(null); setStep(4)
-              })}
-              {btnBack()}
+            <div style={{ display: 'grid', gap: 10, marginTop: 4 }}>
+              <PrimaryButton
+                onClick={() => {
+                  if (!s.lunch && !s.dinner) {
+                    setError('Activá al menos un turno.')
+                    return
+                  }
+                  if (s.days.length === 0) {
+                    setError('Seleccioná al menos un día.')
+                    return
+                  }
+                  setError(null)
+                  setStep(4)
+                }}
+              />
+              <SecondaryButton onClick={() => { setStep(2); setError(null) }} />
             </div>
-          </>
+          </div>
         )}
 
         {/* ── PASO 4: Mesas ── */}
         {step === 4 && (
-          <>
-            <StepHeader step={4}
-              title="Mesas y zonas"
-              sub="Configurá el layout de tu restaurante" />
-
-            <div className="space-y-4">
-              {s.zones.map((zone, zi) => (
-                <div key={zi} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-                  {/* Cabecera de zona */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field label="Nombre de la zona">
-                      <input value={zone.name}
-                        onChange={e => {
-                          const z = [...s.zones]; z[zi] = { ...z[zi], name: e.target.value }
-                          update({ zones: z })
-                        }}
-                        placeholder="Ej: Salón"
-                        className={inputCls} />
-                    </Field>
-                    <Field label="Prefijo">
-                      <input value={zone.prefix} maxLength={2}
-                        onChange={e => {
-                          const z = [...s.zones]; z[zi] = { ...z[zi], prefix: e.target.value.toUpperCase() }
-                          update({ zones: z })
-                        }}
-                        placeholder="S"
-                        className={inputCls} />
-                    </Field>
-                  </div>
-
-                  {/* Mesas */}
-                  <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider">
-                    Mesas ({zone.tables.length})
-                  </p>
-                  <div className="space-y-2">
-                    {zone.tables.map((table, ti) => (
-                      <div key={ti} className="flex items-center gap-2">
-                        <input value={table.label}
-                          onChange={e => updateTable(zi, ti, { label: e.target.value })}
-                          className="w-16 rounded-lg bg-white/10 border border-white/15 px-2 py-2
-                                     text-[13px] text-white text-center outline-none focus:border-c1/50"
-                        />
-                        <div className="flex items-center gap-1.5 flex-1">
-                          {[2, 4, 6, 8].map(cap => (
-                            <button key={cap} onClick={() => updateTable(zi, ti, { capacity: cap })}
-                              className={`flex-1 py-2 rounded-lg text-[12px] font-bold transition-all
-                                          ${table.capacity === cap ? 'bg-c1 text-white' : 'bg-white/10 text-white/40'}`}>
-                              {cap}👤
-                            </button>
-                          ))}
-                        </div>
-                        <button onClick={() => removeTable(zi, ti)}
-                          className="w-8 h-8 rounded-lg bg-c1/15 text-c1 flex items-center justify-center
-                                     text-[16px] active:scale-90 transition-transform flex-shrink-0">
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button onClick={() => addTable(zi)}
-                    className="w-full py-2.5 rounded-xl border border-dashed border-white/20
-                               text-white/40 text-[13px] font-semibold active:scale-[0.97] transition-transform">
-                    + Agregar mesa
-                  </button>
+          <div style={{ display: 'grid', gap: 16 }}>
+            {s.zones.map((zone, zi) => (
+              <div key={zi} className="card" style={{ padding: 16, display: 'grid', gap: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 12 }}>
+                  <Field label="Nombre de la zona">
+                    <input
+                      value={zone.name}
+                      onChange={(e) => {
+                        const z = [...s.zones]
+                        z[zi] = { ...z[zi], name: e.target.value }
+                        update({ zones: z })
+                      }}
+                      placeholder="Salón / Terraza / Privado"
+                      style={inputStyle}
+                    />
+                  </Field>
+                  <Field label="Prefijo">
+                    <input
+                      value={zone.prefix}
+                      maxLength={2}
+                      onChange={(e) => {
+                        const z = [...s.zones]
+                        z[zi] = { ...z[zi], prefix: e.target.value.toUpperCase() }
+                        update({ zones: z })
+                      }}
+                      placeholder="S"
+                      style={{ ...inputStyle, textAlign: 'center', fontWeight: 700 }}
+                    />
+                  </Field>
                 </div>
-              ))}
 
-              <button onClick={addZone}
-                className="w-full py-3 rounded-xl border border-dashed border-c1/30
-                           text-c1 text-[13px] font-semibold active:scale-[0.97] transition-transform">
-                + Agregar zona (terraza, privado…)
-              </button>
-            </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span className="caps" style={{ color: 'var(--text-3, #6D6C68)' }}>
+                    Mesas · {zone.tables.length}
+                  </span>
+                </div>
 
-            <div className="space-y-2 pt-1">
-              {btnNext(() => {
-                const totalTables = s.zones.reduce((sum, z) => sum + z.tables.length, 0)
-                if (totalTables === 0) { setError('Agregá al menos una mesa'); return }
-                setError(null); setStep(5)
-              })}
-              {btnBack()}
-            </div>
-          </>
-        )}
-
-        {/* ── PASO 5: Seña ── */}
-        {step === 5 && (
-          <>
-            <StepHeader step={5}
-              title="Seña y reservas"
-              sub="El monto que paga el cliente para confirmar" />
-
-            <div className="space-y-4">
-              <Field label="Monto de la seña ($)">
-                <input type="number" value={s.depositAmount}
-                  onChange={e => update({ depositAmount: Number(e.target.value) })}
-                  className={inputCls} />
-                <p className="text-white/30 text-[11px] mt-1.5">
-                  Se descuenta del consumo al llegar. Pagado via Mercado Pago.
-                </p>
-              </Field>
-
-              <Field label="Cierre de reservas (minutos antes del turno)">
-                <div className="flex gap-2">
-                  {[30, 60, 90, 120].map(min => (
-                    <button key={min} onClick={() => update({ cutOffMinutes: min })}
-                      className={`flex-1 py-3 rounded-xl text-[13px] font-bold border-2 transition-all
-                                  ${s.cutOffMinutes === min
-                                    ? 'bg-c1 border-c1 text-white'
-                                    : 'bg-white/5 border-white/15 text-white/50'
-                                  }`}>
-                      {min}m
-                    </button>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {zone.tables.map((table, ti) => (
+                    <div
+                      key={ti}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}
+                    >
+                      <input
+                        value={table.label}
+                        onChange={(e) => updateTable(zi, ti, { label: e.target.value })}
+                        aria-label={`Etiqueta mesa ${ti + 1}`}
+                        style={{
+                          ...inputStyle,
+                          width: 64,
+                          height: 44,
+                          textAlign: 'center',
+                          fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+                          fontWeight: 600,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div
+                        role="radiogroup"
+                        aria-label={`Capacidad mesa ${table.label}`}
+                        style={{ display: 'flex', gap: 6, flex: 1 }}
+                      >
+                        {[2, 4, 6, 8].map((cap) => {
+                          const active = table.capacity === cap
+                          return (
+                            <button
+                              key={cap}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              onClick={() => updateTable(zi, ti, { capacity: cap })}
+                              style={{
+                                flex: 1,
+                                height: 44,
+                                borderRadius: 10,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                border: `1px solid ${active ? 'var(--wine, #A13143)' : 'var(--line-2, #2E3036)'}`,
+                                background: active ? 'var(--wine, #A13143)' : 'var(--surface-3, #2C2D34)',
+                                color: active ? '#F5E9EB' : 'var(--text-2, #A9A8A2)',
+                                cursor: 'pointer',
+                                transition: 'background-color 200ms ease, border-color 200ms ease',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 4,
+                                fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
+                              }}
+                            >
+                              {cap}
+                              <IconUsers size={12} />
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeTable(zi, ti)}
+                        aria-label={`Eliminar mesa ${table.label}`}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 10,
+                          background: 'var(--wine-bg, #3A2128)',
+                          border: '1px solid var(--wine, #A13143)',
+                          color: 'var(--wine-soft, #C36878)',
+                          display: 'inline-grid',
+                          placeItems: 'center',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          transition: 'background-color 200ms ease',
+                        }}
+                      >
+                        <IconTrash size={14} />
+                      </button>
+                    </div>
                   ))}
                 </div>
-                <p className="text-white/30 text-[11px] mt-1.5">
-                  Recomendado: 60 min. Así el restaurante puede prepararse.
-                </p>
-              </Field>
 
-              {/* Resumen */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
-                <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mb-2">Resumen</p>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Restaurante</span>
-                  <span className="text-white font-semibold">{s.venueName}</span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Mesas</span>
-                  <span className="text-white font-semibold">
-                    {s.zones.reduce((sum, z) => sum + z.tables.length, 0)} en {s.zones.length} zona{s.zones.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Turnos</span>
-                  <span className="text-white font-semibold">
-                    {[s.lunch && 'almuerzo', s.dinner && 'cena'].filter(Boolean).join(' + ')}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-white/50">Seña</span>
-                  <span className="text-white font-semibold">${s.depositAmount.toLocaleString('es-AR')}</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => addTable(zi)}
+                  className="btn"
+                  style={{
+                    width: '100%',
+                    height: 44,
+                    borderRadius: 12,
+                    fontSize: 13,
+                    background: 'transparent',
+                    border: '1px dashed var(--line-3, #3B3E45)',
+                    color: 'var(--text-2, #A9A8A2)',
+                    cursor: 'pointer',
+                    gap: 8,
+                  }}
+                >
+                  <IconPlus size={14} />
+                  Agregar mesa
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addZone}
+              className="btn"
+              style={{
+                width: '100%',
+                height: 48,
+                borderRadius: 12,
+                background: 'transparent',
+                border: '1px dashed var(--wine, #A13143)',
+                color: 'var(--wine-soft, #C36878)',
+                cursor: 'pointer',
+                gap: 8,
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              <IconPlus size={14} />
+              Agregar zona · terraza, privado, barra…
+            </button>
+
+            <div style={{ display: 'grid', gap: 10, marginTop: 4 }}>
+              <PrimaryButton
+                onClick={() => {
+                  const totalTables = s.zones.reduce((sum, z) => sum + z.tables.length, 0)
+                  if (totalTables === 0) {
+                    setError('Agregá al menos una mesa.')
+                    return
+                  }
+                  setError(null)
+                  setStep(5)
+                }}
+              />
+              <SecondaryButton onClick={() => { setStep(3); setError(null) }} />
+            </div>
+          </div>
+        )}
+
+        {/* ── PASO 5: Seña + Resumen ── */}
+        {step === 5 && (
+          <div style={{ display: 'grid', gap: 18 }}>
+            <Field
+              label="Monto de la seña · ARS"
+              hint="Se descuenta del consumo cuando llega el cliente. Se cobra vía Mercado Pago."
+            >
+              <input
+                type="number"
+                value={s.depositAmount}
+                onChange={(e) => update({ depositAmount: Number(e.target.value) })}
+                style={{
+                  ...inputStyle,
+                  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+                  fontWeight: 600,
+                  fontSize: 16,
+                }}
+                min={0}
+                step={500}
+              />
+            </Field>
+
+            <Field
+              label="Cierre de reservas online · minutos antes del turno"
+              hint="Recomendado 60 minutos. Da margen para preparar la mesa."
+            >
+              <div role="radiogroup" style={{ display: 'flex', gap: 8 }}>
+                {[30, 60, 90, 120].map((min) => {
+                  const active = s.cutOffMinutes === min
+                  return (
+                    <button
+                      key={min}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => update({ cutOffMinutes: min })}
+                      style={{
+                        flex: 1,
+                        height: 48,
+                        borderRadius: 12,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        border: `1px solid ${active ? 'var(--wine, #A13143)' : 'var(--line-2, #2E3036)'}`,
+                        background: active ? 'var(--wine, #A13143)' : 'var(--surface-2, #22232A)',
+                        color: active ? '#F5E9EB' : 'var(--text-2, #A9A8A2)',
+                        cursor: 'pointer',
+                        transition: 'background-color 200ms ease, border-color 200ms ease',
+                        fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+                      }}
+                    >
+                      {min}m
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
+
+            {/* Resumen */}
+            <div
+              style={{
+                padding: 18,
+                background: 'var(--p-lilac, #E4CDED)',
+                borderRadius: 14,
+                color: '#1A1B1F',
+                display: 'grid',
+                gap: 12,
+              }}
+            >
+              <p
+                className="caps"
+                style={{
+                  color: 'rgba(26,27,31,0.6)',
+                  margin: 0,
+                }}
+              >
+                Resumen
+              </p>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <SummaryRow label="Restaurante" value={s.venueName || '—'} />
+                <SummaryRow
+                  label="Mesas"
+                  value={`${s.zones.reduce((sum, z) => sum + z.tables.length, 0)} en ${s.zones.length} zona${s.zones.length !== 1 ? 's' : ''}`}
+                />
+                <SummaryRow
+                  label="Turnos"
+                  value={
+                    [s.lunch && 'almuerzo', s.dinner && 'cena']
+                      .filter(Boolean)
+                      .join(' + ') || '—'
+                  }
+                />
+                <SummaryRow
+                  label="Días"
+                  value={`${s.days.length} día${s.days.length !== 1 ? 's' : ''} por semana`}
+                />
+                <SummaryRow
+                  label="Seña"
+                  value={`$${s.depositAmount.toLocaleString('es-AR')}`}
+                  mono
+                />
               </div>
             </div>
 
-            <div className="space-y-2 pt-1">
-              {btnNext(handleFinish, '¡Empezar a recibir reservas! →')}
-              {btnBack()}
+            <div style={{ display: 'grid', gap: 10, marginTop: 4 }}>
+              <PrimaryButton
+                onClick={handleFinish}
+                label="Empezar a recibir reservas"
+                final
+              />
+              <SecondaryButton onClick={() => { setStep(4); setError(null) }} />
             </div>
-          </>
+          </div>
         )}
+      </main>
+    </div>
+  )
+}
 
-      </div>
+function SummaryRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        gap: 14,
+        fontSize: 14,
+      }}
+    >
+      <span style={{ color: 'rgba(26,27,31,0.6)' }}>{label}</span>
+      <span
+        style={{
+          color: '#1A1B1F',
+          fontWeight: 700,
+          fontFamily: mono
+            ? 'var(--font-mono, "JetBrains Mono", monospace)'
+            : 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
+          textAlign: 'right',
+        }}
+      >
+        {value}
+      </span>
     </div>
   )
 }
