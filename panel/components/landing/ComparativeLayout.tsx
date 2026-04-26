@@ -40,15 +40,20 @@ export default function ComparativeLayout({
         fontFamily: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
       }}
     >
-      {/* Nav (sólido, sin blur) */}
-      <nav
+      {/* Header / Nav (sólido, sin blur) */}
+      <header
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          padding: 'clamp(10px, 2vw, 14px) clamp(14px, 3vw, 28px)',
           background: 'var(--bg, #111315)',
           borderBottom: '1px solid var(--line, #23252A)',
+        }}
+      >
+      <nav
+        aria-label="Navegación principal"
+        style={{
+          padding: 'clamp(10px, 2vw, 14px) clamp(14px, 3vw, 28px)',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
@@ -122,9 +127,12 @@ export default function ComparativeLayout({
           .nav-link-hide-sm { display: none !important; }
         }
       `}</style>
+      </header>
 
+      <main>
       {/* Hero */}
       <section
+        aria-labelledby="cmp-hero"
         style={{
           padding: 'clamp(48px, 8vw, 88px) 28px clamp(40px, 6vw, 64px)',
           maxWidth: 1080,
@@ -135,6 +143,7 @@ export default function ComparativeLayout({
           Comparativa 2026
         </p>
         <h1
+          id="cmp-hero"
           className="fr-900"
           style={{
             fontSize: 'clamp(40px, 6vw, 80px)',
@@ -413,8 +422,8 @@ export default function ComparativeLayout({
             fontStyle: 'italic',
           }}
         >
-          {brand} es una marca registrada de su titular. UnToque no está afiliado ni asociado con
-          {' '}{brand}. Esta comparativa se basa en información pública disponible al 25 de abril de
+          {brand} es una marca registrada de su titular. Esta plataforma no está afiliada ni asociada
+          con {brand}. Esta comparativa se basa en información pública disponible al 25 de abril de
           2026. Si detectás algún dato desactualizado o impreciso, escribinos a{' '}
           <a
             href="mailto:hola@deuntoque.com"
@@ -425,6 +434,7 @@ export default function ComparativeLayout({
           y corregimos en 24 horas.
         </p>
       </section>
+      </main>
 
       <LegalFooter />
     </div>
