@@ -35,29 +35,21 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isPublic = pathname === '/'
-    || pathname === '/login'
-    || pathname === '/landing'
-    || pathname === '/demo'
-    || pathname === '/pilot'
-    || pathname === '/sitemap.xml'
-    || pathname === '/robots.txt'
-    || pathname === '/icon'
-    || pathname === '/apple-icon'
-    || pathname.startsWith('/vs-')
-    || pathname.startsWith('/onboarding')
-    || pathname.startsWith('/terms')
-    || pathname.startsWith('/privacy')
-    || pathname.startsWith('/cookies')
-    || pathname.startsWith('/og/')
-    || pathname.startsWith('/api/onboarding')
-    || pathname.startsWith('/api/webhooks')
-    || pathname.startsWith('/api/auth/signout')
-    || pathname.startsWith('/api/debug-admin')
-    || pathname.startsWith('/api/push/send')
-    || (process.env.NODE_ENV !== 'production' && pathname.startsWith('/preview'))
 
-  if (!user && !isPublic) {
+  // Rutas EXPLÍCITAMENTE protegidas. Todo lo demás es público (incluyendo
+  // 404s — Next.js renderiza app/not-found.tsx con status 404 correcto).
+  // Esto fija el soft-404 que detecta SEO crawlers.
+  const isProtected =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/check-in') ||
+    (pathname.startsWith('/api/') &&
+      !pathname.startsWith('/api/onboarding') &&
+      !pathname.startsWith('/api/webhooks') &&
+      !pathname.startsWith('/api/auth/signout') &&
+      !pathname.startsWith('/api/debug-admin') &&
+      !pathname.startsWith('/api/push/send'))
+
+  if (!user && isProtected) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     return NextResponse.redirect(loginUrl)
