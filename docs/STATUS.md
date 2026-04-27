@@ -1,24 +1,24 @@
 # UnToque · Estado del proyecto
 
-> **Última actualización:** 2026-04-26
-> **Versión live:** commit `059e8b9` en `main`
+> **Última actualización:** 2026-04-27
+> **Versión live:** commit `35ab2cd` en `main`
 > **Producción:** https://panel.deuntoque.com
 >
 > Este documento es la fuente de verdad del estado del proyecto. Lo actualizamos al final de cada sesión de trabajo. Marcá ✅ cuando algo se complete, 🟡 cuando esté en curso, ⚪ cuando esté pendiente.
 
 ---
 
-## 📊 Avance global estimado: **~78%**
+## 📊 Avance global estimado: **~82%**
 
 | Área | Peso | Avance | Aporta |
 |---|---|---|---|
-| Código features (panel + app) | 40% | 90% | 36.0% |
+| Código features (panel + app) | 40% | 94% | 37.6% |
 | Infra / Deploy / Env | 15% | 85% | 12.8% |
 | Legal / Compliance | 15% | 35% | 5.3% |
 | Mobile (Capacitor) | 10% | 30% | 3.0% |
 | Marketing / GTM / SEO | 15% | 75% | 11.3% |
 | Branding / Assets | 5% | 75% | 3.8% |
-| **TOTAL** | 100% | | **~72-78%** |
+| **TOTAL** | 100% | | **~82%** |
 
 ---
 
@@ -49,7 +49,9 @@
 - ✅ `/dashboard/billing` — suscripción Mercado Pago
 - ✅ `/dashboard/config` — venue + horarios + zonas + plano
 - ✅ `/dashboard/config/plano` — drag-and-drop floor plan editor
-- ✅ `/dashboard/config/fotos` — **NUEVO** logo + cover + galería max 12 con drag reorder
+- ✅ `/dashboard/config/fotos` — logo + cover + galería max 12 con drag reorder
+- ✅ **CustomerDetailSheet v2** (NUEVO 27-04) — chips Alergias/Restricciones/Dieta/VIP/Celebración + lista preferencias + modal edición tags
+- ✅ **ReservationHistorySheet** (NUEVO 27-04) — timeline audit log con before→after
 - ✅ `/dashboard/live` — TV mode fullscreen
 - ✅ `/dashboard/ayuda` — help center con FAQ + atajos
 - ✅ Notificaciones realtime + sound + push (con VAPID configurado)
@@ -67,8 +69,10 @@
 
 ### Backend / Infra
 - ✅ 15 migrations Supabase (001-015) aplicadas
-- ✅ **Migration 016 `venue_images`** aplicada en prod (NUEVO HOY)
-- ✅ **Storage bucket `venue-photos`** con RLS por venue_id (NUEVO HOY)
+- ✅ Migration 016 `venue_images` aplicada en prod
+- ✅ Storage bucket `venue-photos` con RLS por venue_id
+- 🟡 **Migration 017 `customer_tags`** lista en `scripts/SETUP-CUSTOMER-PROFILE-AUDIT-CLEAN.sql` — pendiente correr en Supabase Studio
+- 🟡 **Migration 018 `reservation_events` + trigger** misma query, pendiente correr
 - ✅ RLS multi-tenant (staff_users → venue_id)
 - ✅ Mercado Pago webhook con HMAC signature verification
 - ✅ Meta WhatsApp Cloud API v21.0 con throttle 5/seg
@@ -256,7 +260,15 @@ Cliente demo PWA: `test@reservaya.test` / `Test1234!`
 
 ## 📋 SESSIONS LOG
 
-### Sesión 2026-04-26 (hoy)
+### Sesión 2026-04-27 (hoy)
+- ✅ Customer Profile v2 (chips Alergias/Restricciones/Dieta/VIP/Celebración + modal edición + lista preferencias)
+- ✅ Reservation Audit Log (migration 018 con trigger Postgres + ReservationHistorySheet timeline + wire en EditReservation)
+- ✅ Migration 017 `customer_tags` con 7 kinds + helper SQL
+- ✅ 5 API routes nuevas (tags CRUD + history GET) con Zod + requestLogger
+- ✅ 4 commits separados por área + push + deploy production
+- 🟡 SQL `SETUP-CUSTOMER-PROFILE-AUDIT-CLEAN.sql` pendiente de aplicar en Supabase Studio (acción usuario)
+
+### Sesión 2026-04-26
 - ✅ SEO audit + 6 commits (sitemap, canonical, soft 404, OG PNG, mobile fonts, semantic HTML)
 - ✅ Plan estratégico SEO + marketing en `docs/seo-strategy.md`
 - ✅ Fix CSS bundle roto (@import google fonts removido)
