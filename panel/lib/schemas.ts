@@ -116,6 +116,32 @@ export const ReorderVenueImagesSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(12),
 })
 
+/* ─── Customer Tags ───────────────────────────────────────── */
+
+export const CustomerTagKindSchema = z.enum([
+  'allergy',
+  'dietary',
+  'restriction',
+  'preference',
+  'celebration',
+  'note',
+  'vip',
+])
+
+export const NewCustomerTagSchema = z.object({
+  customer_phone: z.string().min(8).max(20),
+  kind: CustomerTagKindSchema,
+  value: z.string().min(1).max(120),
+  notes: z.string().max(500).nullable().optional(),
+})
+
+export const UpdateCustomerTagSchema = z
+  .object({
+    value: z.string().min(1).max(120).optional(),
+    notes: z.string().max(500).nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Patch vacío' })
+
 /* ─── Helpers de uso ──────────────────────────────────────── */
 
 export type ParseResult<T> =
